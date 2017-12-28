@@ -3,7 +3,10 @@
 
 (* use custom lexbuffer to keep track of source location *)
 module Sedlexing = LexBuffer
+module StdChar = Char
 open LexBuffer
+open Core
+open BatPervasives
 
 (** Signals a lexing error at the provided source location.  *)
 exception LexError of (Lexing.position * string)
@@ -30,7 +33,7 @@ let _ =
 let failwith buf s = raise (LexError (buf.pos, s))
 
 let illegal buf c =
-  Char.escaped c
+  StdChar.escaped c
   |> Printf.sprintf "unexpected character in expression: '%s'"
   |> failwith buf
 
@@ -46,15 +49,34 @@ let decnum = [%sedlex.regexp? Plus digit]
 let decbyte = [%sedlex.regexp? (digit,digit,digit) | (digit,digit) | digit ]
 let hexbyte = [%sedlex.regexp? hex,hex ]
 let blank = [%sedlex.regexp? ' ' | '\t' ]
+let space = [%sedlex.regexp? ' ' ]
 let newline = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
+
+type state = { new_line : bool; level : int; stack : int list }
+let init_state = { new_line = false; level = 0; stack = [0] }
+
+(* let end_of_indent state = 
+  if state.level > List.hd_exn 
+  then INDENT, { state with stack = state.level::state.stack }
+  else if state.level < List.hd_exn 
+  then 
+    let rev dedents = 
+      function
+      | top::stack when top > stack.level 
+
+let rec indentation state buf = 
+  match%sedlex buf with 
+  | space   -> indentation { state with level = state.level + 1 } buf 
+  | newline -> indentation { state with level = 0 } buf 
+  | _ -> token {state } *)
 
 (* swallows whitespace and comments *)
 let rec garbage buf =
   match%sedlex buf with
-  | newline -> garbage buf
+  | newline -> garbage buf (*indentation stack 0 buf*)
   | Plus blank -> garbage buf
   | "(*" -> comment 1 buf
-  | _ -> ()
+  | _    -> ()
 
 (* allow nested comments, like OCaml *)
 and comment depth buf =
@@ -70,31 +92,51 @@ and comment depth buf =
 let token buf =
   garbage buf;
   match%sedlex buf with
-  | eof -> EOF
-  (* parenths *)
-  | '(' -> LPAR
-  | ')' -> RPAR
-  (* YOUR TOKENS HERE... *)
-  | _ -> illegal buf (Char.chr (next buf))
+  | eof -> [EOF]
+
+   (* parenths *)
+  | '(' -> [LPAR]
+  | ')' -> [RPAR]
+
+  | _ -> illegal buf (StdChar.chr (next buf))
 
 (* wrapper around `token` that records start and end locations *)
 let loc_token buf =
-  let () = garbage buf in (* dispose of garbage before recording start location *)
+  let () = garbage buf in (*  dispose of garbage before recording start location *)
   let loc_start = next_loc buf in
-  let t = token buf in
+  let ts = token buf in
   let loc_end = next_loc buf in
-  (t, loc_start, loc_end)
-
+  (ts, loc_start, loc_end)
 
 (* menhir interface *)
 type ('token, 'a) parser = ('token, 'a) MenhirLib.Convert.traditional
 
+let aaaa = 3
+
 let parse buf p =
+  let pending_tokens = ref [] in
   let last_token = ref Lexing.(EOF, dummy_pos, dummy_pos) in
-  let next_token () = last_token := loc_token buf; !last_token in
-  try MenhirLib.Convert.Simplified.traditional2revised p next_token with
+
+  let next_token () = 
+    if !pending_tokens = [] 
+    then 
+      let (t::ts, p, q) = loc_token buf in
+      pending_tokens := List.map ts ~f:(fun ti -> ti, Lexing.dummy_pos, Lexing.dummy_pos);
+      last_token := t, p, q;
+      (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
+      flush_all ();
+      !last_token 
+    else 
+      let [t], ts = List.split_n !pending_tokens 1 in 
+      pending_tokens := ts;
+      (* printf "token B: %s\n" (show_token (fst3 t)); *)
+      flush_all ();
+      t
+  in
+  MenhirLib.Convert.Simplified.traditional2revised p next_token 
+  (* try with
   | LexError (pos, s) -> raise (LexError (pos, s))
-  | _ -> raise (ParseError (!last_token))
+  | _                 -> raise (ParseError (!last_token)) *)
 
 let parse_string ?pos s p =
   parse (LexBuffer.of_ascii_string ?pos s) p

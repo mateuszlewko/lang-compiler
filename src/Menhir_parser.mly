@@ -1,24 +1,26 @@
 %{
 (* OCaml preamble *)
-(* open Core *)
+open Core
+
 %}
 
 (* tokens *)
-%token LPAR RPAR EOF
+%token LPAR RPAR EOF LAMBDA
 
-%start <unit> ast_eof
+%start <string> ast_eof
 
 %%
 
 ast_eof:
-  | ast; EOF { () }
+  | a = ast; EOF { a }
   ;
 
 ast:
-  | list(nested) { () }
+  | LAMBDA { "λ" }
+  | l = list(nested) { String.concat l }
 
 nested:
-  | LPAR; ast; RPAR { () }
+  | LPAR; a = ast; RPAR { sprintf "(%s)" a }
   ;
 
 %%

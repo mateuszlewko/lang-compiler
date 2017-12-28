@@ -13,11 +13,11 @@ let () = begin
     |> printf "  %s\n");
 
   let s1 = "() ( ()() (()()) )" in
-  let s2 = "( () ()" in
+  let s2 = "λ" in
   let s3 = "( () () ) ) ()" in
   List.iter [s1; s2; s3 ] ~f:(fun s ->
     printf "\nTrying to parse \"%s\".\n" s;
-    Parser.ast_of_string s;
+    printf "res: %s\n" (Parser.ast_of_string s);
     printf "-> success!\n";
   );
   ()

@@ -4,7 +4,7 @@
 (rule
  ((targets (Tokens.ml))
   (deps    (Menhir_parser.mly))
-  (action  (run ${bin:menhir} --only-tokens ${<} --base Tokens))))
+  (action  (run ${bin:menhir} --trace --only-tokens ${<} --base Tokens))))
 
 ;; generate lexer -- temporary hack while ppx_sedlex and ppx_import are incompatible with jbuilder!!
 (rule
@@ -33,7 +33,8 @@
     (core
      sedlex
      compiler-libs.common
-     menhirLib)
+     menhirLib
+     batteries)
   )
   (virtual_deps (cppo menhir))
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))
