@@ -1,4 +1,4 @@
-#include "Tokens.ml"
+#include "tokens.ml"
   [@@deriving show]
 
 (* use custom lexbuffer to keep track of source location *)
@@ -13,8 +13,6 @@ exception LexError of (Lexing.position * string)
 
 (** Signals a parsing error at the provided token and its start and end locations. *)
 exception ParseError of (token * Lexing.position * Lexing.position)
-
-(* let show_token _ = "<token>" *)
 
 (* Register exceptions for pretty printing *)
 let _ =
@@ -148,13 +146,11 @@ let parse buf p =
       last_state := state;
       
       (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
-      flush_all ();
       !last_token 
     else 
       let [t], ts = List.split_n !pending_tokens 1 in 
       pending_tokens := ts;
       (* printf "token B: %s\n" (show_token (fst3 t)); *)
-      flush_all ();
       t
   in
   try MenhirLib.Convert.Simplified.traditional2revised p next_token with

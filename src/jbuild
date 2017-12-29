@@ -2,28 +2,28 @@
 
 ;; generate menhir tokens
 (rule
- ((targets (Tokens.ml))
-  (deps    (Menhir_parser.mly))
-  (action  (run ${bin:menhir} --trace --only-tokens ${<} --base Tokens))))
+ ((targets (tokens.ml))
+  (deps    (menhirParser.mly))
+  (action  (run ${bin:menhir} --trace --only-tokens ${<} --base tokens))))
 
 ;; generate lexer -- temporary hack while ppx_sedlex and 
 ;; ppx_import are incompatible with jbuilder!!
 (rule
- ((targets (Lexer.sedlex.ml))
-  (deps    (Lexer.cppo.sedlex.ml Tokens.ml))
+ ((targets (lexer.sedlex.ml))
+  (deps    (lexer.cppo.sedlex.ml tokens.ml))
   (action  (run ${bin:cppo} ${<} -n -o ${@}))))
 (rule
- ((targets (Lexer.mli))
-  (deps    (Lexer.cppo.mli Tokens.ml))
+ ((targets (lexer.mli))
+  (deps    (lexer.cppo.mli tokens.ml))
   (action  (run ${bin:cppo} ${<} -n -o ${@}))))
 (rule
- ((targets (Lexer.ml))
-  (deps    (Lexer.sedlex.ml))
+ ((targets (lexer.ml))
+  (deps    (lexer.sedlex.ml))
   (action  (run ${ocaml_where}/../sedlex/ppx_sedlex ${<} -o ${@}))))
 
 ;; generate parser
 (menhir
- ((modules (Menhir_parser))
+ ((modules (menhirParser))
   (flags (--external-tokens Lexer))))
 
 (library
