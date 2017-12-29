@@ -1,5 +1,5 @@
 #include "Tokens.ml"
-  [@@deriving show, enumerate]
+  [@@deriving show]
 
 type ('token, 'a) parser =
   (Lexing.lexbuf -> 'token) -> Lexing.lexbuf -> 'a

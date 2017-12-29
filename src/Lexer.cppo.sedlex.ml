@@ -1,5 +1,5 @@
 #include "Tokens.ml"
-  [@@deriving show, enumerate]
+  [@@deriving show]
 
 (* use custom lexbuffer to keep track of source location *)
 module Sedlexing = LexBuffer
@@ -13,6 +13,8 @@ exception LexError of (Lexing.position * string)
 
 (** Signals a parsing error at the provided token and its start and end locations. *)
 exception ParseError of (token * Lexing.position * Lexing.position)
+
+(* let show_token _ = "<token>" *)
 
 (* Register exceptions for pretty printing *)
 let _ =
@@ -52,77 +54,99 @@ let blank = [%sedlex.regexp? ' ' | '\t' ]
 let space = [%sedlex.regexp? ' ' ]
 let newline = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
 
-type state = { new_line : bool; level : int; stack : int list }
-let init_state = { new_line = false; level = 0; stack = [0] }
+type state = { level : int; stack : int list }
+let init_state = { level = 0; stack = [0] }
 
-(* let end_of_indent state = 
-  if state.level > List.hd_exn 
-  then INDENT, { state with stack = state.level::state.stack }
-  else if state.level < List.hd_exn 
+let rec end_of_indent state = 
+  if state.level > List.hd_exn state.stack
+  then [INDENT], { state with stack = state.level::state.stack }
+  else if state.level < List.hd_exn state.stack
   then 
-    let rev dedents = 
+    let rec dedents res = 
       function
-      | top::stack when top > stack.level 
+      | top::stack when top > state.level ->
+          dedents (DEDENT::res) stack 
+      | stack -> res, stack
+    in 
+    let deds, stack = dedents [] state.stack in 
+    deds, { state with stack = state.stack }
+  else [], state
 
 let rec indentation state buf = 
   match%sedlex buf with 
   | space   -> indentation { state with level = state.level + 1 } buf 
   | newline -> indentation { state with level = 0 } buf 
-  | _ -> token {state } *)
+  | _       -> end_of_indent state
 
 (* swallows whitespace and comments *)
-let rec garbage buf =
+and garbage buf =
   match%sedlex buf with
-  | newline -> garbage buf (*indentation stack 0 buf*)
   | Plus blank -> garbage buf
   | "(*" -> comment 1 buf
   | _    -> ()
 
-(* allow nested comments, like OCaml *)
+(* nested comments *)
 and comment depth buf =
-  if depth = 0 then garbage buf else
-  match%sedlex buf with
-  | eof -> failwith buf "Unterminated comment at EOF" 
-  | "(*" -> comment (depth + 1) buf
-  | "*)" -> comment (depth - 1) buf
-  | any -> comment depth buf
-  | _ -> assert false
+  if depth = 0 
+  then garbage buf 
+  else match%sedlex buf with
+       | eof  -> failwith buf "Unterminated comment at EOF" 
+       | "(*" -> comment (depth + 1) buf
+       | "*)" -> comment (depth - 1) buf
+       | any  -> comment depth buf
+       | _    -> assert false
 
 (* returns the next token *)
-let token buf =
+and token state buf =
   garbage buf;
+
   match%sedlex buf with
-  | eof -> [EOF]
+  | eof -> [EOF], state
+  
+  (* newline and indentation *)
+  | newline ->
+    let toks, state = indentation state buf in NEWLINE::toks, state
+  
+  (* parenths *)
+  | '(' -> [LPAR], state
+  | ')' -> [RPAR], state
 
-   (* parenths *)
-  | '(' -> [LPAR]
-  | ')' -> [RPAR]
+  | "let" -> [LET], state 
+  | "if"  -> [IF], state
+  | "else"  -> [ELSE], state
+  | "elif"  -> [ELIF], state
+  | "then"  -> [THEN], state
 
+  | id -> [SYMBOL (ascii buf)], state
+
+  | any -> [KWD (ascii buf |> flip String.get 0 )], state
   | _ -> illegal buf (StdChar.chr (next buf))
 
 (* wrapper around `token` that records start and end locations *)
-let loc_token buf =
+let loc_token state buf =
   let () = garbage buf in (*  dispose of garbage before recording start location *)
   let loc_start = next_loc buf in
-  let ts = token buf in
-  let loc_end = next_loc buf in
-  (ts, loc_start, loc_end)
+  let ts, state = token state buf in
+  let loc_end   = next_loc buf in
+  state, (ts, loc_start, loc_end)
 
 (* menhir interface *)
 type ('token, 'a) parser = ('token, 'a) MenhirLib.Convert.traditional
 
-let aaaa = 3
-
 let parse buf p =
   let pending_tokens = ref [] in
   let last_token = ref Lexing.(EOF, dummy_pos, dummy_pos) in
+  let last_state = ref init_state in
 
   let next_token () = 
     if !pending_tokens = [] 
     then 
-      let (t::ts, p, q) = loc_token buf in
-      pending_tokens := List.map ts ~f:(fun ti -> ti, Lexing.dummy_pos, Lexing.dummy_pos);
+      let state, (t::ts, p, q) = loc_token !last_state buf in
+      pending_tokens := List.map ts ~f:(fun ti -> ti, p, q);
+      
       last_token := t, p, q;
+      last_state := state;
+      
       (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
       flush_all ();
       !last_token 
@@ -133,10 +157,9 @@ let parse buf p =
       flush_all ();
       t
   in
-  MenhirLib.Convert.Simplified.traditional2revised p next_token 
-  (* try with
+  try MenhirLib.Convert.Simplified.traditional2revised p next_token with
   | LexError (pos, s) -> raise (LexError (pos, s))
-  | _                 -> raise (ParseError (!last_token)) *)
+  | _                 -> raise (ParseError (!last_token))
 
 let parse_string ?pos s p =
   parse (LexBuffer.of_ascii_string ?pos s) p
