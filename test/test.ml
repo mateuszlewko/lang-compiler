@@ -35,13 +35,31 @@ let fn a b = a
   let s3 = 
 " 
 let fn a b =
-    fn 
+    fn a b
     bbbb
+    aa
+    
+    3
+    fn 2
+
+" 
+  in 
+
+  let s4 = 
+" 
+let fn a b =
+    fn a b
+    bbbb
+    aa
+
+    3
+    fn 2
+      3
 " 
   in 
   (* let s2 = "(()" in *)
   (* let s3 = "( () () ) ) ()" in *)
-  List.iter [s2; s3] ~f:(fun s ->
+  List.iter [s2; s3; s4] ~f:(fun s ->
     printf "\nTrying to parse \"%s\".\n" s;
     printf "res: %s\n" (Parser.ast_of_string s |> show_expr);
     printf "-> success!\n";
