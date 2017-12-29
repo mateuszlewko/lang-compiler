@@ -80,8 +80,9 @@ let rec indentation state buf =
 and garbage buf =
   match%sedlex buf with
   | Plus blank -> garbage buf
-  | "(*" -> comment 1 buf
-  | _    -> ()
+  (* | eof        -> garbage buf *)
+  | "(*"       -> comment 1 buf
+  | _          -> ()
 
 (* nested comments *)
 and comment depth buf =
@@ -99,11 +100,12 @@ and token state buf =
   garbage buf;
 
   match%sedlex buf with
-  | eof -> [EOF], state
+  | eof -> [NEWLINE], state
   
   (* newline and indentation *)
   | newline ->
-    let toks, state = indentation state buf in NEWLINE::toks, state
+    let toks, state = indentation { state with level = 0 }
+                        buf in NEWLINE::toks, state
   
   (* parenths *)
   | '(' -> [LPAR], state
@@ -118,6 +120,10 @@ and token state buf =
   | "true" -> [BOOL true], state
   | "false" -> [BOOL true], state
 
+  | '"' -> [QUOTE], state
+  | ';' -> [SEMICOL], state
+  | ':' -> [COLON], state
+  | ',' -> [COMMA], state
   | '=' -> [EQ], state
 
   | decnum -> [INT (ascii buf |> int_of_string)], state
@@ -139,7 +145,7 @@ type ('token, 'a) parser = ('token, 'a) MenhirLib.Convert.traditional
 
 let parse buf p =
   let pending_tokens = ref [] in
-  let last_token = ref Lexing.(EOF, dummy_pos, dummy_pos) in
+  let last_token = ref Lexing.(NEWLINE, dummy_pos, dummy_pos) in
   let last_state = ref init_state in
 
   let next_token () = 
@@ -151,12 +157,14 @@ let parse buf p =
       last_token := t, p, q;
       last_state := state;
       
-      (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
+      printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q);
+      flush_all ();
       !last_token 
     else 
       let [t], ts = List.split_n !pending_tokens 1 in 
       pending_tokens := ts;
-      (* printf "token B: %s\n" (show_token (fst3 t)); *)
+      printf "token B: %s\n" (show_token (fst3 t));
+      flush_all ();
       t
   in
   try MenhirLib.Convert.Simplified.traditional2revised p next_token with
