@@ -56,6 +56,8 @@ type state = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
 
 let rec end_of_indent state = 
+  printf "level: %d, stack: %s\n" state.level (dump state.stack);
+
   if state.level > List.hd_exn state.stack
   then [INDENT], { state with stack = state.level::state.stack }
   else if state.level < List.hd_exn state.stack
@@ -67,7 +69,7 @@ let rec end_of_indent state =
       | stack -> res, stack
     in 
     let deds, stack = dedents [] state.stack in 
-    deds, { state with stack = state.stack }
+    deds, { state with stack = stack }
   else [], state
 
 let rec indentation state buf = 
@@ -100,12 +102,12 @@ and token state buf =
   garbage buf;
 
   match%sedlex buf with
-  | eof -> [NEWLINE], state
+  | eof -> [EOF], state
   
   (* newline and indentation *)
   | newline ->
-    let toks, state = indentation { state with level = 0 }
-                        buf in NEWLINE::toks, state
+    let toks, state = indentation { state with level = 0 } buf 
+    in NEWLINE::toks, state
   
   (* parenths *)
   | '(' -> [LPAR], state

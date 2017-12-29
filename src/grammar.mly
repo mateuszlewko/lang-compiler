@@ -11,11 +11,15 @@ open Ast
 %token LET IF ELSE ELIF THEN MODULE
 %token LPAR RPAR
 %token EQ QUOTE COMMA COLON SEMICOL 
-%token INDENT DEDENT NEWLINE
+%token INDENT DEDENT NEWLINE EOF
 
 %start <Ast.expr> top_let
+%start <Ast.program> program
 
 %%
+
+program: 
+  option(NEWLINE); es = list(complex_expr); option(NEWLINE); EOF { Prog (es) }
 
 top_let:
   | NEWLINE; e = top_let { e }
@@ -27,11 +31,15 @@ letexp:
     { LetExp (n, vs, e, es) } 
 
 application:
-  | s = simple_expr; es1 = nonempty_list(simple_expr); NEWLINE; es2 = option(indented)
+  | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE); 
+    es2 = option(indented); option(NEWLINE)
     { AppExp (s, es1, es2) }
+  | s = simple_expr; NEWLINE; 
+    es2 = indented; option(NEWLINE)
+    { AppExp (s, [], Some es2) }
 
 indented:
-  | INDENT; es = list(complex_expr); DEDENT { es }
+  INDENT; es = list(complex_expr); DEDENT { es }
 
 literal:
   | i = INT { Int i } 
@@ -39,13 +47,14 @@ literal:
 
 simple_expr: 
   | l = literal { LitExp l }
+  | LPAR; a = application; RPAR { a }
   | s = SYMBOL { VarExp s }
   | LPAR; e = simple_expr; RPAR { e }
 
 complex_expr:
-  | l = letexp; NEWLINE { l }
-  | a = application { a }
-  | s = simple_expr; NEWLINE { s }
-  | LPAR; e = complex_expr; RPAR { e }
+  | l = letexp; list(NEWLINE) { l }
+  | s = simple_expr; list(NEWLINE) { s }
+  | a = application; list(NEWLINE) { a }
+  | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }
 
 %%

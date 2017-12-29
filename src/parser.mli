@@ -1,6 +1,9 @@
 (** Thin wrapper around Menhir-generated parser, providing a saner interface. *)
 
 val ast_of_string : ?pos: Lexing.position -> string -> Ast.expr
+
+val prog_of_string : ?pos: Lexing.position -> string -> Ast.program
+
 val ast_of_file : string -> Ast.expr
 
 val pp_exceptions : unit -> unit

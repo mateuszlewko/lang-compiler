@@ -48,20 +48,25 @@ let fn a b =
   let s4 = 
 " 
 let fn a b =
-    fn a b
+    (fn2 a b)
+      a b
     bbbb
     aa
 
     3
     fn 2
       3
+
+let adder a b c =
+  adder a b
+
 " 
   in 
   (* let s2 = "(()" in *)
   (* let s3 = "( () () ) ) ()" in *)
   List.iter [s2; s3; s4] ~f:(fun s ->
     printf "\nTrying to parse \"%s\".\n" s;
-    printf "res: %s\n" (Parser.ast_of_string s |> show_expr);
+    printf "res: %s\n" (Parser.prog_of_string s |> show_program);
     printf "-> success!\n";
   );
   ()

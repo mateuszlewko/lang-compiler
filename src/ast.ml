@@ -8,10 +8,12 @@ type expr =
   | LitExp of literal
   | LetExp of string * string list * expr option * expr list option
   | AppExp of expr * expr list * expr list option
-  | Exps of expr list 
   | InfixOp of string * expr * expr    (* TODO: *)
   | IfExp of expr * expr * expr option (* TODO: *)
   [@@deriving show]
+
+type program = Prog of (expr list)
+[@@deriving show]
 
 type toplevel = 
   | Expr of expr
