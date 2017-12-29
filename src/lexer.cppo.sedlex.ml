@@ -115,6 +115,12 @@ and token state buf =
   | "elif"  -> [ELIF], state
   | "then"  -> [THEN], state
 
+  | "true" -> [BOOL true], state
+  | "false" -> [BOOL true], state
+
+  | '=' -> [EQ], state
+
+  | decnum -> [INT (ascii buf |> int_of_string)], state
   | id -> [SYMBOL (ascii buf)], state
 
   | any -> [KWD (ascii buf |> flip String.get 0 )], state

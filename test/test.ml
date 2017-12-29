@@ -1,5 +1,6 @@
 open Core
 open Ocaml_parsing
+open Ast
 
 let () = begin
   (* enable pretty error messages *)
@@ -20,11 +21,17 @@ let fn a b =
 
 
 let a = 4" in
+  
+  let s2 = 
+" 
+let fn a b = a
+" 
+  in 
   (* let s2 = "(()" in *)
   (* let s3 = "( () () ) ) ()" in *)
-  List.iter [s1 ] ~f:(fun s ->
+  List.iter [s2 ] ~f:(fun s ->
     printf "\nTrying to parse \"%s\".\n" s;
-    printf "res: %s\n" (Parser.ast_of_string s);
+    printf "res: %s\n" (Parser.ast_of_string s |> show_expr);
     printf "-> success!\n";
   );
   ()

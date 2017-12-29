@@ -3,7 +3,7 @@
 ;; generate menhir tokens
 (rule
  ((targets (tokens.ml))
-  (deps    (menhirParser.mly))
+  (deps    (grammar.mly))
   (action  (run ${bin:menhir} --trace --only-tokens ${<} --base tokens))))
 
 ;; generate lexer -- temporary hack while ppx_sedlex and 
@@ -23,7 +23,7 @@
 
 ;; generate parser
 (menhir
- ((modules (menhirParser))
+ ((modules (grammar))
   (flags (--external-tokens Lexer))))
 
 (library
