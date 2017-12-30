@@ -15,9 +15,9 @@ type expr =
 type program = Prog of (expr list)
 [@@deriving show]
 
-type toplevel = 
+(* type toplevel = 
   | Expr of expr
   | InfixSet    (* TODO: *)
   | ModuleDecl  (* TODO: *)
   | TypeDecl    (* TODO: *)
-  [@@deriving show]
+  [@@deriving show] *)

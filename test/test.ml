@@ -1,8 +1,8 @@
 open Core
-open Ocaml_parsing
+open Lang_compiler
 open Ast
 
-let () = begin
+let _ = begin
   (* enable pretty error messages *)
   Parser.pp_exceptions ();
   
@@ -33,7 +33,7 @@ let fn a b = a
   in 
 
   let s3 = 
-" 
+"   
 let fn a b =
     fn a b
     bbbb
@@ -62,6 +62,7 @@ let fn a b =
 let adder a b c =
   adder a b
 
+a + b + 2
 " 
   in 
   List.iter [s2; s3; s4] ~f:(fun s ->

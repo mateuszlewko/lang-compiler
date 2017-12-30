@@ -7,7 +7,7 @@
   (action  (run ${bin:menhir} --trace --only-tokens ${<} --base tokens))))
 
 ;; generate lexer -- temporary hack while ppx_sedlex and 
-;; ppx_import are incompatible with jbuilder!!
+;; ppx_import are incompatible with jbuilder
 (rule
  ((targets (lexer.sedlex.ml))
   (deps    (lexer.cppo.sedlex.ml tokens.ml))
@@ -27,7 +27,7 @@
   (flags (--trace --log-automaton 5 --log-grammar 5 --external-tokens Lexer))))
 
 (library
- ((name        lang_compiler)
+ ((name    lang_compiler)
   (wrapped true)
   (libraries 
     (core
@@ -37,7 +37,7 @@
      batteries
      ppx_deriving
      ppx_enumerate
-     ollvm)
+     llvm)
   )
   (virtual_deps (cppo ollvm menhir))
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))
