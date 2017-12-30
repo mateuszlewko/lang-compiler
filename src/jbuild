@@ -27,8 +27,7 @@
   (flags (--trace --log-automaton 5 --log-grammar 5 --external-tokens Lexer))))
 
 (library
- ((name        ocaml_parsing)
-  (public_name ocaml_parsing)
+ ((name        lang_compiler)
   (wrapped true)
   (libraries 
     (core
@@ -37,9 +36,20 @@
      menhirLib
      batteries
      ppx_deriving
-     ppx_enumerate)
+     ppx_enumerate
+     ollvm)
   )
-  (virtual_deps (cppo menhir))
+  (virtual_deps (cppo ollvm menhir))
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))
  )
 )
+
+(executable
+ ((name            compiler)
+  (libraries (core lang_compiler batteries))
+))
+
+(alias
+  ((name runcompiler)
+   (deps ((file compiler.exe)))
+))

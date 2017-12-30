@@ -2,7 +2,7 @@
 
 (executable
  ((name        test)
-  (libraries (core ocaml_parsing batteries))
+  (libraries (core lang_compiler batteries))
 ))
 
 ;; makes sure the executable is built and run in test mode
