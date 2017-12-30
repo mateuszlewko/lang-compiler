@@ -64,8 +64,6 @@ let adder a b c =
 
 " 
   in 
-  (* let s2 = "(()" in *)
-  (* let s3 = "( () () ) ) ()" in *)
   List.iter [s2; s3; s4] ~f:(fun s ->
     printf "\nTrying to parse \"%s\".\n" s;
     printf "res: %s\n" (Parser.prog_of_string s |> show_program);
