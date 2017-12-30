@@ -7,11 +7,13 @@ open Ast
 %token <int> INT 
 %token <bool> BOOL 
 %token <string> STRING 
+%token <string> OPERATOR 
 %token <char> KWD
 %token LET IF ELSE ELIF THEN MODULE
 %token LPAR RPAR
 %token EQ QUOTE COMMA COLON SEMICOL 
 %token INDENT DEDENT NEWLINE EOF
+/* %left OPERATOR */
 
 %start <Ast.expr> top_let
 %start <Ast.program> program
@@ -38,6 +40,17 @@ application:
     es2 = indented; option(NEWLINE)
     { AppExp (s, [], Some es2) }
 
+infix_op:
+  | l = simple_expr; o = OPERATOR; r = simple_expr
+    { InfixOp (o, Some l, Some r) }
+  /* | LPAR; i = infix_op; RPAR { i } */
+  /* | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE); 
+    es2 = option(indented); option(NEWLINE)
+    { AppExp (s, es1, es2) }
+  | s = simple_expr; NEWLINE; 
+    es2 = indented; option(NEWLINE)
+    { AppExp (s, [], Some es2) } */
+
 indented:
   INDENT; es = list(complex_expr); DEDENT { es }
 
@@ -47,13 +60,19 @@ literal:
 
 simple_expr: 
   | l = literal { LitExp l }
+  | i = infix_op { i }
   | LPAR; a = application; RPAR { a }
   | s = SYMBOL { VarExp s }
   | LPAR; e = simple_expr; RPAR { e }
 
+/* value_expr:
+  | a = application { a }
+  | s = simple_expr { s } */
+
 complex_expr:
   | l = letexp; list(NEWLINE) { l }
-  | s = simple_expr; list(NEWLINE) { s }
+  /* | i = infix_op; list(NEWLINE) { i } */
+  | s = simple_expr; nonempty_list(NEWLINE) { s }
   | a = application; list(NEWLINE) { a }
   | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }
 

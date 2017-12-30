@@ -8,7 +8,7 @@ type expr =
   | LitExp of literal
   | LetExp of string * string list * expr option * expr list option
   | AppExp of expr * expr list * expr list option
-  | InfixOp of string * expr * expr    (* TODO: *)
+  | InfixOp of string * expr option * expr option
   | IfExp of expr * expr * expr option (* TODO: *)
   [@@deriving show]
 

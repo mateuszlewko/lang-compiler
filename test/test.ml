@@ -53,6 +53,8 @@ let fn a b =
     bbbb
     aa
 
+    (a + b) + 2 - (7 + 5)
+
     3
     fn 2
       3

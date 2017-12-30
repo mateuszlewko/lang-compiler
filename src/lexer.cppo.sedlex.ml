@@ -51,6 +51,7 @@ let hexbyte = [%sedlex.regexp? hex,hex ]
 let blank = [%sedlex.regexp? ' ' | '\t' ]
 let space = [%sedlex.regexp? ' ' ]
 let newline = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
+let operator = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ] 
 
 type state = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
@@ -82,7 +83,6 @@ let rec indentation state buf =
 and garbage buf =
   match%sedlex buf with
   | Plus blank -> garbage buf
-  (* | eof        -> garbage buf *)
   | "(*"       -> comment 1 buf
   | _          -> ()
 
@@ -127,6 +127,8 @@ and token state buf =
   | ':' -> [COLON], state
   | ',' -> [COMMA], state
   | '=' -> [EQ], state
+
+  | operator -> [OPERATOR (ascii buf)], state
 
   | decnum -> [INT (ascii buf |> int_of_string)], state
   | id -> [SYMBOL (ascii buf)], state
