@@ -2,7 +2,7 @@
 
 (executable
  ((name        test)
-  (libraries (core lang_compiler batteries))
+  (libraries (core oUnit lang_compiler batteries))
 ))
 
 ;; makes sure the executable is built and run in test mode
