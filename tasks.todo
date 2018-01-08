@@ -1,5 +1,6 @@
 Parser:
     ❑ add types annotation:
+        ❑ ast
         ❑ lexe colon
         ❑ handle in grammar (type is either specified of integer)
 

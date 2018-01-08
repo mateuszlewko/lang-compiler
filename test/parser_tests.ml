@@ -5,11 +5,10 @@ open OUnit
 
 let tests = "parser" >:::
 [
-  (* --- test case --- *)
   "\n\tlet \n\tand same line var \n\tand vars or literals in next indented lines" >:: (fun () -> 
     let src = 
 "
-let fn a b = a
+let fn (a : string) b = a
   fn
   2
   a
@@ -17,21 +16,18 @@ let fn a b = a
 "   in 
     let prog = 
       (Ast.Prog
-        [(Ast.LetExp (
-          "fn", ["a"; "b"], 
+        [(Ast.LetExp (("fn", None), [("a", (Some "string")); ("b", None)],
             (Some (Ast.VarExp "a")),
             (Some [(Ast.VarExp "fn"); (Ast.LitExp (Ast.Int 2)); (Ast.VarExp "a")])
-          )
-         )
-        ]) 
+            ))
+        ])
     in assert_equal (Parser.prog_of_string src) prog
   );
 
-  (* --- test case --- *)
   "\n\tlet \n\tand vars or literals or applications in next indented lines" >:: (fun () -> 
     let src = 
-"
-let fn a b =
+"   
+let fn a (b : int) : string =
     fn a b
     bbbb
     aa
@@ -42,21 +38,20 @@ let fn a b =
 "   in 
     let prog = 
       (Ast.Prog
-        [(Ast.LetExp ("fn", ["a"; "b"], None,
+        [(Ast.LetExp (("fn", (Some "string")), [("a", None); ("b", (Some "int"))],
+            None,
             (Some [(Ast.AppExp ((Ast.VarExp "fn"),
                       [(Ast.VarExp "a"); (Ast.VarExp "b")], None));
                     (Ast.VarExp "bbbb"); (Ast.VarExp "aa");
                     (Ast.LitExp (Ast.Int 3));
                     (Ast.AppExp ((Ast.VarExp "fn"), [(Ast.LitExp (Ast.Int 2))],
                         None))
-                  ])
+                    ])
             ))
-        ])
- 
+          ]) 
     in assert_equal (Parser.prog_of_string src) prog
   );
 
-  (* --- test case --- *)
   "complex program (multiple lets with infix op and application)" >:: (fun () -> 
     let src = 
 " 
@@ -80,10 +75,10 @@ a + b + 2
     in 
     let prog = 
       (Ast.Prog
-        [(Ast.LetExp ("fn", ["a"; "b"], None,
+        [(Ast.LetExp (("fn", None), [("a", None); ("b", None)], None,
             (Some [(Ast.AppExp (
                       (Ast.AppExp ((Ast.VarExp "fn2"),
-                          [(Ast.VarExp "a"); (Ast.VarExp "b")], None)),
+                        [(Ast.VarExp "a"); (Ast.VarExp "b")], None)),
                       [],
                       (Some [(Ast.AppExp ((Ast.VarExp "a"), [(Ast.VarExp "b")],
                                 None))
@@ -91,30 +86,105 @@ a + b + 2
                       ));
                     (Ast.VarExp "bbbb"); (Ast.VarExp "aa");
                     (Ast.InfixOp ("-",
-                        (Some (Ast.InfixOp ("+",
+                      (Some (Ast.InfixOp ("+",
                                 (Some (Ast.InfixOp ("+", (Some (Ast.VarExp "a")),
-                                          (Some (Ast.VarExp "b"))))),
+                                        (Some (Ast.VarExp "b"))))),
                                 (Some (Ast.LitExp (Ast.Int 2)))))),
-                        (Some (Ast.InfixOp ("+", (Some (Ast.LitExp (Ast.Int 7))),
+                      (Some (Ast.InfixOp ("+", (Some (Ast.LitExp (Ast.Int 7))),
                                 (Some (Ast.LitExp (Ast.Int 5))))))
-                        ));
+                      ));
                     (Ast.LitExp (Ast.Int 3));
                     (Ast.AppExp ((Ast.VarExp "fn"), [(Ast.LitExp (Ast.Int 2))],
-                        (Some [(Ast.LitExp (Ast.Int 3))])))
+                      (Some [(Ast.LitExp (Ast.Int 3))])))
                     ])
             ));
-          (Ast.LetExp ("adder", ["a"; "b"; "c"], None,
-              (Some [(Ast.AppExp ((Ast.VarExp "adder"),
-                        [(Ast.VarExp "a"); (Ast.VarExp "b")], None))
-                      ])
-              ));
+          (Ast.LetExp (("adder", None), [("a", None); ("b", None); ("c", None)],
+            None,
+            (Some [(Ast.AppExp ((Ast.VarExp "adder"),
+                      [(Ast.VarExp "a"); (Ast.VarExp "b")], None))
+                    ])
+            ));
           (Ast.InfixOp ("+",
-              (Some (Ast.InfixOp ("+", (Some (Ast.VarExp "a")),
+            (Some (Ast.InfixOp ("+", (Some (Ast.VarExp "a")),
                       (Some (Ast.VarExp "b"))))),
-              (Some (Ast.LitExp (Ast.Int 2)))))
+            (Some (Ast.LitExp (Ast.Int 2)))))
           ])
-
- 
     in assert_equal (Parser.prog_of_string src) prog
   );
 ]
+
+(* open Core
+open Lang_compiler
+open Ast
+
+let _ = begin
+  (* enable pretty error messages *)
+  Parser.pp_exceptions ();
+  
+  printf "Tokens:\n";
+  (* List.iter Lexer.all_of_token ~f:(fun t ->
+    Lexer.show_token t
+    |> printf "  %s\n"); *)
+
+  let s1 = "
+let fn = a 
+
+let fn ((a)) b =
+  fn a
+  fn a b
+  b
+
+
+let a = 4
+" in
+  
+  let s2 = 
+"
+let fn (a : string) b = a
+  fn
+  2
+  a
+
+" 
+  in 
+
+  let s3 = 
+"   
+let fn a (b : int) : string =
+    fn a b
+    bbbb
+    aa
+    
+    3
+    fn 2
+
+" 
+  in 
+
+  let s4 = 
+" 
+let fn a b =
+    (fn2 a b)
+      a b
+    bbbb
+    aa
+
+    (a + b) + 2 - (7 + 5)
+
+    3
+    fn 2
+      3
+
+let adder a b c =
+  adder a b
+
+a + b + 2
+" 
+  in 
+  List.iter [s1; s2; s3; s4] ~f:(fun s ->
+    printf "\nTrying to parse \"%s\".\n" s;
+    printf "res: %s\n" (Parser.prog_of_string s |> show_program);
+    printf "-> success!\n";
+  );
+  ()
+end *)
