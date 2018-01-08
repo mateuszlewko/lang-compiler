@@ -2,6 +2,13 @@ open Core
 
 type literal = Int of int | String of string | Bool of bool
 [@@deriving show]
+                     (* type name   field     type *)
+type record_declaration = string * (string * string) list
+[@@deriving show]
+
+type type_declaration = 
+  | RecordType of record_declaration
+  [@@deriving show]
 
 type expr = 
   | VarExp of string
@@ -15,9 +22,7 @@ type expr =
 type program = Prog of (expr list)
 [@@deriving show]
 
-(* type toplevel = 
-  | Expr of expr
-  | InfixSet    (* TODO: *)
-  | ModuleDecl  (* TODO: *)
-  | TypeDecl    (* TODO: *)
-  [@@deriving show] *)
+type top_level = 
+  | Expr of expr 
+  | TypeDecl of type_declaration
+  [@@deriving show]
