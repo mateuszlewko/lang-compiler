@@ -1,0 +1,7 @@
+Parser:
+    ❑ add types annotation:
+        ❑ lexe colon
+        ❑ handle in grammar (type is either specified of integer)
+
+Codegen:
+    ❑ let-exp 
