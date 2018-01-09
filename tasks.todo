@@ -1,4 +1,11 @@
+Lexer: 
+    ✔ lex tokens @done
+    ✔ indentation sensitive @done
+    ✔ skip comments @done
+
 Parser:
+    ✔ ast @done
+    ✔ basic expressions parser (ast, program) @done
     ✔ add types annotation: @done(18-01-09 00:40)
         ✔ ast @done(18-01-09 00:40)
         ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)

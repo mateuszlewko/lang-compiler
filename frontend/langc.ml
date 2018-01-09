@@ -12,7 +12,7 @@ let _ =
 
   let src = 
 "
-let myfun a b = 
+let myfun a (b : bool) = 
   3
 "
   in 
