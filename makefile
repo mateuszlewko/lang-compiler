@@ -1,5 +1,11 @@
 INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
 
+langc:
+	jbuilder build @runlangc
+
+astprinter:
+	jbuilder build @run_ast_printer
+
 build:
 	jbuilder build @install
 
@@ -19,9 +25,6 @@ doc:
 
 test:
 	jbuilder build @runtest
-
-langc:
-	jbuilder build @runlangc
 
 all: build test doc
 

@@ -7,6 +7,7 @@ open Ast
 open Codegen
 
 let _ = 
+  print_newline (); 
   (* enable pretty error messages *)
   Parser.pp_exceptions ();
 

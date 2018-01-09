@@ -16,7 +16,7 @@ Parser:
     ❑ tuples
     ❑ algebraic types (unions / variants)
 
-    ❑ pretty-printer @critical 
+    ❑ ast pretty-printer @high  
 
 Codegen:
     ❑ let-exp @high 
