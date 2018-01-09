@@ -1,8 +1,19 @@
 Parser:
-    ❑ add types annotation:
-        ❑ ast
-        ❑ lexe colon
-        ❑ handle in grammar (type is either specified of integer)
+    ✔ add types annotation: @done(18-01-09 00:40)
+        ✔ ast @done(18-01-09 00:40)
+        ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)
+    ❑ handle infix operators of different priority
+    ❑ lists
+    ❑ arrays
+    ❑ record types
+    ❑ tuples
+    ❑ algebraic types (unions / variants)
+
+    ❑ pretty-printer @critical 
 
 Codegen:
-    ❑ let-exp 
+    ❑ let-exp @high 
+    ❑ application 
+    ❑ curried application
+    ❑ arithmetic operations (int) @high 
+    ❑ arithmetic operations (float)
