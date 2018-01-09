@@ -24,7 +24,8 @@
 ;; generate parser
 (menhir
  ((modules (grammar))
-  (flags (--trace --log-automaton 5 --log-grammar 5 --external-tokens Lexer))))
+;;; use for debugging:  --trace --log-automaton 5 --log-grammar 5
+  (flags ( --external-tokens Lexer))))
 
 (library
  ((name    lang_compiler)

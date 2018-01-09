@@ -57,7 +57,7 @@ type state = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
 
 let rec end_of_indent state = 
-  printf "level: %d, stack: %s\n" state.level (dump state.stack);
+  (* printf "level: %d, stack: %s\n" state.level (dump state.stack); *)
 
   if state.level > List.hd_exn state.stack
   then [INDENT], { state with stack = state.level::state.stack }
@@ -161,13 +161,13 @@ let parse buf p =
       last_token := t, p, q;
       last_state := state;
       
-      printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q);
+      (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
       flush_all ();
       !last_token 
     else 
       let [t], ts = List.split_n !pending_tokens 1 in 
       pending_tokens := ts;
-      printf "token B: %s\n" (show_token (fst3 t));
+      (* printf "token B: %s\n" (show_token (fst3 t)); *)
       flush_all ();
       t
   in

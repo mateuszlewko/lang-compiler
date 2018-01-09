@@ -19,14 +19,17 @@ let next_line () =
   with _ -> None 
 
 let rec interactive curr_string = 
-  let commit = Str.regexp_string ";;" in 
+  let commit = Str.regexp ".*;;" in 
 
   match next_line () with 
   | Some line when Str.string_match commit line 0 -> 
-      let src = curr_string ^ "\n" ^ line in 
+      let line = BatString.replace ~str:line ~sub:";;" ~by:"" |> snd in 
+      let src = curr_string ^ "\n" ^ line ^ "\n" in 
+      (* printf "src: %s" src; *)
+
       let (Prog prog) = Parser.prog_of_string src in 
       List.iter prog ~f:(show_expr %> printf "%s\n");
-      
+
       prompt ();
       interactive ""
   | Some line -> 
@@ -37,8 +40,9 @@ let _ =
   (* enable pretty error messages *)
   Parser.pp_exceptions ();
 
-  printf "--- Ast pretty printer ---\n\ 
-          NOTE: use double semicolon (;;) in order to commit code for parsing.\n";
+  printf "--- Ast pretty-printer ---
+NOTE: use double semicolon (;;) at and of line, in order to commit code for parsing.\n\n";
+
   prompt ();
   interactive ""
 
