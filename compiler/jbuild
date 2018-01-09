@@ -32,24 +32,23 @@
   (libraries 
     (core
      sedlex
-     compiler-libs.common
      menhirLib
      batteries
      ppx_deriving
      ppx_enumerate
      llvm)
   )
-  (virtual_deps (cppo ollvm menhir))
+  (virtual_deps (cppo menhir))
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))
  )
 )
 
-(executable
- ((name            compiler)
-  (libraries (core lang_compiler batteries))
-))
+;;; (executable
+;;;  ((name            compiler)
+;;;   (libraries (core lang_compiler batteries))
+;;; ))
 
-(alias
-  ((name runcompiler)
-   (deps ((file compiler.exe)))
-))
+;;; (alias
+;;;   ((name runcompiler)
+;;;    (deps ((file compiler.exe)))
+;;; ))

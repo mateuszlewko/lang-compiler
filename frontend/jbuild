@@ -1,0 +1,11 @@
+(jbuild_version 1)
+
+(executable
+ ((name langc)
+  (libraries (core batteries lang_compiler))
+))
+
+(alias
+  ((name runlangc)
+   (deps ((file langc.exe)))
+))

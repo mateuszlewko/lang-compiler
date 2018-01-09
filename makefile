@@ -20,8 +20,8 @@ doc:
 test:
 	jbuilder build @runtest
 
-compiler:
-	jbuilder build @runcompiler
+langc:
+	jbuilder build @runlangc
 
 all: build test doc
 
