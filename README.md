@@ -30,6 +30,13 @@ make test && ./_build/default/test/test.exe
 make printer && ./_build/default/printer/printer.exe
 ```
 
+## Project structure
+- `compiler/` - compiler library which contains: lexer, parser and codegen 
+- `compiler/gammar.mly` - grammar in [Menhir](http://gallium.inria.fr/~fpottier/menhir/) format
+- `compiler/lexer.cppo.sedlex.ml` - lexer 
+- `printer/` - pretty-printer 
+- `langc/` - compiler executable
+
 ## Currently done
 
 - Lexer and parser for simple programs (multiple `let` expression with function applications and arithmetic operations)
