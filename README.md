@@ -42,6 +42,9 @@ make printer && ./_build/default/printer/printer.exe
 - Lexer and parser for simple programs (multiple `let` expression with function applications and arithmetic operations)
 - Ast pretty printer
 
+## TODO
+Check [tasks.todo](https://github.com/mateuszlewko/lang-compiler/blob/master/tasks.todo) for a list of things needed to be done.
+
 ## Used libraries:
 
 - [ocaml-parsing](https://github.com/smolkaj/ocaml-parsing) - boilerplate code for parsing in OCaml
