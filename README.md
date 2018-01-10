@@ -1,4 +1,4 @@
-# *lang* Compiler
+# *Lang* compiler
 
 *Lang* is a functional programming language based on [Ocaml](https://ocaml.org/) and [F#](http://fsharp.org/). *Langc* is a compiler for this language (written in [Ocaml](https://ocaml.org/))
 
