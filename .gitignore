@@ -22,4 +22,4 @@ configure
 My_Tokens.*
 .vscode
 **/*.o
-out.ll
+a.out
