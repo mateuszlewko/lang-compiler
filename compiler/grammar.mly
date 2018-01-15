@@ -55,6 +55,14 @@ infix_op:
   | l = simple_expr; o = OPERATOR; r = simple_expr
     { InfixOp (o, Some l, Some r) }
 
+else_exp:
+  | ELSE; exp = simple_expr {exp}
+
+if_exp:
+  | IF; cond = simple_expr; option(NEWLINE); THEN; true_ex = simple_expr;
+    option(NEWLINE); else_ex = option(else_exp); option(NEWLINE)
+    { IfExp (cond, true_ex, else_ex) }
+
 indented:
   INDENT; es = list(complex_expr); DEDENT { es }
 
@@ -71,6 +79,7 @@ simple_expr:
 
 complex_expr:
   | l = letexp; list(NEWLINE) { l }
+  | e = if_exp; list(NEWLINE) { e }
   | s = simple_expr; nonempty_list(NEWLINE) { s }
   | a = application; list(NEWLINE) { a }
   | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }

@@ -25,7 +25,7 @@
 (menhir
  ((modules (grammar))
 ;;; use for debugging:  --trace --log-automaton 5 --log-grammar 5
-  (flags ( --external-tokens Lexer))))
+  (flags (--trace --log-automaton 5 --log-grammar 5 --external-tokens Lexer))))
 
 (library
  ((name    lang_compiler)

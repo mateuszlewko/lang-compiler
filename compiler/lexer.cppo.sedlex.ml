@@ -51,32 +51,32 @@ let hexbyte = [%sedlex.regexp? hex,hex ]
 let blank = [%sedlex.regexp? ' ' | '\t' ]
 let space = [%sedlex.regexp? ' ' ]
 let newline = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
-let operator = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ] 
+let operator = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ]
 
 type state = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
 
-let rec end_of_indent state = 
+let rec end_of_indent state =
   (* printf "level: %d, stack: %s\n" state.level (dump state.stack); *)
 
   if state.level > List.hd_exn state.stack
   then [INDENT], { state with stack = state.level::state.stack }
   else if state.level < List.hd_exn state.stack
-  then 
-    let rec dedents res = 
+  then
+    let rec dedents res =
       function
       | top::stack when top > state.level ->
-          dedents (DEDENT::res) stack 
+          dedents (DEDENT::res) stack
       | stack -> res, stack
-    in 
-    let deds, stack = dedents [] state.stack in 
+    in
+    let deds, stack = dedents [] state.stack in
     deds, { state with stack = stack }
   else [], state
 
-let rec indentation state buf = 
-  match%sedlex buf with 
-  | space   -> indentation { state with level = state.level + 1 } buf 
-  | newline -> indentation { state with level = 0 } buf 
+let rec indentation state buf =
+  match%sedlex buf with
+  | space   -> indentation { state with level = state.level + 1 } buf
+  | newline -> indentation { state with level = 0 } buf
   | _       -> end_of_indent state
 
 (* swallows whitespace and comments *)
@@ -88,10 +88,10 @@ and garbage buf =
 
 (* nested comments *)
 and comment depth buf =
-  if depth = 0 
-  then garbage buf 
+  if depth = 0
+  then garbage buf
   else match%sedlex buf with
-       | eof  -> failwith buf "Unterminated comment at EOF" 
+       | eof  -> failwith buf "Unterminated comment at EOF"
        | "(*" -> comment (depth + 1) buf
        | "*)" -> comment (depth - 1) buf
        | any  -> comment depth buf
@@ -103,17 +103,17 @@ and token state buf =
 
   match%sedlex buf with
   | eof -> [EOF], state
-  
+
   (* newline and indentation *)
   | newline ->
-    let toks, state = indentation { state with level = 0 } buf 
+    let toks, state = indentation { state with level = 0 } buf
     in NEWLINE::toks, state
-  
+
   (* parenths *)
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
 
-  | "let" -> [LET], state 
+  | "let" -> [LET], state
   | "if"  -> [IF], state
   | "else"  -> [ELSE], state
   | "elif"  -> [ELIF], state
@@ -152,20 +152,20 @@ let parse buf p =
   let last_token = ref Lexing.(NEWLINE, dummy_pos, dummy_pos) in
   let last_state = ref init_state in
 
-  let next_token () = 
-    if !pending_tokens = [] 
-    then 
+  let next_token () =
+    if !pending_tokens = []
+    then
       let state, (t::ts, p, q) = loc_token !last_state buf in
       pending_tokens := List.map ts ~f:(fun ti -> ti, p, q);
-      
+
       last_token := t, p, q;
       last_state := state;
-      
+
       (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
       flush_all ();
-      !last_token 
-    else 
-      let [t], ts = List.split_n !pending_tokens 1 in 
+      !last_token
+    else
+      let [t], ts = List.split_n !pending_tokens 1 in
       pending_tokens := ts;
       (* printf "token B: %s\n" (show_token (fst3 t)); *)
       flush_all ();
