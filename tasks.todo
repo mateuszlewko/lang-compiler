@@ -1,4 +1,4 @@
-Lexer: 
+Lexer:
     ✔ lex tokens @done
     ✔ indentation sensitive @done
     ✔ skip comments @done
@@ -9,8 +9,10 @@ Parser:
     ✔ add types annotation: @done(18-01-09 00:40)
         ✔ ast @done(18-01-09 00:40)
         ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)
+    ❑ if-then-else
     ❑ handle infix operators of different priority
     ❑ lists
+    ❑ extern
     ❑ arrays
     ❑ record types
     ❑ tuples
@@ -19,9 +21,11 @@ Parser:
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
 
 Codegen:
-    ❑ let-exp @high 
-    ❑ application 
+    ❑ let-exp @high
+    ❑ if-then-else
+    ❑ extern
+    ❑ application
     ❑ curried application
-    ❑ arithmetic operations (int) @high 
+    ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ❑ arithmetic operations (float)
-    
+

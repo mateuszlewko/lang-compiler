@@ -11,6 +11,14 @@ type environment = {
 
 let emptyEnv = { named_vals = StrMap.empty }
 
+(* Converts type annotation to lltype *)
+let annot_to_lltype =
+  function
+  | None | Some "int" -> i32_type
+  | Some "bool"       -> i1_type
+  | Some other        -> sprintf "Unsupported type annotation: %s" other
+                         |> failwith
+
 let gen_literal ctx =
   function
   | Int i  -> const_int (i32_type ctx) i
@@ -49,18 +57,13 @@ and gen_expr env ctx builder =
   | other      -> show_expr other |> sprintf "Unsupported expression: %s"
                   |> failwith
 
-let gen_exprs env ctx builder exprs =
-  gen_expr env ctx builder (List.last_exn exprs)
-
-(* Converts type annotation to lltype *)
-let annot_to_lltype =
+and gen_exprs env ctx builder =
   function
-  | None | Some "int" -> i32_type
-  | Some "bool"       -> i1_type
-  | Some other        -> sprintf "Unsupported type annotation: %s" other
-                         |> failwith
+  | [] -> failwith "Let body can't be empty"
+  | e::es -> let llval = gen_expr env ctx builder e in
+             List.fold es ~init:llval ~f:(fun _ -> gen_expr env ctx builder)
 
-let gen_letexp ctx curr_module ((name, ret_type), args, fst_line, body_lines) =
+and gen_letexp ctx curr_module ((name, ret_type), args, fst_line, body_lines) =
   let local = create_context () in
   let args = Array.of_list args in
   (* return type *)

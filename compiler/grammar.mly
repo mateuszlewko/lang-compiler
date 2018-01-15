@@ -4,15 +4,15 @@ open Ast
 %}
 
 %token <string> SYMBOL
-%token <int> INT 
-%token <bool> BOOL 
-%token <string> STRING 
-%token <string> OPERATOR 
+%token <int> INT
+%token <bool> BOOL
+%token <string> STRING
+%token <string> OPERATOR
 %token <char> KWD
-%token LET REC IF ELSE ELIF THEN MODULE TYPE 
+%token LET REC IF ELSE ELIF THEN MODULE TYPE
 %token PIPE FUNCTION MATCH WITH ARROW
-%token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY 
-%token EQ QUOTE COMMA COLON SEMICOL 
+%token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
+%token EQ QUOTE COMMA COLON SEMICOL
 %token INDENT DEDENT NEWLINE EOF
 %left OPERATOR
 
@@ -21,7 +21,7 @@ open Ast
 
 %%
 
-program: 
+program:
   option(NEWLINE); es = list(complex_expr); option(NEWLINE); EOF { Prog (es) }
 
 type_anot:
@@ -37,17 +37,17 @@ top_let:
   | NEWLINE; e = top_let { e }
   | e = letexp; option(NEWLINE) { e }
 
-letexp: 
+letexp:
   | LET; n = SYMBOL; vs = list(typed_var); rett = type_anot;
     EQ; e = option(simple_expr); NEWLINE;
     es = option(indented)
-    { LetExp ((n, rett), vs, e, es) } 
+    { LetExp ((n, rett), vs, e, es) }
 
 application:
-  | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE); 
+  | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE);
     es2 = option(indented); option(NEWLINE)
     { AppExp (s, es1, es2) }
-  | s = simple_expr; NEWLINE; 
+  | s = simple_expr; NEWLINE;
     es2 = indented; option(NEWLINE)
     { AppExp (s, [], Some es2) }
 
@@ -59,10 +59,10 @@ indented:
   INDENT; es = list(complex_expr); DEDENT { es }
 
 literal:
-  | i = INT { Int i } 
+  | i = INT { Int i }
   | b = BOOL { Bool b }
 
-simple_expr: 
+simple_expr:
   | l = literal { LitExp l }
   | i = infix_op { i }
   | LPAR; a = application; RPAR { a }
