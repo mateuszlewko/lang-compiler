@@ -37,6 +37,7 @@ let rec gen_infix_op env ctx builder op lhs rhs =
       | "-" -> build_sub lhs_val rhs_val "subtmp" builder
       | "*" -> build_mul lhs_val rhs_val "multmp" builder
       | "/" -> build_sdiv lhs_val rhs_val "divtmp" builder
+      | "=" -> build_icmp Icmp.Eq lhs_val rhs_val "eqcmp" builder
       | other -> sprintf "Unsupported operator: %s" other |> failwith
     end
   | _, _ ->
@@ -49,8 +50,43 @@ and gen_var env ctx var_name =
                 |> failwith
 
 and gen_if env ctx builder cond then_exp else_exp =
-  (* TODO *)
-  gen_literal ctx (Int 42)
+  (* TODO: Handle if without else_exp *)
+  let (Some else_exp) = else_exp in
+  (* let ll_false = const_int (i1_type ctx) 0 in *)
+  let cond_val = gen_expr env ctx builder cond in
+  let start_bb = insertion_block builder in
+  let the_function = block_parent start_bb in
+  let then_bb = append_block ctx "then" the_function in
+
+  (* Emit 'then' value. *)
+  position_at_end then_bb builder;
+  let then_val = gen_expr env ctx builder then_exp in
+  let new_then_bb = insertion_block builder in
+
+  let else_bb = append_block ctx "else" the_function in
+  position_at_end else_bb builder;
+
+  let else_val = gen_expr env ctx builder else_exp in
+
+  let new_else_bb = insertion_block builder in
+  let merge_bb = append_block ctx "ifcont" the_function in
+  position_at_end merge_bb builder;
+
+  let incoming = [(then_val, new_then_bb); (else_val, new_else_bb)] in
+  let phi = build_phi incoming "iftmp" builder in
+
+  (* Return to the start block to add the conditional branch. *)
+  position_at_end start_bb builder;
+  ignore (build_cond_br cond_val then_bb else_bb builder);
+
+  (* Set a unconditional branch at the end of the 'then' block and the
+    * 'else' block to the 'merge' block. *)
+  position_at_end new_then_bb builder; ignore (build_br merge_bb builder);
+  position_at_end new_else_bb builder; ignore (build_br merge_bb builder);
+
+  (* Finally, set the builder to the end of the merge block. *)
+  position_at_end merge_bb builder;
+  phi
 
 and gen_expr env ctx builder =
   function

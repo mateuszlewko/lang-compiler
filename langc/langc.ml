@@ -13,11 +13,8 @@ let _ =
 
   let src =
 "
-let adder a b = (a + b) * (4 + 4)
-  a + b
-  a + b / 2
-  3 + 3
-  if a + b = 3
+let adder a b =
+  if (a + b) = 3
   then 100
   else 50
 "

@@ -11,6 +11,7 @@ Parser:
         ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)
     ✔ if-then-else @done(18-01-15 02:45)
     ❑ modules
+    ❑ let rec
     ❑ handle infix operators of different priority
     ❑ lists
     ❑ extern
@@ -28,14 +29,19 @@ Parser:
 
 Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
-    ❑ if-then-else
-    ❑ extern
-    ❑ application
-    ❑ main / entry point
-    ❑ modules
-    ❑ curried application
+    ✔ if-then-else @done(18-01-15 21:21)
+    ❑ if-then (no else) @high @today
+    ❑ extern @high @today
+    ❑ application @high
+    ❑ main / entry point @high
+    ❑ entire program generation (single file) @high
+    ❑ source code compiler @medium
+    ❑ modules @medium
+    ❑ curried application @medium
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
-    ❑ arithmetic operations (float)
-    ❑ improve error handling
-    ❑ multi-file programs
+    ❑ arithmetic operations (float) @high
+    ❑ improve error handling @medium
+    ❑ multi-file programs @medium
 
+Syntactic check:
+    ❑ types @high
