@@ -28,4 +28,5 @@ Codegen:
     ❑ curried application
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ❑ arithmetic operations (float)
+    ❑ improve error handling
 
