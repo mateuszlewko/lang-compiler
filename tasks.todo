@@ -21,7 +21,7 @@ Parser:
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
 
 Codegen:
-    ❑ let-exp @high
+    ✔ let-exp @high @done(18-01-15 01:08)
     ❑ if-then-else
     ❑ extern
     ❑ application
