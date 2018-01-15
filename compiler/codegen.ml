@@ -48,14 +48,19 @@ and gen_var env ctx var_name =
     | None   -> sprintf "Unbound variable %s" var_name
                 |> failwith
 
+and gen_if env ctx builder cond then_exp else_exp =
+  (* TODO *)
+  gen_literal ctx (Int 42)
+
 and gen_expr env ctx builder =
   function
-  | LitExp lit -> gen_literal ctx lit
-  | InfixOp (op, lhs, rhs) ->
-    gen_infix_op env ctx builder op lhs rhs
-  | VarExp var_name -> gen_var env ctx var_name
-  | other      -> show_expr other |> sprintf "Unsupported expression: %s"
-                  |> failwith
+  | LitExp lit             -> gen_literal ctx lit
+  | InfixOp (op, lhs, rhs) -> gen_infix_op env ctx builder op lhs rhs
+  | IfExp (cond, then_exp, else_exp) ->
+    gen_if env ctx builder cond then_exp else_exp
+  | VarExp var_name        -> gen_var env ctx var_name
+
+  | other -> show_expr other |> sprintf "Unsupported expression: %s" |> failwith
 
 and gen_exprs env ctx builder =
   function

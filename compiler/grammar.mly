@@ -54,6 +54,8 @@ application:
 infix_op:
   | l = simple_expr; o = OPERATOR; r = simple_expr
     { InfixOp (o, Some l, Some r) }
+  | l = simple_expr; EQ; r = simple_expr
+    { InfixOp ("=", Some l, Some r) }
 
 else_exp:
   | ELSE; exp = simple_expr {exp}

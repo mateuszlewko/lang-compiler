@@ -17,6 +17,9 @@ let adder a b = (a + b) * (4 + 4)
   a + b
   a + b / 2
   3 + 3
+  if a + b = 3
+  then 100
+  else 50
 "
   in
   let (Prog prog) = Parser.prog_of_string src in

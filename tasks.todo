@@ -9,13 +9,19 @@ Parser:
     ✔ add types annotation: @done(18-01-09 00:40)
         ✔ ast @done(18-01-09 00:40)
         ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)
-    ❑ if-then-else
+    ✔ if-then-else @done(18-01-15 02:45)
+    ❑ modules
     ❑ handle infix operators of different priority
     ❑ lists
     ❑ extern
     ❑ arrays
     ❑ record types
     ❑ tuples
+    ❑ lambda fun
+    ❑ mutable var
+    ❑ tuples pattern matching
+    ❑ match (...) with (...)
+    ❑ function (pattern matching)
     ❑ algebraic types (unions / variants)
 
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
@@ -25,8 +31,11 @@ Codegen:
     ❑ if-then-else
     ❑ extern
     ❑ application
+    ❑ main / entry point
+    ❑ modules
     ❑ curried application
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ❑ arithmetic operations (float)
     ❑ improve error handling
+    ❑ multi-file programs
 
