@@ -16,6 +16,7 @@ let annot_to_lltype =
   function
   | None | Some "int" -> i32_type
   | Some "bool"       -> i1_type
+  | Some "()"         -> void_type
   | Some other        -> sprintf "Unsupported type annotation: %s" other
                          |> failwith
 

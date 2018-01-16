@@ -10,7 +10,7 @@ open Ast
 %token <string> OPERATOR
 %token <char> KWD
 %token LET REC IF ELSE ELIF THEN MODULE TYPE
-%token PIPE FUNCTION MATCH WITH ARROW
+%token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token EQ QUOTE COMMA COLON SEMICOL
 %token INDENT DEDENT NEWLINE EOF
@@ -26,6 +26,7 @@ program:
 
 type_anot:
   | { None }
+  | COLON; UNIT { Some "()" }
   | COLON; t = SYMBOL { Some t }
 
 typed_var:

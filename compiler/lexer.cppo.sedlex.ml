@@ -110,6 +110,7 @@ and token state buf =
     in NEWLINE::toks, state
 
   (* parenths *)
+  | "()" -> [UNIT], state
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
 
