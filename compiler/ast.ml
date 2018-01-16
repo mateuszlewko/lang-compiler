@@ -10,8 +10,11 @@ type type_declaration =
   | RecordType of record_declaration
   [@@deriving show]
 
+  (* type t1 -> t2 -> ... -> tn is represented as list [t1; t2; ...; tn] *)
+type type_annot = string list
+[@@deriving show]
 (* Type is either Some type, or none which means it's integer *)
-type typed_var = string * string option
+type typed_var = string * type_annot option
 [@@deriving show]
 
 type expr =

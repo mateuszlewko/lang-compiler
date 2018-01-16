@@ -24,22 +24,24 @@ open Ast
 program:
   option(NEWLINE); es = list(complex_expr); option(NEWLINE); EOF { Prog (es) }
 
+single_type_anot:
+  | UNIT { "()" }
+  | t = SYMBOL { t }
+
 type_anot:
-  | { None }
-  | COLON; UNIT { Some "()" }
-  | COLON; t = SYMBOL { Some t }
+  | COLON; t = separated_list(ARROW, single_type_anot) { t }
 
 typed_var:
-  | LPAR; s = SYMBOL; COLON; t = SYMBOL; RPAR { s, Some t }
-  | s = SYMBOL; t = type_anot { s, t }
-  | LPAR; t = typed_var; RPAR { t }
+  | LPAR; s = SYMBOL; t = option(type_anot); RPAR { s, t }
+  | s = SYMBOL; { s, None }
+  /* | LPAR; t = option(typed_var); RPAR { t } */
 
 top_let:
   | NEWLINE; e = top_let { e }
   | e = letexp; option(NEWLINE) { e }
 
 letexp:
-  | LET; n = SYMBOL; vs = list(typed_var); rett = type_anot;
+  | LET; n = SYMBOL; vs = list(typed_var); rett = option(type_anot);
     EQ; e = option(simple_expr); NEWLINE;
     es = option(indented)
     { LetExp ((n, rett), vs, e, es) }

@@ -12,13 +12,19 @@ type environment = {
 let emptyEnv = { named_vals = StrMap.empty }
 
 (* Converts type annotation to lltype *)
-let annot_to_lltype =
+let annot_to_lltype ctx =
+  let single_type =
+    function
+    | "int"  -> i32_type ctx
+    | "bool" -> i1_type ctx
+    | "()"   -> void_type ctx
+    | other  -> sprintf "Unsupported type annotation: %s" other |> failwith
+  in
   function
-  | None | Some "int" -> i32_type
-  | Some "bool"       -> i1_type
-  | Some "()"         -> void_type
-  | Some other        -> sprintf "Unsupported type annotation: %s" other
-                         |> failwith
+  | None     -> i1_type ctx
+  | Some [t] -> single_type t
+  | Some ts  -> let ret = List.last_exn ts |> single_type in
+                function_type ret (Array.of_list_map ts ~f:single_type)
 
 let gen_literal ctx =
   function
@@ -33,13 +39,15 @@ let rec gen_infix_op env ctx builder op lhs rhs =
     let lhs_val = gen_expr env ctx builder lhs in
     let rhs_val = gen_expr env ctx builder rhs in
     begin
-      match op with
-      | "+" -> build_add lhs_val rhs_val "addtmp" builder
-      | "-" -> build_sub lhs_val rhs_val "subtmp" builder
-      | "*" -> build_mul lhs_val rhs_val "multmp" builder
-      | "/" -> build_sdiv lhs_val rhs_val "divtmp" builder
-      | "=" -> build_icmp Icmp.Eq lhs_val rhs_val "eqcmp" builder
-      | other -> sprintf "Unsupported operator: %s" other |> failwith
+      let build_fn, name =
+        match op with
+        | "+" -> build_add, "addtmp"
+        | "-" -> build_sub, "subtmp"
+        | "*" -> build_mul, "multmp"
+        | "/" -> build_sdiv, "divtmp"
+        | "=" -> build_icmp Icmp.Eq, "eqcmp"
+        | other -> sprintf "Unsupported operator: %s" other |> failwith
+      in build_fn lhs_val rhs_val name builder
     end
   | _, _ ->
     failwith "Operator is missing operands"
@@ -109,10 +117,10 @@ and gen_letexp ctx curr_module ((name, ret_type), args, fst_line, body_lines) =
   let local = create_context () in
   let args = Array.of_list args in
   (* return type *)
-  let ret = (annot_to_lltype ret_type) ctx in
+  let ret = annot_to_lltype ctx ret_type in
   (* create argument types *)
   let arg_types =
-    Array.map args (snd %> annot_to_lltype %> (|>) local) in
+    Array.map args (snd %> annot_to_lltype local) in
   let ftype = function_type ret arg_types in
   let fn = declare_function name ftype curr_module in
   (* name arguments for later use in let scope *)

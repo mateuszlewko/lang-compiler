@@ -123,11 +123,12 @@ and token state buf =
   | "true" -> [BOOL true], state
   | "false" -> [BOOL true], state
 
-  | '"' -> [QUOTE], state
-  | ';' -> [SEMICOL], state
-  | ':' -> [COLON], state
-  | ',' -> [COMMA], state
-  | '=' -> [EQ], state
+  | '"'  -> [QUOTE], state
+  | "->" -> [ARROW], state
+  | ';'  -> [SEMICOL], state
+  | ':'  -> [COLON], state
+  | ','  -> [COMMA], state
+  | '='  -> [EQ], state
 
   | operator -> [OPERATOR (ascii buf)], state
 

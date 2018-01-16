@@ -13,7 +13,7 @@ let _ =
 
   let src =
 "
-let adder a b =
+let adder (a : int) b : int =
   if (a + b) = 3
   then 100
   else 50
