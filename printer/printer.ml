@@ -14,8 +14,7 @@ let line_stream_of_channel channel =
   Stream.from (fun _ -> try Some (input_line channel) with End_of_file -> None)
 
 let next_line () =
-  try
-    Some (input_line stdin)
+  try Some (input_line stdin)
   with _ -> None
 
 let rec interactive curr_string =

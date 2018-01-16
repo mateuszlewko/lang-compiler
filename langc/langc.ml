@@ -20,7 +20,7 @@ let adder (a : int) b : int =
 "
   in
   let (Prog prog) = Parser.prog_of_string src in
-  let ast = List.nth_exn prog 0 in
+  let (Expr ast) = List.nth_exn prog 0 in
   printf "Ast:\n%s\n" (show_expr ast);
 
   printf "--- start ll ---\n";

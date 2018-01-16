@@ -26,10 +26,11 @@ type expr =
   | IfExp of expr * expr * expr option
   [@@deriving show]
 
-type program = Prog of (expr list)
-[@@deriving show]
-
 type top_level =
   | Expr of expr
+  | Extern of string * type_annot
   | TypeDecl of type_declaration
   [@@deriving show]
+
+type program = Prog of top_level list
+[@@deriving show]

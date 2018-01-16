@@ -14,6 +14,7 @@ open Ast
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token EQ QUOTE COMMA COLON SEMICOL
 %token INDENT DEDENT NEWLINE EOF
+%token EXTERNAL
 %left OPERATOR
 
 %start <Ast.expr> top_let
@@ -22,7 +23,7 @@ open Ast
 %%
 
 program:
-  option(NEWLINE); es = list(complex_expr); option(NEWLINE); EOF { Prog (es) }
+  option(NEWLINE); es = list(top_expr); option(NEWLINE); EOF { Prog (es) }
 
 single_type_anot:
   | UNIT { "()" }
@@ -88,5 +89,12 @@ complex_expr:
   | s = simple_expr; nonempty_list(NEWLINE) { s }
   | a = application; list(NEWLINE) { a }
   | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }
+
+external_expr:
+  | EXTERNAL; s = SYMBOL; t = type_anot { Extern (s, t) }
+
+top_expr:
+ | e = complex_expr { Expr e }
+ | e = external_expr { e }
 
 %%

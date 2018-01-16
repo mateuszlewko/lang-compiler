@@ -123,6 +123,8 @@ and token state buf =
   | "true" -> [BOOL true], state
   | "false" -> [BOOL true], state
 
+  | "external" -> [EXTERNAL], state
+
   | '"'  -> [QUOTE], state
   | "->" -> [ARROW], state
   | ';'  -> [SEMICOL], state
