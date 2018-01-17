@@ -1,6 +1,6 @@
 open Core
 
-type literal = Int of int | String of string | Bool of bool
+type literal = Int of int | String of string | Bool of bool | Unit
 [@@deriving show]
                      (* type name   field     type *)
 type record_declaration = string * (string * string) list

@@ -109,8 +109,8 @@ and token state buf =
     let toks, state = indentation { state with level = 0 } buf
     in NEWLINE::toks, state
 
-  (* parenths *)
   | "()" -> [UNIT], state
+
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
 

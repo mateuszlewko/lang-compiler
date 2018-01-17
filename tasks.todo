@@ -31,9 +31,12 @@ Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
     ✔ if-then-else @done(18-01-15 21:21)
     ❑ if-then (no else) @high @today
-    ❑ extern @high @today
+    ✔ extern @high @today @done(18-01-16 22:16)
     ❑ application @high
     ❑ main / entry point @high
+    ❑ let rec @high
+    ❑ currying @high
+    ❑ tail call
     ❑ entire program generation (single file) @high
     ❑ source code compiler @medium
     ❑ modules @medium

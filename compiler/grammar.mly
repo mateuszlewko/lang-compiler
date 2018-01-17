@@ -33,6 +33,7 @@ type_anot:
   | COLON; t = separated_list(ARROW, single_type_anot) { t }
 
 typed_var:
+  | s = UNIT; { "()", Some ["()"]  }
   | LPAR; s = SYMBOL; t = option(type_anot); RPAR { s, t }
   | s = SYMBOL; { s, None }
   /* | LPAR; t = option(typed_var); RPAR { t } */
@@ -73,6 +74,7 @@ indented:
   INDENT; es = list(complex_expr); DEDENT { es }
 
 literal:
+  | UNIT { Unit }
   | i = INT { Int i }
   | b = BOOL { Bool b }
 
@@ -86,12 +88,12 @@ simple_expr:
 complex_expr:
   | l = letexp; list(NEWLINE) { l }
   | e = if_exp; list(NEWLINE) { e }
-  | s = simple_expr; nonempty_list(NEWLINE) { s }
   | a = application; list(NEWLINE) { a }
+  | s = simple_expr; nonempty_list(NEWLINE) { s }
   | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }
 
 external_expr:
-  | EXTERNAL; s = SYMBOL; t = type_anot { Extern (s, t) }
+  | EXTERNAL; s = SYMBOL; t = type_anot; nonempty_list(NEWLINE) { Extern (s, t) }
 
 top_expr:
  | e = complex_expr { Expr e }
