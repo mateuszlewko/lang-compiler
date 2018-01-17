@@ -151,7 +151,8 @@ and gen_letexp env (name, ret_type) args fst_line body_lines =
 
   let ftype = function_type ret arg_types in
   let fn = declare_function name ftype env.llmod in
-  (* printf "decl func %s\n LL: %s" name (string_of_llmodule env.llmod); *)
+  (* printf "declw func %s\n " name; *)
+   (* (string_of_llmodule env.llmod); *)
 
   (* name arguments for later use in let's scope *)
   let inner_env =

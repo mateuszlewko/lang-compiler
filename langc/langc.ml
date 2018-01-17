@@ -39,8 +39,8 @@ let adder (a : int) b : int =
 let id x = x
 
 let fn2 a b =
-  let adder x y = x + y
-  adder a b
+  let adder2 x y = x + y
+  adder2 a b
 
 let main () : int =
   ll_print_line ()
@@ -64,7 +64,8 @@ let main () : int =
   flush_all (); *)
 
   (* printf "--- start ll ---\n"; *)
-  let ll = gen_prog prog |> snd in
-  List.iter ll ~f:(string_of_llvalue %> printf "%s\n");
+  let env, llval = gen_prog prog in
+  string_of_llmodule env.llmod |> printf "%s\n";
+  (* List.iter ll ~f:(string_of_llvalue %> printf "%s\n"); *)
   flush_all ();
   (* printf "\n--- end ll ---\n"; *)
