@@ -37,9 +37,7 @@ let main () : int =
   ll_print_line ()
   add 20 20 + 2
 
-  ll_putint ((id 5) + 5)
-
-  ll_putint ((sub 20 20) + (sub 20 20))
+  ll_putint ((sub 40 20) + (sub 21 20))
 
   (* ll_print_line ()*)
   0

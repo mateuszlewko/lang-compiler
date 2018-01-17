@@ -62,10 +62,10 @@ let rec gen_infix_op env ctx builder op lhs rhs =
     let lhs_val = gen_expr env ctx builder lhs |> fst in
     let rhs_val = gen_expr env ctx builder rhs |> fst in
     begin
-      if is_constant lhs_val || is_constant rhs_val
-         && (not (is_constant lhs_val && is_constant rhs_val))
-      then set_value_name "lhs" lhs_val;
-           set_value_name "rhs" rhs_val;
+(*
+      if is_constant lhs_val
+      then build_add (const_int (i32_type ctx 0)) lhs_val "" builder;
+           set_value_name "rhs" rhs_val; *)
       let build_fn, name =
         match op with
         | "+" -> build_add, "add_tmp"
