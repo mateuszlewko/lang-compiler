@@ -37,8 +37,9 @@ Codegen:
     ✔ main / entry point @high @done(18-01-17 03:59)
     ❑ let rec @high
     ❑ currying @high
+    ❑ type checking @high
     ❑ tail call
-    ❑ entire program generation (single file) @high
+    ✔ entire program generation (single file) @high @done(18-01-17 11:39)
     ❑ source code compiler @medium
     ❑ modules @medium
     ❑ curried application @medium

@@ -44,7 +44,7 @@ top_let:
 
 letexp:
   | LET; n = SYMBOL; vs = list(typed_var); rett = option(type_anot);
-    EQ; e = option(simple_expr); NEWLINE;
+    EQ; e = option(simple_expr); nonempty_list(NEWLINE);
     es = option(indented)
     { LetExp ((n, rett), vs, e, es) }
 
