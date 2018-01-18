@@ -45,7 +45,7 @@ let fn2 a b =
 let rec power a n =
   if n = 0
   then 1
-  else a * n
+  else a * (power a (n - 1))
 
 let main () : int =
   ll_print_line ()
@@ -80,8 +80,26 @@ let main () : int =
   then (ll_putint 1) *)
 
   0
+" in
+  let src =
+"
+
+external ll_putint : int -> ()
+external ll_print_line : () -> ()
+
+let rec power a n =
+  if n = 0
+  then 1
+  else a * (power a (n - 1))
+
+let main () : int =
+  ll_putint(power 3 200000)
+  ll_print_line ()
+
+  0
 "
   in
+
   let (Prog prog) = Parser.prog_of_string src in
   (* printf "Ast:\n%s\n" (show_program (Prog prog));
   flush_all (); *)

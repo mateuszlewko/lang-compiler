@@ -115,6 +115,7 @@ and token state buf =
   | ')' -> [RPAR], state
 
   | "let" -> [LET], state
+  | "rec" -> [REC], state
   | "if"  -> [IF], state
   | "else"  -> [ELSE], state
   | "elif"  -> [ELIF], state

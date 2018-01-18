@@ -173,8 +173,6 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
 
   let ftype = function_type ret arg_types in
   let fn = declare_function name ftype env.llmod in
-  (* printf "declw func %s\n " name; *)
-   (* (string_of_llmodule env.llmod); *)
 
   (* name arguments for later use in let's scope *)
   let inner_env =
@@ -183,7 +181,12 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
         let name = fst args.(i) in
         set_value_name name arg;
         { env with named_vals = StrMap.set env.named_vals ~key:name ~data:arg }
-      ) in
+      )
+    |> fun env ->
+        if is_rec then
+          {env with named_vals = StrMap.set env.named_vals ~key:name ~data:fn }
+        else env
+  in
 
   let bb = append_block env.ctx "entry" fn in
 
@@ -223,15 +226,26 @@ and gen_exprs env let_block =
 
 and gen_application env callee line_args rest_of_args =
   let args = line_args @ Option.value rest_of_args ~default:[] in
+  (* print_endline "in1"; *)
   let args_val =
     Array.of_list_map args ~f:(gen_expr env %> fst)
     |> skip_void_vals in
 
+  (* print_endline "in2"; *)
   let callee_val = gen_expr env callee |> fst in
-  let ret_type_kind = callee_val |> type_of |> return_type
-                      |> return_type |> classify_type in
+  (* printf "callee val: %s\n" (string_of_llvalue callee_val); *)
+  (* print_endline "in3"; *)
+  let ret_type_kind = callee_val |> type_of |> return_type |> return_type
+                      |> classify_type in
+  (* print_endline "in4"; *)
   let name = if ret_type_kind = TypeKind.Void
              then "" else "call_tmp" in
+  (* print_endline "in5"; *)
+  (* Array.iter args_val (string_of_llvalue %> printf "arg: %s\n"); *)
+  (* Env.print env; *)
+  (* printf "callee type: %s\n" (string_of_lltype (type_of callee_val)); *)
+  (* flush_all (); *)
+  (* callee_val *)
   build_call callee_val args_val name env.builder
 
 and gen_expr env =

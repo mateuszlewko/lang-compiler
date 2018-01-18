@@ -50,5 +50,12 @@ Codegen:
     ❑ improved error handling @medium
     ❑ multi-file programs @medium
 
+Bugs:
+    ❑ functions with same name should overwrite
+    ❑ if-then-elif-else should accept complex expression and indented expressions
+
 Syntactic check:
     ❑ types @high
+
+Other:
+    ❑ interpreter @optional
