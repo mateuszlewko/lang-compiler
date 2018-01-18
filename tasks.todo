@@ -36,7 +36,7 @@ Codegen:
     ✔ extern @high @today @done(18-01-16 22:16)
     ✔ application @high @done(18-01-17 03:59)
     ✔ main / entry point @high @done(18-01-17 03:59)
-    ❑ let rec @high
+    ✔ let rec @high @done(18-01-18 21:15)
     ❑ first-class functions
     ❑ currying @high
     ❑ type checking @high
@@ -51,7 +51,7 @@ Codegen:
     ❑ multi-file programs @medium
 
 Bugs:
-    ❑ functions with same name should overwrite
+    ❑ functions with same name should overwrite previous declarations
     ❑ if-then-elif-else should accept complex expression and indented expressions
 
 Syntactic check:
