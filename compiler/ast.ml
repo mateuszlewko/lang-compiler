@@ -23,7 +23,8 @@ type expr =
   | LetExp of typed_var * typed_var list * expr option * expr list option
   | AppExp of expr * expr list * expr list option
   | InfixOp of string * expr option * expr option
-  | IfExp of expr * expr * expr option
+          (* cond   then    elif elif-then      else *)
+  | IfExp of expr * expr * (expr * expr) list * expr option
   [@@deriving show]
 
 type top_level =

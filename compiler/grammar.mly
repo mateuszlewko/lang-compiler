@@ -65,10 +65,14 @@ infix_op:
 else_exp:
   | ELSE; exp = simple_expr {exp}
 
+elif_exp:
+  | ELIF; cond = simple_expr; THEN true_ex = simple_expr; option(NEWLINE)
+    { cond, true_ex }
+
 if_exp:
-  | IF; cond = simple_expr; option(NEWLINE); THEN; true_ex = simple_expr;
-    option(NEWLINE); else_ex = option(else_exp); option(NEWLINE)
-    { IfExp (cond, true_ex, else_ex) }
+  | IF; cond = simple_expr; list(NEWLINE); THEN; true_ex = simple_expr;
+    option(NEWLINE); elif_exps = list(elif_exp); else_ex = option(else_exp);
+    option(NEWLINE) { IfExp (cond, true_ex, elif_exps, else_ex) }
 
 indented:
   INDENT; es = list(complex_expr); DEDENT { es }

@@ -88,7 +88,7 @@ and gen_var env var_name =
     | None   -> sprintf "Unbound variable %s" var_name
                 |> failwith
 
-and gen_if env cond then_exp else_exp =
+and gen_if env cond then_exp elif_exps else_exp =
   let cond_val = gen_expr env cond |> fst in
   let start_bb = insertion_block env.builder in
   let parent   = block_parent start_bb in
@@ -236,8 +236,8 @@ and gen_expr env =
     gen_application env callee args rest_of_args, env
   | InfixOp (op, lhs, rhs)  -> gen_infix_op env op lhs rhs, env
 
-  | IfExp (cond, then_exp, else_exp) ->
-    gen_if env cond then_exp else_exp, env
+  | IfExp (cond, then_exp, elif_exps, else_exp) ->
+    gen_if env cond then_exp elif_exps else_exp, env
   | VarExp var_name -> gen_var env var_name, env
 
   (* | other -> show_expr other |> sprintf "Unsupported expression: %s" |> failwith *)
