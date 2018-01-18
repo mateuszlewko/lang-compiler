@@ -158,7 +158,7 @@ and gen_simple_if env cond then_exp else_exp =
     position_at_end merge_bb env.builder;
     undef (void_type env.ctx)
 
-and gen_letexp env (name, ret_type) args fst_line body_lines =
+and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   (* let local = create_context () in *)
   let args = Array.of_list args in
 
@@ -239,8 +239,8 @@ and gen_expr env =
   Env.print env;
   flush_all (); *)
   function
-  | LetExp (e1, e2, e3, e4) ->
-    gen_letexp env e1 e2 e3 e4
+  | LetExp (is_rec, e1, e2, e3, e4) ->
+    gen_letexp env is_rec e1 e2 e3 e4
   | LitExp lit              -> gen_literal env.ctx lit, env
   | AppExp (callee, args, rest_of_args) ->
     gen_application env callee args rest_of_args, env

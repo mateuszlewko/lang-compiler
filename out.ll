@@ -71,6 +71,23 @@ entry:
   ret i32 %add_tmp
 }
 
+define i32 @rec(i32 %power, i32 %a, i32 %n) {
+entry:
+  %eq_cmp = icmp eq i32 %n, 0
+  br i1 %eq_cmp, label %then, label %else
+
+then:                                             ; preds = %entry
+  br label %if_cont
+
+else:                                             ; preds = %entry
+  %mul_tmp = mul i32 %a, %n
+  br label %if_cont
+
+if_cont:                                          ; preds = %else, %then
+  %if_result = phi i32 [ 1, %then ], [ %mul_tmp, %else ]
+  ret i32 %if_result
+}
+
 define i32 @main() {
 entry:
   call void @ll_print_line()

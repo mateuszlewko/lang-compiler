@@ -42,6 +42,11 @@ let fn2 a b =
   let adder2 x y = x + y
   adder2 a b
 
+let rec power a n =
+  if n = 0
+  then 1
+  else a * n
+
 let main () : int =
   ll_print_line ()
 

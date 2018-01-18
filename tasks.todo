@@ -11,7 +11,7 @@ Parser:
         ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40)
     ✔ if-then-else @done(18-01-15 02:45)
     ✔ if-then-elif @high @today @done(18-01-18 18:31)
-    ❑ let rec
+    ✔ let rec @done(18-01-18 19:55)
     ❑ modules
     ❑ handle infix operators of different priority
     ❑ lists
@@ -32,7 +32,7 @@ Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
     ✔ if-then-else @done(18-01-15 21:21)
     ✔ if-then (no else) @high @today @done(18-01-18 03:32)
-    ❑ if-then-elif @high @today
+    ✔ if-then-elif @high @today @done(18-01-18 19:35)
     ✔ extern @high @today @done(18-01-16 22:16)
     ✔ application @high @done(18-01-17 03:59)
     ✔ main / entry point @high @done(18-01-17 03:59)
