@@ -10,7 +10,7 @@ type type_declaration =
   | RecordType of record_declaration
   [@@deriving show]
 
-  (* type t1 -> t2 -> ... -> tn is represented as list [t1; t2; ...; tn] *)
+  (* type t1 -> t2 -> ... -> tn is represented as a list [t1; t2; ...; tn] *)
 type type_annot = string list
 [@@deriving show]
 (* Type is either Some type, or none which means it's integer *)
@@ -20,7 +20,7 @@ type typed_var = string * type_annot option
 type expr =
   | VarExp of string
   | LitExp of literal
-  | LetExp of typed_var * typed_var list * expr option * expr list option
+  | LetExp of bool * typed_var * typed_var list * expr option * expr list option
   | AppExp of expr * expr list * expr list option
   | InfixOp of string * expr option * expr option
           (* cond   then    elif elif-then      else *)

@@ -43,10 +43,10 @@ top_let:
   | e = letexp; option(NEWLINE) { e }
 
 letexp:
-  | LET; n = SYMBOL; vs = list(typed_var); rett = option(type_anot);
-    EQ; e = option(simple_expr); nonempty_list(NEWLINE);
-    es = option(indented)
-    { LetExp ((n, rett), vs, e, es) }
+  | LET; is_rec = boption(REC); n = SYMBOL; vs = list(typed_var);
+    rett = option(type_anot); EQ; e = option(simple_expr);
+    nonempty_list(NEWLINE); es = option(indented)
+    { LetExp (is_rec, (n, rett), vs, e, es) }
 
 application:
   | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE);
