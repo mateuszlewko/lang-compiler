@@ -54,23 +54,25 @@ let main () : int =
   ll_putint (adder 5 5)
   ll_print_line ()
 
-  (* let res a =
+  let res a : () =
     if (2 + 2) = (id 3)
-    then 1
+    then (ll_putint 1)
     elif (3 + 3) = (id 6)
-    then 2
+    then (ll_putint 2)
     elif (2 + 2) = (id 4)
-    then 3 *)
+    then (ll_putint 3)
 
-  (* ll_putint (res 0)
-  ll_print_line () *)
+  res 5
 
-  if (2 + 2) = 4
+  (* ll_putint (res 0) *)
+  ll_print_line ()
+
+  (* if (2 + 2) = 4
   then (lettest 0 0)
   else (lettest 1 1)
 
   if (2 + 2) = 4
-  then (ll_putint 1)
+  then (ll_putint 1) *)
 
   0
 "

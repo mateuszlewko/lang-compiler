@@ -83,25 +83,46 @@ entry:
   %call_tmp2 = call i32 @adder(i32 5, i32 5)
   call void @ll_putint(i32 %call_tmp2)
   call void @ll_print_line()
-  br i1 true, label %then, label %else
+  call void @res(i32 5)
+  call void @ll_print_line()
+  ret i32 0
+}
+
+define void @res(i32 %a) {
+entry:
+  %call_tmp = call i32 @id(i32 3)
+  %eq_cmp = icmp eq i32 4, %call_tmp
+  br i1 %eq_cmp, label %then, label %else
 
 then:                                             ; preds = %entry
-  %call_tmp3 = call i32 @lettest(i32 0, i32 0)
-  br label %if_cont
+  call void @ll_putint(i32 1)
+  br label %if_cont9
 
 else:                                             ; preds = %entry
-  %call_tmp4 = call i32 @lettest(i32 1, i32 1)
+  %call_tmp1 = call i32 @id(i32 6)
+  %eq_cmp2 = icmp eq i32 6, %call_tmp1
+  br i1 %eq_cmp2, label %then3, label %else4
+
+then3:                                            ; preds = %else
+  call void @ll_putint(i32 2)
+  br label %if_cont8
+
+else4:                                            ; preds = %else
+  %call_tmp5 = call i32 @id(i32 4)
+  %eq_cmp6 = icmp eq i32 4, %call_tmp5
+  br i1 %eq_cmp6, label %then7, label %if_cont
+
+then7:                                            ; preds = %else4
+  call void @ll_putint(i32 3)
   br label %if_cont
 
-if_cont:                                          ; preds = %else, %then
-  %if_result = phi i32 [ %call_tmp3, %then ], [ %call_tmp4, %else ]
-  br i1 true, label %then5, label %if_cont6
+if_cont:                                          ; preds = %then7, %else4
+  br label %if_cont8
 
-then5:                                            ; preds = %if_cont
-  call void @ll_putint(i32 1)
-  br label %if_cont6
+if_cont8:                                         ; preds = %if_cont, %then3
+  br label %if_cont9
 
-if_cont6:                                         ; preds = %then5, %if_cont
-  ret i32 0
+if_cont9:                                         ; preds = %if_cont8, %then
+  ret void
 }
 

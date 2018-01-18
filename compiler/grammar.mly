@@ -66,8 +66,8 @@ else_exp:
   | ELSE; exp = simple_expr {exp}
 
 elif_exp:
-  | ELIF; cond = simple_expr; THEN true_ex = simple_expr; option(NEWLINE)
-    { cond, true_ex }
+  | ELIF; cond = simple_expr; list(NEWLINE); THEN; true_ex = simple_expr;
+    option(NEWLINE) { cond, true_ex }
 
 if_exp:
   | IF; cond = simple_expr; list(NEWLINE); THEN; true_ex = simple_expr;

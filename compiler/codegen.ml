@@ -30,6 +30,8 @@ end
 let skip_void_vals =
   Array.filter ~f:(type_of %> classify_type %> (<>) TypeKind.Void)
 
+let kind_of = type_of %> classify_type
+
 (* Converts type annotation to lltype *)
 let annot_to_lltype ctx =
   let single_type =
@@ -88,7 +90,15 @@ and gen_var env var_name =
     | None   -> sprintf "Unbound variable %s" var_name
                 |> failwith
 
-and gen_if env cond then_exp elif_exps else_exp =
+and gen_if_with_elif env cond then_exp elif_exps else_exp =
+  let rec nest_elif_exps =
+    function
+    | [] -> else_exp
+    | (cond_exp, then_exp)::els ->
+      Some (IfExp (cond_exp, then_exp, [], nest_elif_exps els))
+  in gen_simple_if env cond then_exp (nest_elif_exps elif_exps)
+
+and gen_simple_if env cond then_exp else_exp =
   let cond_val = gen_expr env cond |> fst in
   let start_bb = insertion_block env.builder in
   let parent   = block_parent start_bb in
@@ -103,7 +113,7 @@ and gen_if env cond then_exp elif_exps else_exp =
   in
 
   let then_val, then_bb, new_then_bb = emit_branch "then" then_exp in
-  let res_is_void = then_val |> type_of |> classify_type = TypeKind.Void in
+  let res_is_void = kind_of then_val = TypeKind.Void in
 
   match else_exp with
   | Some else_exp ->
@@ -191,7 +201,7 @@ and gen_letexp env (name, ret_type) args fst_line body_lines =
   } in
 
   (* generate body and return function definition *)
-  (if ret_val |> type_of |> classify_type = TypeKind.Void
+  (if kind_of ret_val = TypeKind.Void
    then build_ret_void inner_env.builder
    else build_ret ret_val inner_env.builder)
   |> ignore;
@@ -237,7 +247,7 @@ and gen_expr env =
   | InfixOp (op, lhs, rhs)  -> gen_infix_op env op lhs rhs, env
 
   | IfExp (cond, then_exp, elif_exps, else_exp) ->
-    gen_if env cond then_exp elif_exps else_exp, env
+    gen_if_with_elif env cond then_exp elif_exps else_exp, env
   | VarExp var_name -> gen_var env var_name, env
 
   (* | other -> show_expr other |> sprintf "Unsupported expression: %s" |> failwith *)
