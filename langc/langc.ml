@@ -18,6 +18,7 @@ external ll_print_line : () -> ()
 
 let lettest a b =
   ll_putint (10 + 20)
+  ll_print_line ()
   let inner_adder a b =
     a + b
   inner_adder 10 10
@@ -45,7 +46,8 @@ let fn2 a b =
 let main () : int =
   ll_print_line ()
 
-  (* ll_putint(lettest 100 99) *)
+  ll_putint(lettest 100 99)
+  ll_print_line ()
 
   ll_putint (fn2 1 2)
   ll_print_line ()

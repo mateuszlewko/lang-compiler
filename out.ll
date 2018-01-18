@@ -9,6 +9,7 @@ declare void @ll_print_line()
 define i32 @lettest(i32 %a, i32 %b) {
 Entry:
   call void @ll_putint(i32 30)
+  call void @ll_print_line()
   %call_tmp = call i32 @inner_adder(i32 10, i32 10)
   ret i32 %call_tmp
 }
@@ -73,8 +74,11 @@ Entry:
 define i32 @main() {
 Entry:
   call void @ll_print_line()
-  %call_tmp = call i32 @fn2(i32 1, i32 2)
+  %call_tmp = call i32 @lettest(i32 100, i32 99)
   call void @ll_putint(i32 %call_tmp)
+  call void @ll_print_line()
+  %call_tmp1 = call i32 @fn2(i32 1, i32 2)
+  call void @ll_putint(i32 %call_tmp1)
   call void @ll_print_line()
   ret i32 0
 }
