@@ -102,17 +102,23 @@ and gen_if env cond then_exp else_exp =
     llval, bb, new_bb
   in
 
-  let (Some else_exp) = else_exp in
   let then_val, then_bb, new_then_bb = emit_branch "then" then_exp in
-  let else_val, else_bb, new_else_bb = emit_branch "else" else_exp in
-  let merge_bb = append_block env.ctx "if_cont" parent in
+  let res_is_void = then_val |> type_of |> classify_type = TypeKind.Void in
 
-  if then_val |> type_of |> classify_type <> TypeKind.Void
-  then (
-    position_at_end merge_bb env.builder;
+  match else_exp with
+  | Some else_exp ->
+    let else_val, else_bb, new_else_bb = emit_branch "else" else_exp in
+    let merge_bb = append_block env.ctx "if_cont" parent in
 
-    let incoming = [then_val, new_then_bb; else_val, new_else_bb] in
-    let phi = build_phi incoming "if_result" env.builder in
+    let result =
+      if not res_is_void
+      then (
+        position_at_end merge_bb env.builder;
+        let incoming = [then_val, new_then_bb; else_val, new_else_bb] in
+        build_phi incoming "if_result" env.builder
+      )
+      else undef (void_type env.ctx)
+    in
 
     (* Return to the start block to add the conditional branch. *)
     position_at_end start_bb env.builder;
@@ -127,21 +133,20 @@ and gen_if env cond then_exp else_exp =
 
     (* Finally, set the builder to the end of the merge block. *)
     position_at_end merge_bb env.builder;
-    phi
-  )
-  else (
+    result
+  | None when not res_is_void ->
+    failwith "If expression needs an else branch or must return unit."
+  | None ->
+    let merge_bb = append_block env.ctx "if_cont" parent in
+
     position_at_end start_bb env.builder;
-    ignore (build_cond_br cond_val then_bb else_bb env.builder);
+    ignore (build_cond_br cond_val then_bb merge_bb env.builder);
 
     position_at_end new_then_bb env.builder;
     ignore (build_br merge_bb env.builder);
-    position_at_end new_else_bb env.builder;
-    ignore (build_br merge_bb env.builder);
 
-    (* Finally, set the builder to the end of the merge block. *)
     position_at_end merge_bb env.builder;
     undef (void_type env.ctx)
-  )
 
 and gen_letexp env (name, ret_type) args fst_line body_lines =
   (* let local = create_context () in *)

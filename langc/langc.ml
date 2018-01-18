@@ -60,7 +60,6 @@ let main () : int =
 
   if (2 + 2) = 4
   then (ll_putint 1)
-  else (ll_putint 0)
 
   0
 "

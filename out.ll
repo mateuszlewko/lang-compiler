@@ -95,17 +95,13 @@ else:                                             ; preds = %entry
 
 if_cont:                                          ; preds = %else, %then
   %if_result = phi i32 [ %call_tmp3, %then ], [ %call_tmp4, %else ]
-  br i1 true, label %then5, label %else6
+  br i1 true, label %then5, label %if_cont6
 
 then5:                                            ; preds = %if_cont
   call void @ll_putint(i32 1)
-  br label %if_cont7
+  br label %if_cont6
 
-else6:                                            ; preds = %if_cont
-  call void @ll_putint(i32 0)
-  br label %if_cont7
-
-if_cont7:                                         ; preds = %else6, %then5
+if_cont6:                                         ; preds = %then5, %if_cont
   ret i32 0
 }
 
