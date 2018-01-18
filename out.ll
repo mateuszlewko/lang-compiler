@@ -26,7 +26,7 @@ if_cont:                                          ; preds = %else, %then
 
 define i32 @main() {
 entry:
-  %call_tmp = call i32 @power(i32 3, i32 200000)
+  %call_tmp = call i32 @power(i32 3, i32 4)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
   ret i32 0

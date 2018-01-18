@@ -186,9 +186,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
         if is_rec then
           {env with named_vals = StrMap.set env.named_vals ~key:name ~data:fn }
         else env
-  in
-
-  let bb = append_block env.ctx "entry" fn in
+  in let bb = append_block env.ctx "entry" fn in
 
   (* params *)
   let inner_env = { inner_env with builder = Llvm.builder_at_end env.ctx bb } in
@@ -199,59 +197,36 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let ret_val = gen_exprs inner_env fn body_exprs |> fst in
 
   (* env extended with new binding to generated let *)
-  let env_with_let = { env with
-    named_vals = StrMap.set env.named_vals ~key:name ~data:fn
-  } in
+  let env_with_let =
+    { env with named_vals = StrMap.set env.named_vals name fn } in
 
   (* generate body and return function definition *)
   (if kind_of ret_val = TypeKind.Void
    then build_ret_void inner_env.builder
    else build_ret ret_val inner_env.builder)
   |> ignore;
-  (* printf "env after let\n";
-  Env.print env_with_let; *)
+
   fn, env_with_let
 
 and gen_exprs env let_block =
   function
   | []    -> failwith "Let body can't be empty"
-  | e::es ->
-             (* block_parent let_block |> string_of_llvalue |> printf "parent block: %s\n"; *)
-             (* position_at_end (let_block |> block_of_value) env.builder; *)
-             let llval, env = gen_expr env e in
-             List.fold es ~init:(llval, env)
-                             ~f:(fun (_, env) ->
-                                  (* position_at_end let_block env.builder; *)
-                                  gen_expr env)
+  | e::es -> let llval, env = gen_expr env e in
+             List.fold es ~init:(llval, env) ~f:(fun (_, env) -> gen_expr env)
 
 and gen_application env callee line_args rest_of_args =
   let args = line_args @ Option.value rest_of_args ~default:[] in
-  (* print_endline "in1"; *)
-  let args_val =
-    Array.of_list_map args ~f:(gen_expr env %> fst)
-    |> skip_void_vals in
+  let args_val = Array.of_list_map args ~f:(gen_expr env %> fst)
+                 |> skip_void_vals in
 
-  (* print_endline "in2"; *)
   let callee_val = gen_expr env callee |> fst in
-  (* printf "callee val: %s\n" (string_of_llvalue callee_val); *)
-  (* print_endline "in3"; *)
   let ret_type_kind = callee_val |> type_of |> return_type |> return_type
                       |> classify_type in
-  (* print_endline "in4"; *)
   let name = if ret_type_kind = TypeKind.Void
              then "" else "call_tmp" in
-  (* print_endline "in5"; *)
-  (* Array.iter args_val (string_of_llvalue %> printf "arg: %s\n"); *)
-  (* Env.print env; *)
-  (* printf "callee type: %s\n" (string_of_lltype (type_of callee_val)); *)
-  (* flush_all (); *)
-  (* callee_val *)
   build_call callee_val args_val name env.builder
 
 and gen_expr env =
-  (* printf "env:\n";
-  Env.print env;
-  flush_all (); *)
   function
   | LetExp (is_rec, e1, e2, e3, e4) ->
     gen_letexp env is_rec e1 e2 e3 e4
@@ -263,9 +238,6 @@ and gen_expr env =
   | IfExp (cond, then_exp, elif_exps, else_exp) ->
     gen_if_with_elif env cond then_exp elif_exps else_exp, env
   | VarExp var_name -> gen_var env var_name, env
-
-  (* | other -> show_expr other |> sprintf "Unsupported expression: %s" |> failwith *)
-
 
 and gen_extern env name tp =
   let ftype = annot_to_lltype env.ctx (Some tp) in
@@ -286,7 +258,4 @@ let gen_prog top_level_exprs =
   let swap (x, y) = y, x in
 
   List.fold_map top_level_exprs ~init:env
-    ~f:(fun env ->
-      (* printf "curr env:\n";
-      Env.print env; *)
-      gen_top_level env %> swap)
+                                   ~f:(fun env -> gen_top_level env %> swap)

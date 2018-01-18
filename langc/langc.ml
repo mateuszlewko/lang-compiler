@@ -93,7 +93,7 @@ let rec power a n =
   else a * (power a (n - 1))
 
 let main () : int =
-  ll_putint(power 3 200000)
+  ll_putint(power 3 4)
   ll_print_line ()
 
   0
