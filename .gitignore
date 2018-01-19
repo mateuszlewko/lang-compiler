@@ -23,3 +23,6 @@ My_Tokens.*
 .vscode
 **/*.o
 a.out
+**/*.s
+**/*.cmi
+**/*.cmo

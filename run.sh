@@ -1,0 +1,1 @@
+ make langc -B && ./_build/default/langc/langc.exe >! out.ll && llc out.ll -relocation-model=pic -O2 && gcc out.s external.c -O2 -o a.out && ./a.out
