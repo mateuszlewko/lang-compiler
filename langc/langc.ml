@@ -86,18 +86,6 @@ let main () : int =
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
 
-(* module Mod1 =
-  let someFun x = 5
-
-  let someFun2 x y =
-    x * x + y * y
-
-  module Test =
-    let this = 0
-
-open Mod1
-open Mod1.Test *)
-
 let apply (fn : int -> int) arg =
   fn arg
 
@@ -109,10 +97,21 @@ let rec power a n =
   then 1
   else a * (power a (n - 1))
 
+let fib n =
+  let rec aux n a b =
+    if n = 0
+    then b
+    else (aux (n-1) b (a+b))
+
+  aux n 0 1
+
 let app2 (fn : int -> int -> int) arg1 arg2 =
   fn arg1 arg2
 
 let main () : int =
+
+  ll_putint(fib 35)
+  ll_print_line ()
 
   ll_putint (apply mult2 6)
   ll_print_line ()

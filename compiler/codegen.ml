@@ -20,7 +20,6 @@ struct
       ctx        = ctx;
       builder    = builder ctx;
       llmod      = create_module ctx module_name }
-
   let print env =
     printf "Env:\n";
     StrMap.iter_keys env.named_vals ~f:(printf "+ %s\n");
@@ -225,9 +224,9 @@ and gen_application env callee line_args rest_of_args =
 
   let callee_val = gen_expr env callee |> fst in
   (* string_of_llvalue callee_val |> printf "callee val: %s\n";
-  string_of_lltype (type_of callee_val) |> printf "callee type: %s\n"; *)
+  string_of_lltype (type_of callee_val) |> printf "callee type: %s\n";
   (* printf "module:\n %s\n" (string_of_llmodule env.llmod); *)
-  (* flush_all (); *)
+  flush_all (); *)
   let ret_type_kind = callee_val |> type_of |> return_type |> return_type
                       |> classify_type in
   let name = if ret_type_kind = TypeKind.Void
@@ -240,11 +239,10 @@ and gen_expr env =
   function
   | LetExp (is_rec, e1, e2, e3, e4) ->
     gen_letexp env is_rec e1 e2 e3 e4
-  | LitExp lit              -> gen_literal env.ctx lit, env
+  | LitExp lit -> gen_literal env.ctx lit, env
   | AppExp (callee, args, rest_of_args) ->
     gen_application env callee args rest_of_args, env
-  | InfixOp (op, lhs, rhs)  -> gen_infix_op env op lhs rhs, env
-
+  | InfixOp (op, lhs, rhs) -> gen_infix_op env op lhs rhs, env
   | IfExp (cond, then_exp, elif_exps, else_exp) ->
     gen_if_with_elif env cond then_exp elif_exps else_exp, env
   | VarExp var_name -> gen_var env var_name, env

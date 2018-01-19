@@ -14,6 +14,7 @@ Parser:
     ✔ let rec @done(18-01-18 19:55)
     ✔ modules & open @done(18-01-19 03:29)
     ✔ extern @done(18-01-16 02:48)
+    ❑ complex expression in if
     ❑ lists
     ❑ arrays
     ❑ lambda fun
@@ -38,6 +39,8 @@ Codegen:
     ✔ let rec @high @done(18-01-18 21:15)
     ✔ first-class functions @done(18-01-19 02:11)
     ❑ modules & open @medium
+    ❑ operators: <=, >=, <>
+    ❑ type bool & char
     ❑ currying @high
     ❑ type checking @high
     ❑ tail call
