@@ -227,7 +227,7 @@ and gen_application env callee line_args rest_of_args =
   (* string_of_llvalue callee_val |> printf "callee val: %s\n";
   string_of_lltype (type_of callee_val) |> printf "callee type: %s\n"; *)
   (* printf "module:\n %s\n" (string_of_llmodule env.llmod); *)
-  flush_all ();
+  (* flush_all (); *)
   let ret_type_kind = callee_val |> type_of |> return_type |> return_type
                       |> classify_type in
   let name = if ret_type_kind = TypeKind.Void

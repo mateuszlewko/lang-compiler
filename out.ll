@@ -1,11 +1,9 @@
 ; ModuleID = 'main'
 source_filename = "main"
 
-; declare void @ll_putint(i32)
+declare void @ll_putint(i32)
 
-; declare void @ll_print_line()
-
-@.str = private unnamed_addr constant [3 x i8] c"%d\00", align 1
+declare void @ll_print_line()
 
 define i32 @apply(i32 (i32)* %fn, i32 %arg) {
 entry:
@@ -19,26 +17,33 @@ entry:
   ret i32 %mul_tmp
 }
 
+define i32 @power(i32 %a, i32 %n) {
+entry:
+  %eq_cmp = icmp eq i32 %n, 0
+  br i1 %eq_cmp, label %then, label %else
+
+then:                                             ; preds = %entry
+  br label %if_cont
+
+else:                                             ; preds = %entry
+  %sub_tmp = sub i32 %n, 1
+  %call_tmp = call i32 @power(i32 %a, i32 %sub_tmp)
+  %mul_tmp = mul i32 %a, %call_tmp
+  br label %if_cont
+
+if_cont:                                          ; preds = %else, %then
+  %if_result = phi i32 [ 1, %then ], [ %mul_tmp, %else ]
+  ret i32 %if_result
+}
+
 define i32 @main() {
 entry:
   %call_tmp = call i32 @apply(i32 (i32)* @mult2, i32 6)
-  ; call void @ll_putint(i32 %call_tmp)
-  ; call void @ll_print_line()
-  call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([3 x i8], [3 x i8]* @.str, i32 0, i32 0), i32 %call_tmp)
-
+  call void @ll_putint(i32 %call_tmp)
+  call void @ll_print_line()
+  %call_tmp1 = call i32 @power(i32 3, i32 4)
+  call void @ll_putint(i32 %call_tmp1)
+  call void @ll_print_line()
   ret i32 0
 }
 
-
-declare i32 @printf(i8*, ...) #1
-
-attributes #0 = { noinline nounwind optnone sspstrong uwtable "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-jump-tables"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-attributes #1 = { "correctly-rounded-divide-sqrt-fp-math"="false" "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "no-signed-zeros-fp-math"="false" "no-trapping-math"="false" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+fxsr,+mmx,+sse,+sse2,+x87" "unsafe-fp-math"="false" "use-soft-float"="false" }
-
-!llvm.module.flags = !{!0, !1, !2}
-!llvm.ident = !{!3}
-
-!0 = !{i32 1, !"wchar_size", i32 4}
-!1 = !{i32 7, !"PIC Level", i32 2}
-!2 = !{i32 7, !"PIE Level", i32 2}
-!3 = !{!"clang version 5.0.1 (tags/RELEASE_501/final)"}
