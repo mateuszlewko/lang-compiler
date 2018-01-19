@@ -33,7 +33,7 @@ let skip_void_vals =
 let kind_of = type_of %> classify_type
 
 (* Converts type annotation to lltype *)
-let annot_to_lltype ctx =
+let annot_to_lltype ctx ?func_as_ptr:(func_as_ptr=false) =
   let single_type =
     function
     | "int"  -> i32_type ctx
@@ -50,7 +50,10 @@ let annot_to_lltype ctx =
   | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
                 let ts = List.filter ts ((<>) "()") in
                 let ret = single_type (List.hd_exn last_t) in
-                function_type ret (Array.of_list_map ts ~f:single_type)
+                let ft = function_type ret (Array.of_list_map ts ~f:single_type)
+                in if func_as_ptr
+                   then pointer_type ft
+                   else ft
 
 let gen_literal ctx =
   function
@@ -169,7 +172,8 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let args = Array.filter args ~f:(snd %> (<>) (Some ["()"])) in
 
   (* create types for args *)
-  let arg_types = Array.map args ~f:(snd %> annot_to_lltype env.ctx) in
+  let arg_types =
+    Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
   let ftype = function_type ret arg_types in
   let fn = declare_function name ftype env.llmod in
@@ -220,10 +224,16 @@ and gen_application env callee line_args rest_of_args =
                  |> skip_void_vals in
 
   let callee_val = gen_expr env callee |> fst in
+  (* string_of_llvalue callee_val |> printf "callee val: %s\n";
+  string_of_lltype (type_of callee_val) |> printf "callee type: %s\n"; *)
+  (* printf "module:\n %s\n" (string_of_llmodule env.llmod); *)
+  flush_all ();
   let ret_type_kind = callee_val |> type_of |> return_type |> return_type
                       |> classify_type in
   let name = if ret_type_kind = TypeKind.Void
              then "" else "call_tmp" in
+  (* if kind_of callee_val = TypeKind.Pointer
+  then printf "is ptr\n"; *)
   build_call callee_val args_val name env.builder
 
 and gen_expr env =

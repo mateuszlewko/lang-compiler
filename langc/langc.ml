@@ -87,15 +87,24 @@ let main () : int =
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
 
+let apply (fn : int -> int) arg =
+  fn arg
+
+let mult2 x =
+  x * 2
+(*
 let rec power a n =
   if n = 0
   then 1
-  else a * (power a (n - 1))
+  else a * (power a (n - 1)) *)
 
 let main () : int =
-  ll_putint(power 3 4)
+
+  ll_putint (apply mult2 6)
   ll_print_line ()
 
+  (* ll_putint(power 3 4)
+  ll_print_line () *)
   0
 "
   in
