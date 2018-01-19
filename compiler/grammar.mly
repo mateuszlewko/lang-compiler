@@ -9,7 +9,7 @@ open Ast
 %token <string> STRING
 %token <string> OPERATOR
 %token <char> KWD
-%token LET REC IF ELSE ELIF THEN MODULE TYPE
+%token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token EQ QUOTE COMMA COLON SEMICOL
@@ -37,6 +37,13 @@ typed_var:
   | LPAR; s = SYMBOL; t = option(type_anot); RPAR { s, t }
   | s = SYMBOL; { s, None }
   /* | LPAR; t = option(typed_var); RPAR { t } */
+
+module_exp:
+  | MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr*; DEDENT
+    { Module (s, es) }
+
+open_exp:
+  | OPEN; s = SYMBOL; NEWLINE+ { Open s }
 
 top_let:
   | NEWLINE; e = top_let { e }
@@ -75,7 +82,7 @@ if_exp:
     option(NEWLINE) { IfExp (cond, true_ex, elif_exps, else_ex) }
 
 indented:
-  INDENT; es = list(complex_expr); DEDENT { es }
+  INDENT; es = complex_expr*; DEDENT { es }
 
 literal:
   | UNIT { Unit }
@@ -90,16 +97,18 @@ simple_expr:
   | LPAR; e = simple_expr; RPAR { e }
 
 complex_expr:
-  | l = letexp; list(NEWLINE) { l }
-  | e = if_exp; list(NEWLINE) { e }
-  | a = application; list(NEWLINE) { a }
-  | s = simple_expr; nonempty_list(NEWLINE) { s }
-  | LPAR; e = complex_expr; RPAR; list(NEWLINE) { e }
+  | l = letexp; NEWLINE* { l }
+  | e = if_exp; NEWLINE* { e }
+  | a = application; NEWLINE* { a }
+  | s = simple_expr; NEWLINE+ { s }
+  | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
 
 external_expr:
-  | EXTERNAL; s = SYMBOL; t = type_anot; nonempty_list(NEWLINE) { Extern (s, t) }
+  | EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
 
 top_expr:
+ | m = module_exp { m }
+ | o = open_exp { o }
  | e = complex_expr { Expr e }
  | e = external_expr { e }
 

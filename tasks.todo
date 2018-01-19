@@ -12,15 +12,14 @@ Parser:
     ✔ if-then-else @done(18-01-15 02:45)
     ✔ if-then-elif @high @today @done(18-01-18 18:31)
     ✔ let rec @done(18-01-18 19:55)
-    ❑ modules
-    ❑ handle infix operators of different priority
-    ❑ lists
+    ✔ modules & open @done(18-01-19 03:29)
     ✔ extern @done(18-01-16 02:48)
+    ❑ lists
     ❑ arrays
-    ❑ record types
-    ❑ tuples
     ❑ lambda fun
+    ❑ record types
     ❑ mutable var
+    ❑ tuples
     ❑ tuples pattern matching
     ❑ match (...) with (...)
     ❑ function (pattern matching)
@@ -38,12 +37,12 @@ Codegen:
     ✔ main / entry point @high @done(18-01-17 03:59)
     ✔ let rec @high @done(18-01-18 21:15)
     ✔ first-class functions @done(18-01-19 02:11)
+    ❑ modules & open @medium
     ❑ currying @high
     ❑ type checking @high
     ❑ tail call
     ✔ entire program generation (single file) @high @done(18-01-17 11:39)
     ❑ source code compiler @medium
-    ❑ modules @medium
     ❑ curried application @medium
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ❑ arithmetic operations (float) @high
@@ -59,3 +58,4 @@ Syntactic check:
 
 Other:
     ❑ interpreter @optional
+    ❑ handle infix operators of different priority

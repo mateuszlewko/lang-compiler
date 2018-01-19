@@ -260,8 +260,9 @@ and gen_top_level env =
   function
   | Expr e            -> gen_expr env e
   | Extern (name, tp) -> gen_extern env name tp
+  (* | Module (name, es) -> failwith "module" *)
   | other             -> show_top_level other
-                         |> sprintf "Unsupported type level: %s" |> failwith
+                         |> sprintf "Unsupported top level expression: %s" |> failwith
 
 let gen_prog top_level_exprs =
   let env = Env.create "main" in

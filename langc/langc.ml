@@ -83,9 +83,20 @@ let main () : int =
 " in
   let src =
 "
-
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
+
+(* module Mod1 =
+  let someFun x = 5
+
+  let someFun2 x y =
+    x * x + y * y
+
+  module Test =
+    let this = 0
+
+open Mod1
+open Mod1.Test *)
 
 let apply (fn : int -> int) arg =
   fn arg
@@ -98,6 +109,9 @@ let rec power a n =
   then 1
   else a * (power a (n - 1))
 
+let app2 (fn : int -> int -> int) arg1 arg2 =
+  fn arg1 arg2
+
 let main () : int =
 
   ll_putint (apply mult2 6)
@@ -105,6 +119,11 @@ let main () : int =
 
   ll_putint(power 3 4)
   ll_print_line ()
+
+  ll_putint(app2 power 2 10)
+  ll_print_line ()
+
+  ll_putint(104)
   0
 "
   in

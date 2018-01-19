@@ -125,6 +125,8 @@ and token state buf =
   | "false" -> [BOOL true], state
 
   | "external" -> [EXTERNAL], state
+  | "module" -> [MODULE], state
+  | "open" -> [OPEN], state
 
   | '"'  -> [QUOTE], state
   | "->" -> [ARROW], state

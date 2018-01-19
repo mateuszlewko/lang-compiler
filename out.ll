@@ -36,6 +36,12 @@ if_cont:                                          ; preds = %else, %then
   ret i32 %if_result
 }
 
+define i32 @app2(i32 (i32, i32)* %fn, i32 %arg1, i32 %arg2) {
+entry:
+  %call_tmp = call i32 %fn(i32 %arg1, i32 %arg2)
+  ret i32 %call_tmp
+}
+
 define i32 @main() {
 entry:
   %call_tmp = call i32 @apply(i32 (i32)* @mult2, i32 6)
@@ -44,6 +50,10 @@ entry:
   %call_tmp1 = call i32 @power(i32 3, i32 4)
   call void @ll_putint(i32 %call_tmp1)
   call void @ll_print_line()
+  %call_tmp2 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp2)
+  call void @ll_print_line()
+  call void @ll_putint(i32 104)
   ret i32 0
 }
 

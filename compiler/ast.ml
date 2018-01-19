@@ -31,6 +31,8 @@ type top_level =
   | Expr of expr
   | Extern of string * type_annot
   | TypeDecl of type_declaration
+  | Module of string * top_level list
+  | Open of string
   [@@deriving show]
 
 type program = Prog of top_level list
