@@ -7,14 +7,14 @@ open BatString
 module StrMap = Map.Make(String)
 
 type environment = {
-  named_vals  : llvalue StrMap.t
-; opened_vals : llvalue StrMap.t
-; llmod       : llmodule
-; builder     : llbuilder
-; ctx         : llcontext
+    named_vals  : llvalue StrMap.t
+  ; opened_vals : llvalue StrMap.t
+  ; llmod       : llmodule
+  ; builder     : llbuilder
+  ; ctx         : llcontext
   (* current module prefix *)
-; mod_prefix  : string
-}
+  ; mod_prefix  : string
+  }
 
 module Env =
 struct
