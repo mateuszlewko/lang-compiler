@@ -9,21 +9,37 @@ type environment = {
   named_vals : llvalue StrMap.t;
   llmod      : llmodule;
   builder    : llbuilder;
-  ctx        : llcontext
+  ctx        : llcontext;
+  mod_prefix : string
 }
 
 module Env =
 struct
+
+  (* Creates top-level env *)
   let create module_name =
     let ctx = create_context () in
     { named_vals = StrMap.empty;
       ctx        = ctx;
       builder    = builder ctx;
+      mod_prefix = "";
       llmod      = create_module ctx module_name }
+
   let print env =
     printf "Env:\n";
     StrMap.iter_keys env.named_vals ~f:(printf "+ %s\n");
-    printf "\n"
+    printf "\n";
+    flush_all ()
+
+  let name_of env raw_name = env.mod_prefix ^ raw_name
+
+  let find_var env var =
+    StrMap.find env.named_vals (name_of env var)
+
+  let add_var env raw_name var =
+    { env with named_vals =
+        StrMap.set env.named_vals ~key:(name_of env raw_name) ~data:var }
+
 end
 
 let skip_void_vals =
@@ -47,9 +63,9 @@ let annot_to_lltype ctx ?func_as_ptr:(func_as_ptr=false) =
   | Some []  -> failwith "Empty type (??)"
   | Some [t] -> single_type t
   | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
-                let ts = List.filter ts ((<>) "()") in
+                let ts  = List.filter ts ((<>) "()") in
                 let ret = single_type (List.hd_exn last_t) in
-                let ft = function_type ret (Array.of_list_map ts ~f:single_type)
+                let ft  = function_type ret (Array.of_list_map ts single_type)
                 in if func_as_ptr
                    then pointer_type ft
                    else ft
@@ -81,15 +97,15 @@ let rec gen_infix_op env op lhs rhs =
         | "=" -> build_icmp Icmp.Eq, "eq_cmp"
         | other -> sprintf "Unsupported operator: %s" other |> failwith
       in build_fn lhs_val rhs_val name env.builder
-      (* Llvm.Attrib *)
     end
   | _, _ ->
     failwith "Operator is missing operands"
 
 and gen_var env var_name =
-    match StrMap.find env.named_vals var_name with
+    match Env.find_var env var_name with
     | Some v -> v
-    | None   -> sprintf "Unbound variable %s" var_name
+    | None   -> Env.print env;
+                sprintf "Unbound variable %s" var_name
                 |> failwith
 
 and gen_if_with_elif env cond then_exp elif_exps else_exp =
@@ -109,7 +125,7 @@ and gen_simple_if env cond then_exp else_exp =
     let bb = append_block env.ctx name parent in
     position_at_end bb env.builder;
 
-    let llval = gen_expr env exp |> fst in
+    let llval  = gen_expr env exp |> fst in
     let new_bb = insertion_block env.builder in
     llval, bb, new_bb
   in
@@ -161,52 +177,46 @@ and gen_simple_if env cond then_exp else_exp =
     undef (void_type env.ctx)
 
 and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
-  (* let local = create_context () in *)
   let args = Array.of_list args in
-
   (* return type *)
   let ret = annot_to_lltype env.ctx ret_type in
-
   (* skip args of type unit *)
   let args = Array.filter args ~f:(snd %> (<>) (Some ["()"])) in
-
   (* create types for args *)
   let arg_types =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
   let ftype = function_type ret arg_types in
-  let fn = declare_function name ftype env.llmod in
+  let fn    = declare_function (Env.name_of env name) ftype env.llmod in
 
   (* name arguments for later use in let's scope *)
-  let inner_env =
+  let body_env =
     Array.foldi (params fn) ~init:env ~f:(
       fun i env arg ->
         let name = fst args.(i) in
-        set_value_name name arg;
-        { env with named_vals = StrMap.set env.named_vals ~key:name ~data:arg }
+        set_value_name (Env.name_of env name) arg;
+        Env.add_var env name arg
       )
     |> fun env ->
-        if is_rec then
-          {env with named_vals = StrMap.set env.named_vals ~key:name ~data:fn }
+        if is_rec (* add binding to currently created let inside body *)
+        then Env.add_var env name fn
         else env
   in let bb = append_block env.ctx "entry" fn in
 
-  (* params *)
-  let inner_env = { inner_env with builder = Llvm.builder_at_end env.ctx bb } in
-  (* position_at_end bb env.builder; *)
-
-  let body = Option.value body_lines ~default:[] in
+  (* create new builder for body *)
+  let body_env   = { body_env with builder = Llvm.builder_at_end env.ctx bb } in
+  let body       = Option.value body_lines ~default:[] in
   let body_exprs = Option.fold fst_line ~init:body ~f:(flip List.cons) in
-  let ret_val = gen_exprs inner_env fn body_exprs |> fst in
 
+  (* build body and return value of last expression as a value of let *)
+  let ret_val     = gen_exprs body_env fn body_exprs |> fst in
   (* env extended with new binding to generated let *)
-  let env_with_let =
-    { env with named_vals = StrMap.set env.named_vals name fn } in
+  let env_with_let = Env.add_var env name fn in
 
   (* generate body and return function definition *)
   (if kind_of ret_val = TypeKind.Void
-   then build_ret_void inner_env.builder
-   else build_ret ret_val inner_env.builder)
+   then build_ret_void body_env.builder
+   else build_ret ret_val body_env.builder)
   |> ignore;
 
   fn, env_with_let
@@ -218,7 +228,7 @@ and gen_exprs env let_block =
              List.fold es ~init:(llval, env) ~f:(fun (_, env) -> gen_expr env)
 
 and gen_application env callee line_args rest_of_args =
-  let args = line_args @ Option.value rest_of_args ~default:[] in
+  let args     = line_args @ Option.value rest_of_args ~default:[] in
   let args_val = Array.of_list_map args ~f:(gen_expr env %> fst)
                  |> skip_void_vals in
 
@@ -250,21 +260,25 @@ and gen_expr env =
 and gen_extern env name tp =
   let ftype = annot_to_lltype env.ctx (Some tp) in
   let fn = declare_function name ftype env.llmod in
-  let env = { env with
-                named_vals = StrMap.set env.named_vals ~key:name ~data:fn } in
+  let env = Env.add_var env name fn in
   fn, env
 
 and gen_top_level env =
   function
   | Expr e            -> gen_expr env e
   | Extern (name, tp) -> gen_extern env name tp
-  (* | Module (name, es) -> failwith "module" *)
+  | Module (name, es) ->
+    let inner_env = { env with mod_prefix = env.mod_prefix ^ name ^ "."} in
+    let llval, inner_env = gen_top_levels inner_env es in
+    llval, { inner_env with mod_prefix = env.mod_prefix }
   | other             -> show_top_level other
-                         |> sprintf "Unsupported top level expression: %s" |> failwith
+                         |> sprintf "Unsupported top level expression: %s"
+                         |> failwith
 
-let gen_prog top_level_exprs =
-  let env = Env.create "main" in
-  let swap (x, y) = y, x in
+and gen_top_levels env top_lvl_exprs =
+  let nothing = undef (void_type env.ctx) in
+  List.fold top_lvl_exprs ~init:(nothing, env)
+                             ~f:(fun (_, env) -> gen_top_level env)
 
-  List.fold_map top_level_exprs ~init:env
-                                   ~f:(fun env -> gen_top_level env %> swap)
+and gen_prog ?module_name:(module_name="interactive") top_lvl_exprs =
+  let env = Env.create module_name in gen_top_levels env top_lvl_exprs

@@ -1,9 +1,21 @@
-; ModuleID = 'main'
-source_filename = "main"
+; ModuleID = 'interactive'
+source_filename = "interactive"
 
 declare void @ll_putint(i32)
 
 declare void @ll_print_line()
+
+define i32 @A.testA(i32 %A.x) {
+entry:
+  %mul_tmp = mul i32 %A.x, 2
+  ret i32 %mul_tmp
+}
+
+define i32 @A.B.testB(i32 %A.B.x, i32 %A.B.y) {
+entry:
+  %add_tmp = add i32 %A.B.x, %A.B.y
+  ret i32 %add_tmp
+}
 
 define i32 @apply(i32 (i32)* %fn, i32 %arg) {
 entry:

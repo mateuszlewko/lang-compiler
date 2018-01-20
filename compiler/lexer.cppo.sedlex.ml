@@ -41,8 +41,10 @@ let illegal buf c =
 let letter = [%sedlex.regexp? 'A'..'Z' | 'a'..'z']
 let digit = [%sedlex.regexp? '0'..'9']
 let id_init = [%sedlex.regexp? letter  | '_']
-let id_cont = [%sedlex.regexp? id_init | Chars ".\'" | digit ]
+let id_cont = [%sedlex.regexp? id_init | Chars "'" | digit ]
+let id_nest_cont = [%sedlex.regexp? id_init | Chars ".\'" | digit ]
 let id = [%sedlex.regexp? id_init, Star id_cont ]
+let id_nest = [%sedlex.regexp? id_init, Star id_nest_cont ]
 let hex = [%sedlex.regexp? digit | 'a'..'f' | 'A'..'F' ]
 let hexnum = [%sedlex.regexp? '0', 'x', Plus hex ]
 let decnum = [%sedlex.regexp? Plus digit]
@@ -139,6 +141,7 @@ and token state buf =
 
   | decnum -> [INT (ascii buf |> int_of_string)], state
   | id -> [SYMBOL (ascii buf)], state
+  | id_nest -> [NESTED_SYMBOL (ascii buf)], state
 
   | any -> [KWD (ascii buf |> flip String.get 0 )], state
   | _ -> illegal buf (StdChar.chr (next buf))

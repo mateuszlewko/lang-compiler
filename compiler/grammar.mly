@@ -4,6 +4,7 @@ open Ast
 %}
 
 %token <string> SYMBOL
+%token <string> NESTED_SYMBOL
 %token <int> INT
 %token <bool> BOOL
 %token <string> STRING
@@ -23,18 +24,22 @@ open Ast
 %%
 
 program:
-  option(NEWLINE); es = list(top_expr); option(NEWLINE); EOF { Prog (es) }
+  option(NEWLINE); es = top_expr+; option(NEWLINE); EOF { Prog (es) }
 
 single_type_anot:
   | UNIT { "()" }
   | t = SYMBOL { t }
+
+nested_sym:
+  | s = NESTED_SYMBOL { s }
+  | s = SYMBOL { s }
 
 type_anot:
   | COLON; t = separated_list(ARROW, single_type_anot) { t }
 
 typed_var:
   | s = UNIT; { "()", Some ["()"]  }
-  | LPAR; s = SYMBOL; t = option(type_anot); RPAR { s, t }
+  | LPAR; s = SYMBOL; t = type_anot?; RPAR { s, t }
   | s = SYMBOL; { s, None }
   /* | LPAR; t = option(typed_var); RPAR { t } */
 
@@ -43,16 +48,16 @@ module_exp:
     { Module (s, es) }
 
 open_exp:
-  | OPEN; s = SYMBOL; NEWLINE+ { Open s }
+  | OPEN; s = nested_sym; NEWLINE+ { Open s }
 
 top_let:
   | NEWLINE; e = top_let { e }
   | e = letexp; option(NEWLINE) { e }
 
 letexp:
-  | LET; is_rec = boption(REC); n = SYMBOL; vs = list(typed_var);
-    rett = option(type_anot); EQ; e = option(simple_expr);
-    nonempty_list(NEWLINE); es = option(indented)
+  | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
+    rett = option(type_anot); EQ; e = simple_expr?;
+    NEWLINE+; es = indented?
     { LetExp (is_rec, (n, rett), vs, e, es) }
 
 application:
@@ -93,7 +98,7 @@ simple_expr:
   | l = literal { LitExp l }
   | i = infix_op { i }
   | LPAR; a = application; RPAR { a }
-  | s = SYMBOL { VarExp s }
+  | s = nested_sym { VarExp s }
   | LPAR; e = simple_expr; RPAR { e }
 
 complex_expr:

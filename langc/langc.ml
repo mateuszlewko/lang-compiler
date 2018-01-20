@@ -86,6 +86,14 @@ let main () : int =
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
 
+
+module A =
+    let testA x = x * 2
+
+    module B =
+      let testB x y =
+        x + y
+
 let apply (fn : int -> int) arg =
   fn arg
 
@@ -131,6 +139,6 @@ let main () : int =
   (* printf "Ast:\n%s\n" (show_program (Prog prog));
   flush_all (); *)
 
-  let env, llval = gen_prog prog in
+  let llval, env = gen_prog prog in
   string_of_llmodule env.llmod |> printf "%s\n";
   flush_all ();
