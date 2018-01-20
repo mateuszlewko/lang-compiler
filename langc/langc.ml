@@ -9,6 +9,7 @@ open Codegen
 let _ =
   (* enable pretty error messages *)
   Parser.pp_exceptions ();
+  Llvm.enable_pretty_stacktrace ();
 
   let src =
 "

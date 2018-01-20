@@ -14,9 +14,9 @@ Parser:
     ✔ let rec @done(18-01-18 19:55)
     ✔ modules & open @done(18-01-19 03:29)
     ✔ extern @done(18-01-16 02:48)
+    ❑ arrays @today
     ❑ complex expression in if
     ❑ lists
-    ❑ arrays @today
     ❑ lambda fun
     ❑ record types
     ❑ mutable var
