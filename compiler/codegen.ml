@@ -2,15 +2,18 @@ open Ast
 open Llvm
 open Core
 open BatPervasives
+open BatString
 
 module StrMap = Map.Make(String)
 
 type environment = {
-  named_vals : llvalue StrMap.t;
-  llmod      : llmodule;
-  builder    : llbuilder;
-  ctx        : llcontext;
-  mod_prefix : string
+  named_vals  : llvalue StrMap.t
+; opened_vals : llvalue StrMap.t
+; llmod       : llmodule
+; builder     : llbuilder
+; ctx         : llcontext
+  (* current module prefix *)
+; mod_prefix  : string
 }
 
 module Env =
@@ -19,11 +22,12 @@ struct
   (* Creates top-level env *)
   let create module_name =
     let ctx = create_context () in
-    { named_vals = StrMap.empty;
-      ctx        = ctx;
-      builder    = builder ctx;
-      mod_prefix = "";
-      llmod      = create_module ctx module_name }
+    { named_vals  = StrMap.empty
+    ; opened_vals = StrMap.empty
+    ; ctx         = ctx
+    ; builder     = builder ctx
+    ; mod_prefix  = ""
+    ; llmod       = create_module ctx module_name }
 
   let print env =
     printf "Env:\n";
@@ -34,11 +38,15 @@ struct
   let name_of env raw_name = env.mod_prefix ^ raw_name
 
   let find_var env var =
-    StrMap.find env.named_vals (name_of env var)
+    match StrMap.find env.opened_vals (name_of env var) with
+    | None  -> StrMap.find env.named_vals (name_of env var)
+    | other -> other
 
   let add_var env raw_name var =
-    { env with named_vals =
-        StrMap.set env.named_vals ~key:(name_of env raw_name) ~data:var }
+    let name = name_of env raw_name in
+    let add map = StrMap.set map ~key:name ~data:var in
+    { env with named_vals  = add env.named_vals
+             ; opened_vals = add env.opened_vals }
 
 end
 
@@ -270,7 +278,26 @@ and gen_top_level env =
   | Module (name, es) ->
     let inner_env = { env with mod_prefix = env.mod_prefix ^ name ^ "."} in
     let llval, inner_env = gen_top_levels inner_env es in
-    llval, { inner_env with mod_prefix = env.mod_prefix }
+    llval, { inner_env with mod_prefix  = env.mod_prefix
+                          ; opened_vals = env.opened_vals }
+  | Open path         ->
+    let merge ~key =
+      function
+      | `Both (l, r) -> Some r
+      | `Left x | `Right x -> Some x in
+    let all_vars = StrMap.merge env.named_vals env.opened_vals ~f:merge in
+    (* printf "opening %s\n" path;
+    printf "all vars len: %d\n" (StrMap.length all_vars);
+    Env.print env; *)
+    let opened =
+      StrMap.filter_keys all_vars ~f:(flip starts_with (path ^ "."))
+      |> StrMap.fold ~init:StrMap.empty
+         ~f:(fun ~key ~data res ->
+            let path_len = length path + 1 in
+            let new_name = sub key path_len (length key - path_len) in
+            StrMap.set res ~key:new_name ~data:data)
+
+    in undef (void_type env.ctx), { env with opened_vals = opened }
   | other             -> show_top_level other
                          |> sprintf "Unsupported top level expression: %s"
                          |> failwith

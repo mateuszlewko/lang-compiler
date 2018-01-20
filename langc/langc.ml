@@ -94,6 +94,13 @@ module A =
       let testB x y =
         x + y
 
+module D =
+    module E =
+      let adder x y = x + y
+
+    let testD x =
+      E.adder 21 x
+
 let apply (fn : int -> int) arg =
   fn arg
 
@@ -116,9 +123,21 @@ let fib n =
 let app2 (fn : int -> int -> int) arg1 arg2 =
   fn arg1 arg2
 
+module G =
+  let testG a b =
+    a + b
+
+open G
+
 let main () : int =
 
+  ll_putint(testG 2 3)
+  ll_print_line ()
+
   ll_putint(A.testA 101)
+  ll_print_line ()
+
+  ll_putint(D.testD 35)
   ll_print_line ()
 
   ll_putint(fib 35)

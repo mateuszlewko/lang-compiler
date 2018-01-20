@@ -17,6 +17,18 @@ entry:
   ret i32 %add_tmp
 }
 
+define i32 @D.E.adder(i32 %D.E.x, i32 %D.E.y) {
+entry:
+  %add_tmp = add i32 %D.E.x, %D.E.y
+  ret i32 %add_tmp
+}
+
+define i32 @D.testD(i32 %D.x) {
+entry:
+  %call_tmp = call i32 @D.E.adder(i32 21, i32 %D.x)
+  ret i32 %call_tmp
+}
+
 define i32 @apply(i32 (i32)* %fn, i32 %arg) {
 entry:
   %call_tmp = call i32 %fn(i32 %arg)
@@ -79,22 +91,34 @@ entry:
   ret i32 %call_tmp
 }
 
+define i32 @G.testG(i32 %G.a, i32 %G.b) {
+entry:
+  %add_tmp = add i32 %G.a, %G.b
+  ret i32 %add_tmp
+}
+
 define i32 @main() {
 entry:
-  %call_tmp = call i32 @A.testA(i32 101)
+  %call_tmp = call i32 @G.testG(i32 2, i32 3)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %call_tmp1 = call i32 @fib(i32 35)
+  %call_tmp1 = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp1)
   call void @ll_print_line()
-  %call_tmp2 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp2 = call i32 @D.testD(i32 35)
   call void @ll_putint(i32 %call_tmp2)
   call void @ll_print_line()
-  %call_tmp3 = call i32 @power(i32 3, i32 4)
+  %call_tmp3 = call i32 @fib(i32 35)
   call void @ll_putint(i32 %call_tmp3)
   call void @ll_print_line()
-  %call_tmp4 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp4 = call i32 @apply(i32 (i32)* @mult2, i32 6)
   call void @ll_putint(i32 %call_tmp4)
+  call void @ll_print_line()
+  %call_tmp5 = call i32 @power(i32 3, i32 4)
+  call void @ll_putint(i32 %call_tmp5)
+  call void @ll_print_line()
+  %call_tmp6 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp6)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   ret i32 0

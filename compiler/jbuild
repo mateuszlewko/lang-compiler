@@ -6,7 +6,7 @@
   (deps    (grammar.mly))
   (action  (run ${bin:menhir} --trace --only-tokens ${<} --base tokens))))
 
-;; generate lexer -- temporary hack while ppx_sedlex and 
+;; generate lexer -- temporary hack while ppx_sedlex and
 ;; ppx_import are incompatible with jbuilder
 (rule
  ((targets (lexer.sedlex.ml))
@@ -30,7 +30,7 @@
 (library
  ((name    lang_compiler)
   (wrapped true)
-  (libraries 
+  (libraries
     (core
      sedlex
      menhirLib

@@ -44,7 +44,7 @@ typed_var:
   /* | LPAR; t = option(typed_var); RPAR { t } */
 
 module_exp:
-  | MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr*; DEDENT
+  | MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
     { Module (s, es) }
 
 open_exp:
