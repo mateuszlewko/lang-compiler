@@ -281,15 +281,12 @@ and gen_top_level env =
     llval, { inner_env with mod_prefix  = env.mod_prefix
                           ; opened_vals = env.opened_vals }
   | Open path         ->
-    let merge ~key =
-      function
-      | `Both (l, r) -> Some r
-      | `Left x | `Right x -> Some x in
+    let merge ~key = function
+                     | `Both (l, r)       -> Some r
+                     | `Left x | `Right x -> Some x in
+
     let all_vars = StrMap.merge env.named_vals env.opened_vals ~f:merge in
-    (* printf "opening %s\n" path;
-    printf "all vars len: %d\n" (StrMap.length all_vars);
-    Env.print env; *)
-    let opened =
+    let opened   =
       StrMap.filter_keys all_vars ~f:(flip starts_with (path ^ "."))
       |> StrMap.fold ~init:StrMap.empty
          ~f:(fun ~key ~data res ->
