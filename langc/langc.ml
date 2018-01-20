@@ -118,6 +118,9 @@ let app2 (fn : int -> int -> int) arg1 arg2 =
 
 let main () : int =
 
+  ll_putint(A.testA 101)
+  ll_print_line ()
+
   ll_putint(fib 35)
   ll_print_line ()
 

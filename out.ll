@@ -81,17 +81,20 @@ entry:
 
 define i32 @main() {
 entry:
-  %call_tmp = call i32 @fib(i32 35)
+  %call_tmp = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %call_tmp1 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp1 = call i32 @fib(i32 35)
   call void @ll_putint(i32 %call_tmp1)
   call void @ll_print_line()
-  %call_tmp2 = call i32 @power(i32 3, i32 4)
+  %call_tmp2 = call i32 @apply(i32 (i32)* @mult2, i32 6)
   call void @ll_putint(i32 %call_tmp2)
   call void @ll_print_line()
-  %call_tmp3 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp3 = call i32 @power(i32 3, i32 4)
   call void @ll_putint(i32 %call_tmp3)
+  call void @ll_print_line()
+  %call_tmp4 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp4)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   ret i32 0
