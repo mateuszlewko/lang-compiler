@@ -106,15 +106,20 @@ and gen_simple_if env cond then_exp else_exp =
 
 and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let args = Array.of_list args in
+  let is_val = Array.is_empty args in
+  if is_rec && is_val
+  then failwith "Can't define recursive value. Either remove 'rec' from let \
+                 or add at least one argument.";
+
   (* return type *)
-  let ret = annot_to_lltype env.ctx ret_type in
+  let ret_type = annot_to_lltype env.ctx ret_type in
   (* skip args of type unit *)
   let args = Array.filter args ~f:(snd %> (<>) (Some ["()"])) in
   (* create types for args *)
   let arg_types =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
-  let ftype = function_type ret arg_types in
+  let ftype = function_type ret_type arg_types in
   let fn    = declare_function (Env.name_of env name) ftype env.llmod in
 
   (* name arguments for later use in let's scope *)
@@ -139,15 +144,35 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   (* build body and return value of last expression as a value of let *)
   let ret_val     = gen_exprs body_env fn body_exprs |> fst in
   (* env extended with new binding to generated let *)
-  let env_with_let = Env.add_var env name fn in
+  let ret_is_void = kind_of ret_val = TypeKind.Void in
+  let env_with_let, expr_result =
+    if not is_val
+    then Env.add_var env name fn, fn
+    else
+      let mod_name = Env.name_of env name in
+      let g_var =
+        if ret_is_void
+        then None
+        else
+          let null = const_null ret_type in
+          Some (define_global (mod_name ^ "_val") null env.llmod)
+      in
+
+      let top_val = {ll=fn; of_ptr=false}
+                  , g_var |> Option.map ~f:(fun v -> {ll=v; of_ptr=true}) in
+      let env     = { env with top_vals = top_val::env.top_vals } in
+      let res_var = Option.value g_var ~default:(undef (void_type env.ctx)) in
+
+      Env.add_var env name ~of_ptr:true res_var, res_var
+  in
 
   (* generate body and return function definition *)
-  (if kind_of ret_val = TypeKind.Void
+  (if ret_is_void
    then build_ret_void body_env.builder
    else build_ret ret_val body_env.builder)
   |> ignore;
 
-  fn, env_with_let
+  expr_result, env_with_let
 
 and gen_exprs env let_block =
   function
@@ -224,5 +249,25 @@ and gen_top_levels env top_lvl_exprs =
   List.fold top_lvl_exprs ~init:(nothing, env)
                              ~f:(fun (_, env) -> gen_top_level env)
 
+and insert_top_vals env =
+  match lookup_function "main" env.llmod with
+  | None    -> failwith "Main function (main : () -> int) is not defined."
+  | Some main ->
+    let entry_bb = entry_block main in
+    let bb       = insert_block env.ctx "calls_to_top_vals" entry_bb in
+    let builder  = builder_at_end env.ctx bb in
+
+    List.rev env.top_vals |> List.iter ~f:(
+      fun (fn, g_var) ->
+        let name = if Option.is_some g_var then "ret" else "" in
+        let ret_val = build_call fn.ll [||] name builder in
+        Option.iter g_var (fun g_var -> build_store ret_val g_var.ll builder
+                                        |> ignore)
+    );
+    build_br entry_bb builder |> ignore
+
 and gen_prog ?module_name:(module_name="interactive") top_lvl_exprs =
-  let env = Env.create module_name in gen_top_levels env top_lvl_exprs
+  let env = Env.create module_name in
+  let llval, env = gen_top_levels env top_lvl_exprs in
+  insert_top_vals env;
+  llval, env

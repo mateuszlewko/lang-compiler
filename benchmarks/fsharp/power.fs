@@ -3,6 +3,12 @@ let rec power a n =
   then 1
   else a * (power a (n - 1))
 
+let rec a = printfn ""
+
+let fn () = 4 + 5
+
+let fn2 = fn a
+
 module A =
     module B =
         let testB =
@@ -12,6 +18,7 @@ module A =
 
 
     open B
+    let _ = printf "3"
 
     let x = 4
 
@@ -23,9 +30,9 @@ module A =
         B.testB
         testB
 
-open A
+// open A
 // open B 
-B.testB
+// B.testB
 
 
-printfn "%d" (power 3 500000)
+printfn "%d" (power 3 100000)

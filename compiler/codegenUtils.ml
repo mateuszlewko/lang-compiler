@@ -6,12 +6,21 @@ open BatString
 
 module StrMap = Map.Make(String)
 
+type bound_var = {
+    ll     : llvalue
+  ; of_ptr : bool
+  }
+
 type environment = {
-    named_vals  : llvalue StrMap.t
-  ; opened_vals : llvalue StrMap.t
+    named_vals  : bound_var StrMap.t
+  ; opened_vals : bound_var StrMap.t
   ; llmod       : llmodule
   ; builder     : llbuilder
   ; ctx         : llcontext
+  (* List of top level values or side-effects.
+     Each pair is a function with 0 arguments and variable
+     equal to result of function call (if any) *)
+  ; top_vals    : (bound_var * bound_var option) list
   (* current module prefix *)
   ; mod_prefix  : string
   }
@@ -27,6 +36,7 @@ struct
     ; ctx         = ctx
     ; builder     = builder ctx
     ; mod_prefix  = ""
+    ; top_vals    = []
     ; llmod       = create_module ctx module_name }
 
   let print env =
@@ -37,13 +47,17 @@ struct
 
   let name_of env raw_name = env.mod_prefix ^ raw_name
 
-  let find_var env var =
-    match StrMap.find env.opened_vals (name_of env var) with
-    | None  -> StrMap.find env.named_vals (name_of env var)
+  let find_bound_var env name =
+    match StrMap.find env.opened_vals (name_of env name) with
+    | None  -> StrMap.find env.named_vals (name_of env name)
     | other -> other
 
-  let add_var env raw_name var =
-    let name = name_of env raw_name in
+  let find_var env name =
+    find_bound_var env name |> Option.map ~f:(fun bv -> bv.ll)
+
+  let add_var env raw_name ?of_ptr:(of_ptr=false) var =
+    let name    = name_of env raw_name in
+    let var     = { ll = var; of_ptr = of_ptr } in
     let add map = StrMap.set map ~key:name ~data:var in
     { env with named_vals  = add env.named_vals
              ; opened_vals = add env.opened_vals }
@@ -87,8 +101,11 @@ let get_literal ctx =
               |> failwith
 
 let get_var env var_name =
-  match Env.find_var env var_name with
-  | Some v -> v
+  match Env.find_bound_var env var_name with
+  | Some bv ->
+    if bv.of_ptr
+    then build_load bv.ll "load_res" env.builder
+    else bv.ll
   | None   -> Env.print env;
               sprintf "Unbound variable %s" var_name
               |> failwith

@@ -89,6 +89,13 @@ external ll_print_line : () -> ()
 
 
 module A =
+    external ll_putint : int -> ()
+    external ll_print_line : () -> ()
+
+    let aaaaaa : () =
+      ll_putint (1)
+      ll_print_line ()
+
     let testA x = x * 2
 
     module B =
@@ -130,7 +137,19 @@ module G =
 
 open G
 
+let topval = 4
+
+let topval2 =
+  let top_inner_adder a b =
+    a + b + 10
+
+  ll_putint(top_inner_adder 1 3)
+  ll_print_line ()
+  G.testG 10 14
+
 let main () : int =
+  ll_putint(topval2)
+  ll_print_line ()
 
   ll_putint(testG 2 3)
   ll_print_line ()
@@ -153,7 +172,8 @@ let main () : int =
   ll_putint(app2 power 2 10)
   ll_print_line ()
 
-  ll_putint(104)
+  ll_putint 104
+  ll_print_line ()
   0
 "
   in
@@ -163,5 +183,6 @@ let main () : int =
   flush_all (); *)
 
   let llval, env = gen_prog prog in
+
   string_of_llmodule env.llmod |> printf "%s\n";
   flush_all ();
