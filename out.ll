@@ -6,6 +6,7 @@ source_filename = "interactive"
 @topval7_val = global i32 0
 @topval_val = global i32 0
 @retfun_val = global i32 (i32)* null
+@my_arr_val = global [0 x i32]* null
 
 declare void @ll_putint(i32)
 
@@ -14,6 +15,8 @@ declare void @ll_print_line()
 declare i32 @ll_get_ith_elem_of_int_array([0 x i32]*, i32)
 
 declare void @ll_set_ith_elem_of_int_array([0 x i32]*, i32, i32)
+
+declare [0 x i32]* @ll_new_int_array(i32)
 
 define void @A.aaaaaa() {
 entry:
@@ -167,19 +170,33 @@ entry:
   ret void
 }
 
+define [0 x i32]* @new(i32 %size) {
+entry:
+  %call_tmp = call [0 x i32]* @ll_new_int_array(i32 %size)
+  ret [0 x i32]* %call_tmp
+}
+
+define [0 x i32]* @my_arr() {
+entry:
+  %call_tmp = call [0 x i32]* @new(i32 100)
+  ret [0 x i32]* %call_tmp
+}
+
 define i32 @main() {
 calls_to_top_vals:
   call void @A.aaaaaa()
   %ret = call [0 x i32]* @arr()
   store [0 x i32]* %ret, [0 x i32]** @arr_val
-  %ret15 = call i32 @topval6()
-  store i32 %ret15, i32* @topval6_val
-  %ret16 = call i32 @topval7()
-  store i32 %ret16, i32* @topval7_val
-  %ret17 = call i32 @topval()
-  store i32 %ret17, i32* @topval_val
-  %ret18 = call i32 (i32)* @retfun()
-  store i32 (i32)* %ret18, i32 (i32)** @retfun_val
+  %ret20 = call i32 @topval6()
+  store i32 %ret20, i32* @topval6_val
+  %ret21 = call i32 @topval7()
+  store i32 %ret21, i32* @topval7_val
+  %ret22 = call i32 @topval()
+  store i32 %ret22, i32* @topval_val
+  %ret23 = call i32 (i32)* @retfun()
+  store i32 (i32)* %ret23, i32 (i32)** @retfun_val
+  %ret24 = call [0 x i32]* @my_arr()
+  store [0 x i32]* %ret24, [0 x i32]** @my_arr_val
   %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 2) to i32))
   %malloc_tmp = bitcast i8* %malloccall to [2 x i32]*
   store [2 x i32] [i32 1, i32 3], [2 x i32]* %malloc_tmp
@@ -188,46 +205,56 @@ calls_to_top_vals:
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals
-  %load_res = load [0 x i32]*, [0 x i32]** @arr_val
-  %call_tmp = call i32 @get_ith([0 x i32]* %load_res, i32 2)
+  %load_res = load [0 x i32]*, [0 x i32]** @my_arr_val
+  call void @set_ith([0 x i32]* %load_res, i32 78, i32 108)
+  %load_res1 = load [0 x i32]*, [0 x i32]** @my_arr_val
+  %call_tmp = call i32 @get_ith([0 x i32]* %load_res1, i32 78)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %load_res1 = load [0 x i32]*, [0 x i32]** @arr_val
-  call void @set_ith([0 x i32]* %load_res1, i32 2, i32 999)
-  %load_res2 = load [0 x i32]*, [0 x i32]** @arr_val
-  %call_tmp3 = call i32 @get_ith([0 x i32]* %load_res2, i32 2)
+  %load_res2 = load [0 x i32]*, [0 x i32]** @my_arr_val
+  %call_tmp3 = call i32 @get_ith([0 x i32]* %load_res2, i32 10000079)
   call void @ll_putint(i32 %call_tmp3)
   call void @ll_print_line()
-  %load_res4 = load i32 (i32)*, i32 (i32)** @retfun_val
-  %call_tmp5 = call i32 %load_res4(i32 109)
+  %load_res4 = load [0 x i32]*, [0 x i32]** @arr_val
+  %call_tmp5 = call i32 @get_ith([0 x i32]* %load_res4, i32 2)
   call void @ll_putint(i32 %call_tmp5)
   call void @ll_print_line()
-  %load_res6 = load i32, i32* @topval7_val
-  call void @ll_putint(i32 %load_res6)
-  call void @ll_print_line()
-  %call_tmp7 = call i32 @topval8(i32 7)
-  call void @ll_putint(i32 %call_tmp7)
-  call void @ll_print_line()
-  %call_tmp8 = call i32 @G.testG(i32 2, i32 3)
+  %load_res6 = load [0 x i32]*, [0 x i32]** @arr_val
+  call void @set_ith([0 x i32]* %load_res6, i32 2, i32 999)
+  %load_res7 = load [0 x i32]*, [0 x i32]** @arr_val
+  %call_tmp8 = call i32 @get_ith([0 x i32]* %load_res7, i32 2)
   call void @ll_putint(i32 %call_tmp8)
   call void @ll_print_line()
-  %call_tmp9 = call i32 @A.testA(i32 101)
-  call void @ll_putint(i32 %call_tmp9)
-  call void @ll_print_line()
-  %call_tmp10 = call i32 @D.testD(i32 35)
+  %load_res9 = load i32 (i32)*, i32 (i32)** @retfun_val
+  %call_tmp10 = call i32 %load_res9(i32 109)
   call void @ll_putint(i32 %call_tmp10)
   call void @ll_print_line()
-  %call_tmp11 = call i32 @fib(i32 35)
-  call void @ll_putint(i32 %call_tmp11)
+  %load_res11 = load i32, i32* @topval7_val
+  call void @ll_putint(i32 %load_res11)
   call void @ll_print_line()
-  %call_tmp12 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp12 = call i32 @topval8(i32 7)
   call void @ll_putint(i32 %call_tmp12)
   call void @ll_print_line()
-  %call_tmp13 = call i32 @power(i32 3, i32 4)
+  %call_tmp13 = call i32 @G.testG(i32 2, i32 3)
   call void @ll_putint(i32 %call_tmp13)
   call void @ll_print_line()
-  %call_tmp14 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp14 = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp14)
+  call void @ll_print_line()
+  %call_tmp15 = call i32 @D.testD(i32 35)
+  call void @ll_putint(i32 %call_tmp15)
+  call void @ll_print_line()
+  %call_tmp16 = call i32 @fib(i32 35)
+  call void @ll_putint(i32 %call_tmp16)
+  call void @ll_print_line()
+  %call_tmp17 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  call void @ll_putint(i32 %call_tmp17)
+  call void @ll_print_line()
+  %call_tmp18 = call i32 @power(i32 3, i32 4)
+  call void @ll_putint(i32 %call_tmp18)
+  call void @ll_print_line()
+  %call_tmp19 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp19)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   call void @ll_print_line()

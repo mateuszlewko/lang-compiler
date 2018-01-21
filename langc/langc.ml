@@ -88,6 +88,7 @@ external ll_putint : int -> ()
 external ll_print_line : () -> ()
 external ll_get_ith_elem_of_int_array : int array -> int -> int
 external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+external ll_new_int_array : int -> int array
 
 module A =
     external ll_putint : int -> ()
@@ -169,7 +170,19 @@ let get_ith (arr : int array) ix =
 let set_ith (arr : int array) ix val : () =
   ll_set_ith_elem_of_int_array arr ix val
 
+let new size : int array =
+  ll_new_int_array size
+
+let my_arr : int array = (new 100)
+
 let main () : int =
+  set_ith my_arr 78 108
+  ll_putint (get_ith my_arr 78)
+  ll_print_line ()
+
+  ll_putint (get_ith my_arr 79)
+  ll_print_line ()
+
   ll_putint (get_ith arr 2)
   ll_print_line ()
 
