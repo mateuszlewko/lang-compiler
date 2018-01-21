@@ -11,6 +11,10 @@ declare void @ll_putint(i32)
 
 declare void @ll_print_line()
 
+declare i32 @ll_get_ith_elem_of_int_array([0 x i32]*, i32)
+
+declare void @ll_set_ith_elem_of_int_array([0 x i32]*, i32, i32)
+
 define void @A.aaaaaa() {
 entry:
   call void @ll_putint(i32 1)
@@ -114,7 +118,7 @@ define [0 x i32]* @arr() {
 entry:
   %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 3) to i32))
   %malloc_tmp = bitcast i8* %malloccall to [3 x i32]*
-  store [3 x i32] [i32 3, i32 5, i32 10], [3 x i32]* %malloc_tmp
+  store [3 x i32] [i32 3, i32 5, i32 10111], [3 x i32]* %malloc_tmp
   %exp_ptr32 = bitcast [3 x i32]* %malloc_tmp to [0 x i32]*
   ret [0 x i32]* %exp_ptr32
 }
@@ -151,19 +155,31 @@ entry:
   ret i32 (i32)* @mult2
 }
 
+define i32 @get_ith([0 x i32]* %arr, i32 %ix) {
+entry:
+  %call_tmp = call i32 @ll_get_ith_elem_of_int_array([0 x i32]* %arr, i32 %ix)
+  ret i32 %call_tmp
+}
+
+define void @set_ith([0 x i32]* %arr, i32 %ix, i32 %val) {
+entry:
+  call void @ll_set_ith_elem_of_int_array([0 x i32]* %arr, i32 %ix, i32 %val)
+  ret void
+}
+
 define i32 @main() {
 calls_to_top_vals:
   call void @A.aaaaaa()
   %ret = call [0 x i32]* @arr()
   store [0 x i32]* %ret, [0 x i32]** @arr_val
-  %ret10 = call i32 @topval6()
-  store i32 %ret10, i32* @topval6_val
-  %ret11 = call i32 @topval7()
-  store i32 %ret11, i32* @topval7_val
-  %ret12 = call i32 @topval()
-  store i32 %ret12, i32* @topval_val
-  %ret13 = call i32 (i32)* @retfun()
-  store i32 (i32)* %ret13, i32 (i32)** @retfun_val
+  %ret15 = call i32 @topval6()
+  store i32 %ret15, i32* @topval6_val
+  %ret16 = call i32 @topval7()
+  store i32 %ret16, i32* @topval7_val
+  %ret17 = call i32 @topval()
+  store i32 %ret17, i32* @topval_val
+  %ret18 = call i32 (i32)* @retfun()
+  store i32 (i32)* %ret18, i32 (i32)** @retfun_val
   %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 2) to i32))
   %malloc_tmp = bitcast i8* %malloccall to [2 x i32]*
   store [2 x i32] [i32 1, i32 3], [2 x i32]* %malloc_tmp
@@ -172,36 +188,46 @@ calls_to_top_vals:
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals
-  %load_res = load i32 (i32)*, i32 (i32)** @retfun_val
-  %call_tmp = call i32 %load_res(i32 109)
+  %load_res = load [0 x i32]*, [0 x i32]** @arr_val
+  %call_tmp = call i32 @get_ith([0 x i32]* %load_res, i32 2)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %load_res1 = load i32, i32* @topval7_val
-  call void @ll_putint(i32 %load_res1)
-  call void @ll_print_line()
-  %call_tmp2 = call i32 @topval8(i32 7)
-  call void @ll_putint(i32 %call_tmp2)
-  call void @ll_print_line()
-  %call_tmp3 = call i32 @G.testG(i32 2, i32 3)
+  %load_res1 = load [0 x i32]*, [0 x i32]** @arr_val
+  call void @set_ith([0 x i32]* %load_res1, i32 2, i32 999)
+  %load_res2 = load [0 x i32]*, [0 x i32]** @arr_val
+  %call_tmp3 = call i32 @get_ith([0 x i32]* %load_res2, i32 2)
   call void @ll_putint(i32 %call_tmp3)
   call void @ll_print_line()
-  %call_tmp4 = call i32 @A.testA(i32 101)
-  call void @ll_putint(i32 %call_tmp4)
-  call void @ll_print_line()
-  %call_tmp5 = call i32 @D.testD(i32 35)
+  %load_res4 = load i32 (i32)*, i32 (i32)** @retfun_val
+  %call_tmp5 = call i32 %load_res4(i32 109)
   call void @ll_putint(i32 %call_tmp5)
   call void @ll_print_line()
-  %call_tmp6 = call i32 @fib(i32 35)
-  call void @ll_putint(i32 %call_tmp6)
+  %load_res6 = load i32, i32* @topval7_val
+  call void @ll_putint(i32 %load_res6)
   call void @ll_print_line()
-  %call_tmp7 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp7 = call i32 @topval8(i32 7)
   call void @ll_putint(i32 %call_tmp7)
   call void @ll_print_line()
-  %call_tmp8 = call i32 @power(i32 3, i32 4)
+  %call_tmp8 = call i32 @G.testG(i32 2, i32 3)
   call void @ll_putint(i32 %call_tmp8)
   call void @ll_print_line()
-  %call_tmp9 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp9 = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp9)
+  call void @ll_print_line()
+  %call_tmp10 = call i32 @D.testD(i32 35)
+  call void @ll_putint(i32 %call_tmp10)
+  call void @ll_print_line()
+  %call_tmp11 = call i32 @fib(i32 35)
+  call void @ll_putint(i32 %call_tmp11)
+  call void @ll_print_line()
+  %call_tmp12 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  call void @ll_putint(i32 %call_tmp12)
+  call void @ll_print_line()
+  %call_tmp13 = call i32 @power(i32 3, i32 4)
+  call void @ll_putint(i32 %call_tmp13)
+  call void @ll_print_line()
+  %call_tmp14 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp14)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   call void @ll_print_line()

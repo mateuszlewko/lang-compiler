@@ -43,7 +43,7 @@ Codegen:
     ✔ modules & open @medium @done(18-01-20 22:21)
     ✔ operators: <=, >=, <> @high @done(18-01-21 04:27)
     ❑ array operations: new, set, get @high @today
-    ❑ array literal with ints @high  @today
+    ✔ array literal with ints @high  @today @done(18-01-21 22:59)
     ❑ type checking @medium @today
     ❑ tail call
 

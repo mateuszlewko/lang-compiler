@@ -86,6 +86,8 @@ let main () : int =
 "
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
+external ll_get_ith_elem_of_int_array : int array -> int -> int
+external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
 
 module A =
     external ll_putint : int -> ()
@@ -137,7 +139,7 @@ module G =
 open G
 
 let arr : int array =
-  [| 3; 5; 10 |]
+  [| 3; 5; 10111 |]
 
 let topval6 = 77
 
@@ -161,7 +163,20 @@ let topval = 4
 
 let retfun : int -> int = mult2
 
+let get_ith (arr : int array) ix =
+  ll_get_ith_elem_of_int_array arr ix
+
+let set_ith (arr : int array) ix val : () =
+  ll_set_ith_elem_of_int_array arr ix val
+
 let main () : int =
+  ll_putint (get_ith arr 2)
+  ll_print_line ()
+
+  set_ith arr 2 999
+
+  ll_putint (get_ith arr 2)
+  ll_print_line ()
 
   ll_putint((retfun) 109)
   ll_print_line ()
