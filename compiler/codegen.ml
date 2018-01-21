@@ -220,6 +220,7 @@ and gen_application env callee line_args rest_of_args =
   (* if kind_of callee_val = TypeKind.Pointer
   then printf "is ptr\n"; *)
   build_call callee_val args_val name env.builder
+  |> fun x -> set_tail_call true x; x
 
 and gen_expr env =
   function

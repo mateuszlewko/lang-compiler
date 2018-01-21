@@ -175,7 +175,16 @@ let new size : int array =
 
 let my_arr : int array = (new 100)
 
+let rec add_one x n =
+  if n = 0
+  then x
+  else (add_one (1 + x) (n - 1))
+
 let main () : int =
+  ll_putint (add_one 0 1000000000)
+  ll_print_line ()
+
+  (*
   set_ith my_arr 78 108
   ll_putint (get_ith my_arr 78)
   ll_print_line ()
@@ -222,7 +231,7 @@ let main () : int =
   ll_print_line ()
 
   ll_putint 104
-  ll_print_line ()
+  ll_print_line () *)
   0
 "
   in

@@ -45,7 +45,7 @@ Codegen:
     ✔ array operations: new, set, get @high @today @done(18-01-21 23:08)
     ✔ array literal with ints @high  @today @done(18-01-21 22:59)
     ❑ type checking @medium @today
-    ❑ tail call
+    ✔ tail call @done(18-01-21 23:46)
 
     ❑ currying @medium
     ❑ curried application @medium
