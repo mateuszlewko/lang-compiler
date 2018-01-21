@@ -1,7 +1,7 @@
 ; ModuleID = 'interactive'
 source_filename = "interactive"
 
-@arr_val = global [3 x i32] zeroinitializer
+@arr_val = global [0 x i32]* null
 @topval6_val = global i32 0
 @topval7_val = global i32 0
 @topval_val = global i32 0
@@ -110,10 +110,16 @@ entry:
   ret i32 %add_tmp
 }
 
-define [3 x i32] @arr() {
+define [0 x i32]* @arr() {
 entry:
-  ret [3 x i32] [i32 3, i32 5, i32 10]
+  %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 3) to i32))
+  %malloc_tmp = bitcast i8* %malloccall to [3 x i32]*
+  store [3 x i32] [i32 3, i32 5, i32 10], [3 x i32]* %malloc_tmp
+  %exp_ptr32 = bitcast [3 x i32]* %malloc_tmp to [0 x i32]*
+  ret [0 x i32]* %exp_ptr32
 }
+
+declare noalias i8* @malloc(i32)
 
 define i32 @topval6() {
 entry:
@@ -148,8 +154,8 @@ entry:
 define i32 @main() {
 calls_to_top_vals:
   call void @A.aaaaaa()
-  %ret = call [3 x i32] @arr()
-  store [3 x i32] %ret, [3 x i32]* @arr_val
+  %ret = call [0 x i32]* @arr()
+  store [0 x i32]* %ret, [0 x i32]** @arr_val
   %ret10 = call i32 @topval6()
   store i32 %ret10, i32* @topval6_val
   %ret11 = call i32 @topval7()
@@ -158,6 +164,11 @@ calls_to_top_vals:
   store i32 %ret12, i32* @topval_val
   %ret13 = call i32 (i32)* @retfun()
   store i32 (i32)* %ret13, i32 (i32)** @retfun_val
+  %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 2) to i32))
+  %malloc_tmp = bitcast i8* %malloccall to [2 x i32]*
+  store [2 x i32] [i32 1, i32 3], [2 x i32]* %malloc_tmp
+  %ptr32 = bitcast [2 x i32]* %malloc_tmp to [0 x i32]*
+  %extr_val = getelementptr [0 x i32], [0 x i32]* %ptr32, i32 1
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals

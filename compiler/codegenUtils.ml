@@ -70,23 +70,24 @@ let skip_void_vals =
   Array.filter ~f:(type_of %> classify_type %> (<>) TypeKind.Void)
 let kind_of = type_of %> classify_type
 let undef_val = undef (void_type (global_context ()))
+let array_ptr = array_type (global_context () |> i32_type) 0 |> pointer_type
 
 (* Converts type annotation to lltype *)
 let annot_to_lltype ctx ?(func_as_ptr=false) =
   let single_type =
     function
-    | ["int"]         -> i32_type ctx
-    | ["bool"]        -> i1_type ctx
-    | [x; "intArray"] ->
-      begin
+    | ["int"]          -> i32_type ctx
+    | ["bool"]         -> i1_type ctx
+    | ["int"; "array"] -> array_ptr
+      (* begin
       match BatInt32.of_string_opt x with
         | Some x -> array_type (i32_type ctx) (Int.of_int32_exn x)
         | None   -> failwith "intArray type needs integer parameter (length).
-                              \nTry '4 intArray' for an array of length 4"
-      end
-    | ["()"]          -> void_type ctx
-    | other           ->
-      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf "%s" %> (^) s) in
+                              \nTry '4 intArray' for an array of length 4."
+      end *)
+    | ["()"]           -> void_type ctx
+    | other            ->
+      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf " %s" %> (^) s) in
       sprintf "Unsupported type annotation : %s" ts |> failwith
   in
   function

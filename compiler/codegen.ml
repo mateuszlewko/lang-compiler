@@ -5,20 +5,23 @@ open BatPervasives
 open BatString
 open CodegenUtils
 
-let rec gen_literal ctx =
+let rec gen_literal env =
   let array_lit xs =
     if List.exists xs ~f:(function LitExp (Int _) -> false | _ -> true)
     then failwith "Only arrays of integers are currently supported";
 
     let elems =
       Array.of_list_map xs ~f:(function LitExp x -> x | _ -> assert false)
-      |> Array.map ~f:(gen_literal ctx) in
-    const_array (i32_type ctx) elems
+      |> Array.map ~f:(gen_literal env) in
+    let arr = const_array (i32_type env.ctx) elems in
+    let arr_ptr = build_malloc (type_of arr) "malloc_tmp" env.builder in
+    build_store arr arr_ptr env.builder |> ignore;
+    build_pointercast arr_ptr array_ptr "exp_ptr32" env.builder
   in
 
   function
-  | Int i    -> const_int (i32_type ctx) i
-  | Bool b   -> const_int (i1_type ctx) (BatBool.to_int b)
+  | Int i    -> const_int (i32_type env.ctx) i
+  | Bool b   -> const_int (i1_type env.ctx) (BatBool.to_int b)
   | Array xs -> array_lit xs
   | Unit     -> undef_val
   | other    -> show_literal other |> sprintf "Unsupported literal: %s"
@@ -222,7 +225,7 @@ and gen_expr env =
   function
   | LetExp (is_rec, e1, e2, e3, e4) ->
     gen_letexp env is_rec e1 e2 e3 e4
-  | LitExp lit -> gen_literal env.ctx lit, env
+  | LitExp lit -> gen_literal env lit, env
   | AppExp (callee, args, rest_of_args) ->
     gen_application env callee args rest_of_args, env
   | InfixOp (op, lhs, rhs) -> gen_infix_op env op lhs rhs, env
@@ -269,7 +272,27 @@ and insert_top_vals env =
         Option.iter g_var (fun g_var -> build_store ret_val g_var.ll builder
                                         |> ignore)
     );
+    let el = const_int (i32_type env.ctx) 3 in
+    let el1 = const_int (i32_type env.ctx) 1 in
+    (* let v =
+    build_bitcast (const_array (i32_type env.ctx) [|el; el|])
+                  (i32_type env.ctx |> pointer_type)
+                  "bit_arr"
+                  builder  in *)
+    let arr = (const_array (i32_type env.ctx) [|el1; el|]) in
+    let arr_size = size_of (type_of arr) in
+    let arr_ptr = build_malloc (type_of arr) "malloc_tmp" builder in
+    build_store arr arr_ptr builder |> ignore;
+    let res_ptr =
+      build_pointercast arr_ptr (array_type (i32_type env.ctx) 0 |> pointer_type) "ptr32" builder in
+    build_gep res_ptr [|el1|] "extr_val" builder;
+    (* build_array_malloc (type_of arr) arr
+     "ss" builder |> ignore; *)
+    (* build_load v "res" builder |> ignore; *)
     build_br entry_bb builder |> ignore
+
+(* and gen_builtin_funcs env = *)
+
 
 and gen_prog ?(module_name="interactive") top_lvl_exprs =
   let env = Env.create module_name in
