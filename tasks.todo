@@ -55,6 +55,7 @@ Codegen:
 
 Bugs:
     ❑ can't reference symbols from parent module
+    ❑ segfault when top-value returns function
     ❑ functions with same name should overwrite previous declarations
     ❑ if-then-elif-else should accept complex expression and indented expressions
 

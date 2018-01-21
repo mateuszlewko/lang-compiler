@@ -23,13 +23,21 @@ let rec gen_infix_op env op lhs rhs =
       if is_constant lhs_val
       then build_add (const_int (i32_type ctx 0)) lhs_val "" builder;
            set_value_name "rhs" rhs_val; *)
+
       let build_fn, name =
         match op with
-        | "+" -> build_add, "add_tmp"
-        | "-" -> build_sub, "sub_tmp"
-        | "*" -> build_mul, "mul_tmp"
-        | "/" -> build_sdiv, "div_tmp"
-        | "=" -> build_icmp Icmp.Eq, "eq_cmp"
+        | "+"   -> build_add , "add_tmp"
+        | "-"   -> build_sub , "sub_tmp"
+        | "*"   -> build_mul , "mul_tmp"
+        | "/"   -> build_sdiv, "div_tmp"
+
+        | "="   -> build_icmp Icmp.Eq , "eq_cmp"
+        | "<"   -> build_icmp Icmp.Slt, "slt_cmp"
+        | "<="  -> build_icmp Icmp.Sle, "sle_cmp"
+        | ">"   -> build_icmp Icmp.Sgt, "sgt_cmp"
+        | ">="  -> build_icmp Icmp.Sge, "sgt_cmp"
+        | "<>"  -> build_icmp Icmp.Ne , "ne_cmp"
+
         | other -> sprintf "Unsupported operator: %s" other |> failwith
       in build_fn lhs_val rhs_val name env.builder
     end
@@ -154,7 +162,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
         if ret_is_void
         then None
         else
-          let null = const_null ret_type in
+          let null = const_pointer_null ret_type in
           Some (define_global (mod_name ^ "_val") null env.llmod)
       in
 

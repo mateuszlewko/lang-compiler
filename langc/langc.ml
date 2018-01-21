@@ -139,6 +139,8 @@ open G
 
 let topval = 4
 
+let topval_fun : int -> int = mult2
+
 let topval2 =
   let top_inner_adder a b =
     a + b + 10
@@ -148,6 +150,9 @@ let topval2 =
   G.testG 10 14
 
 let main () : int =
+  ll_putint(topval_fun 3)
+  ll_print_line ()
+
   ll_putint(topval2)
   ll_print_line ()
 
