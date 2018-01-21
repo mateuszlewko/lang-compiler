@@ -30,7 +30,7 @@ let _ =
       let loc = Location.{ loc_start; loc_end; loc_ghost = false} in
       let msg =
         show_token token
-        |> Printf.sprintf "parse error while reading token '%s'" in
+        |> Printf.sprintf "Parse error while reading token '%s'." in
       Some { loc; msg; sub=[]; if_highlight=""; }
     | _ -> None)
 
@@ -39,7 +39,7 @@ let failwith buf s = raise (LexError (buf.pos, s))
 
 let illegal buf c =
   StdChar.escaped c
-  |> Printf.sprintf "unexpected character in expression: '%s'"
+  |> Printf.sprintf "Unexpected character in expression: '%s'."
   |> failwith buf
 
 (* regular expressions  *)
@@ -63,7 +63,7 @@ let operator = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ]
 type state = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
 
-let rec end_of_indent state =
+let rec end_of_indent buf state =
   (* printf "level: %d, stack: %s\n" state.level (dump state.stack); *)
 
   if state.level > List.hd_exn state.stack
@@ -74,7 +74,11 @@ let rec end_of_indent state =
       function
       | top::stack when top > state.level ->
           dedents (DEDENT::res) stack
-      | stack -> res, stack
+      | top::stack when top <= state.level -> res, top::stack
+      (* | top::stack when top < state.level ->
+        failwith buf "Current indentation level needs to match some previous \
+                      indentation. Try indenting this token further or closer." *)
+      | [] -> failwith buf "Unexpected case, indentation stack is empty."
     in
     let deds, stack = dedents [] state.stack in
     deds, { state with stack = stack }
@@ -84,7 +88,7 @@ let rec indentation state buf =
   match%sedlex buf with
   | space   -> indentation { state with level = state.level + 1 } buf
   | newline -> indentation { state with level = 0 } buf
-  | _       -> end_of_indent state
+  | _       -> end_of_indent buf state
 
 (* swallows whitespace and comments *)
 and garbage buf =
@@ -98,7 +102,7 @@ and comment depth buf =
   if depth = 0
   then garbage buf
   else match%sedlex buf with
-       | eof  -> failwith buf "Unterminated comment at EOF"
+       | eof  -> failwith buf "Unterminated comment at end of file."
        | "(*" -> comment (depth + 1) buf
        | "*)" -> comment (depth - 1) buf
        | any  -> comment depth buf

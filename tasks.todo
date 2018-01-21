@@ -14,7 +14,7 @@ Parser:
     ✔ let rec @done(18-01-18 19:55)
     ✔ modules & open @done(18-01-19 03:29)
     ✔ extern @done(18-01-16 02:48)
-    ❑ arrays @today
+    ✔ arrays @today @done(18-01-21 16:46)
     ❑ complex expression in if @today
     ❑ lambda fun @today
     ❑ correct priority of operators

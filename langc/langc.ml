@@ -136,6 +136,13 @@ module G =
 
 open G
 
+let arr x =
+  [|
+    3; 5;
+ 10
+  |]
+
+
 let topval = 4
 
 (* let topval_fun : int -> int = mult2 *)

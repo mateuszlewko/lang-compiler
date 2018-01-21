@@ -4,7 +4,11 @@ let rec power a n =
   else a * (power a (n - 1))
 
 let rec a = printfn ""
-let arr = [fun x -> x; let fn x = x*2 in fn]
+let arr =
+    [3;
+       3;
+  3]
+
 let fn () = 4 + 5
 
 let fn2 = fn a
@@ -31,7 +35,7 @@ module A =
         testB
 
 // open A
-// open B 
+// open B
 // B.testB
 
 

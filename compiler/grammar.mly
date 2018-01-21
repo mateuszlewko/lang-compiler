@@ -25,8 +25,7 @@ open Ast
 
 %%
 
-program:
-  option(NEWLINE); es = top_expr+; option(NEWLINE); EOF { Prog (es) }
+program: option(NEWLINE); es = top_expr+; option(NEWLINE); EOF { Prog (es) }
 
 single_type_anot:
   | UNIT { "()" }
@@ -36,8 +35,7 @@ nested_sym:
   | s = NESTED_SYMBOL { s }
   | s = SYMBOL { s }
 
-type_anot:
-  | COLON; t = separated_list(ARROW, single_type_anot) { t }
+type_anot: COLON; t = separated_list(ARROW, single_type_anot) { t }
 
 typed_var:
   | s = UNIT; { "()", Some ["()"]  }
@@ -45,29 +43,27 @@ typed_var:
   | s = SYMBOL; { s, None }
   /* | LPAR; t = option(typed_var); RPAR { t } */
 
-module_exp:
-  | MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
-    { Module (s, es) }
+module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
+            { Module (s, es) }
 
-open_exp:
-  | OPEN; s = nested_sym; NEWLINE+ { Open s }
+open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 
 top_let:
   | NEWLINE; e = top_let { e }
-  | e = letexp; option(NEWLINE) { e }
+  | e = letexp; NEWLINE? { e }
 
 letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
-    rett = option(type_anot); EQ; e = simple_expr?;
+    rett = type_anot?; EQ; e = simple_expr?;
     NEWLINE+; es = indented?
     { LetExp (is_rec, (n, rett), vs, e, es) }
 
 application:
-  | s = simple_expr; es1 = nonempty_list(simple_expr); option(NEWLINE);
-    es2 = option(indented); option(NEWLINE)
+  | s = simple_expr; es1 = simple_expr+; option(NEWLINE);
+    es2 = indented?; NEWLINE?
     { AppExp (s, es1, es2) }
   | s = simple_expr; NEWLINE;
-    es2 = indented; option(NEWLINE)
+    es2 = indented; NEWLINE?
     { AppExp (s, [], Some es2) }
 
 infix_op:
@@ -76,25 +72,34 @@ infix_op:
   | l = simple_expr; EQ; r = simple_expr
     { InfixOp ("=", Some l, Some r) }
 
-else_exp:
-  | ELSE; exp = simple_expr {exp}
+else_exp: ELSE; exp = simple_expr {exp}
 
-elif_exp:
-  | ELIF; cond = simple_expr; list(NEWLINE); THEN; true_ex = simple_expr;
-    option(NEWLINE) { cond, true_ex }
+elif_exp: ELIF; cond = simple_expr; NEWLINE*; THEN; true_ex = simple_expr;
+          NEWLINE? { cond, true_ex }
 
-if_exp:
-  | IF; cond = simple_expr; list(NEWLINE); THEN; true_ex = simple_expr;
-    option(NEWLINE); elif_exps = list(elif_exp); else_ex = option(else_exp);
-    option(NEWLINE) { IfExp (cond, true_ex, elif_exps, else_ex) }
+if_exp: IF; cond = simple_expr; NEWLINE*; THEN; true_ex = simple_expr;
+        NEWLINE?; elif_exps = elif_exp*; else_ex = else_exp?;
+        NEWLINE? { IfExp (cond, true_ex, elif_exps, else_ex) }
 
-indented:
-  INDENT; es = complex_expr*; DEDENT { es }
+indented: INDENT; es = complex_expr*; DEDENT { es }
+
+%inline white_space:
+  | NEWLINE { }
+  | INDENT { }
+  | DEDENT { }
+
+%inline array_elem:
+  | white_space*; e = simple_expr; white_space* { e }
+  | white_space*; e = complex_expr; white_space* { e }
+
+array_lit: ARRAY_OPEN; es = separated_list(SEMICOL, array_elem); ARRAY_CLOSE;
+           { Array es }
 
 literal:
   | UNIT { Unit }
   | i = INT { Int i }
   | b = BOOL { Bool b }
+  | ar = array_lit { ar }
 
 simple_expr:
   | l = literal { LitExp l }
@@ -110,8 +115,7 @@ complex_expr:
   | s = simple_expr; NEWLINE+ { s }
   | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
 
-external_expr:
-  | EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
+external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
 
 top_expr:
  | m = module_exp { m }

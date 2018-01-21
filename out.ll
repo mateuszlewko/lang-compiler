@@ -107,6 +107,11 @@ entry:
   ret i32 %add_tmp
 }
 
+define i32 @arr(i32 %x) {
+entry:
+  ret i32 3
+}
+
 define i32 @topval() {
 entry:
   ret i32 4

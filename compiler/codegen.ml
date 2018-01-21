@@ -7,11 +7,12 @@ open CodegenUtils
 
 let gen_literal ctx =
   function
-  | Int i  -> const_int (i32_type ctx) i
-  | Bool b -> const_int (i1_type ctx) (BatBool.to_int b)
-  | Unit   -> undef_val
-  | other  -> show_literal other |> sprintf "Unsupported literal: %s"
-              |> failwith
+  | Int i    -> const_int (i32_type ctx) i
+  | Bool b   -> const_int (i1_type ctx) (BatBool.to_int b)
+  | Array xs -> const_int (i32_type ctx) 3
+  | Unit     -> undef_val
+  | other    -> show_literal other |> sprintf "Unsupported literal: %s"
+                |> failwith
 
 let rec gen_infix_op env op lhs rhs =
   match lhs, rhs with
