@@ -15,8 +15,8 @@ Parser:
     ✔ modules & open @done(18-01-19 03:29)
     ✔ extern @done(18-01-16 02:48)
     ❑ arrays @today
-    ❑ complex expression in if
-    ❑ lambda fun
+    ❑ complex expression in if @today
+    ❑ lambda fun @today
     ❑ correct priority of operators
 
     ❑ lists
@@ -42,9 +42,9 @@ Codegen:
     ✔ let as value @high @today @done(18-01-21 02:52)
     ✔ modules & open @medium @done(18-01-20 22:21)
     ✔ operators: <=, >=, <> @high @done(18-01-21 04:27)
-    ❑ currying @high
-    ❑ curried application @medium
-    ❑ type checking @medium
+    ❑ currying @high @today
+    ❑ curried application @medium @today
+    ❑ type checking @medium @today
     ❑ tail call
     ❑ type char @medium
     ❑ type float @medium
@@ -55,6 +55,7 @@ Codegen:
     ❑ multi-file programs @low @optional
 
 Bugs:
+    ❑ let-value in another let expression body may not be correct
     ❑ can't reference symbols from parent module @critical
     ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
     ❑ functions with same name should overwrite previous declarations @critical

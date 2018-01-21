@@ -39,9 +39,12 @@ struct
     ; top_vals    = []
     ; llmod       = create_module ctx module_name }
 
+  (* Print named_vals and opened_vals from environment *)
   let print env =
-    printf "Env:\n";
+    printf "Env:\nnamed_vals";
     StrMap.iter_keys env.named_vals ~f:(printf "+ %s\n");
+    printf "Env:\nopened_vals";
+    StrMap.iter_keys env.opened_vals ~f:(printf "* %s\n");
     printf "\n";
     flush_all ()
 
@@ -55,13 +58,12 @@ struct
   let find_var env name =
     find_bound_var env name |> Option.map ~f:(fun bv -> bv.ll)
 
-  let add_var env raw_name ?of_ptr:(of_ptr=false) var =
+  let add_var env raw_name ?(of_ptr=false) var =
     let name    = name_of env raw_name in
     let var     = { ll = var; of_ptr = of_ptr } in
     let add map = StrMap.set map ~key:name ~data:var in
     { env with named_vals  = add env.named_vals
              ; opened_vals = add env.opened_vals }
-
 end
 
 let skip_void_vals =
@@ -70,7 +72,7 @@ let kind_of = type_of %> classify_type
 let undef_val = undef (void_type (global_context ()))
 
 (* Converts type annotation to lltype *)
-let annot_to_lltype ctx ?func_as_ptr:(func_as_ptr=false) =
+let annot_to_lltype ctx ?(func_as_ptr=false) =
   let single_type =
     function
     | "int"  -> i32_type ctx
@@ -80,8 +82,8 @@ let annot_to_lltype ctx ?func_as_ptr:(func_as_ptr=false) =
   in
   function
   | None     -> i32_type ctx
-                (* TODO: This will probably be incorrect when I start
-                         implementing currying *)
+                (* TODO: FIXME: This will probably be incorrect when I start
+                                implementing currying *)
   | Some []  -> failwith "Empty type (??)"
   | Some [t] -> single_type t
   | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
@@ -112,8 +114,8 @@ let get_var env var_name =
 
 let open_expr env path =
   let merge ~key = function
-                    | `Both (l, r)       -> Some r
-                    | `Left x | `Right x -> Some x in
+                   | `Both (l, r)       -> Some r
+                   | `Left x | `Right x -> Some x in
 
   let all_vars = StrMap.merge env.named_vals env.opened_vals ~f:merge in
   let opened   =

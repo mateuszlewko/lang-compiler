@@ -260,7 +260,7 @@ and insert_top_vals env =
     );
     build_br entry_bb builder |> ignore
 
-and gen_prog ?module_name:(module_name="interactive") top_lvl_exprs =
+and gen_prog ?(module_name="interactive") top_lvl_exprs =
   let env = Env.create module_name in
   let llval, env = gen_top_levels env top_lvl_exprs in
   insert_top_vals env;

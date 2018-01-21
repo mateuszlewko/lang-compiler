@@ -1,7 +1,4 @@
 open Core
-
-type literal = Int of int | String of string | Bool of bool | Unit
-[@@deriving show]
                      (* type name   field     type *)
 type record_declaration = string * (string * string) list
 [@@deriving show]
@@ -25,6 +22,14 @@ type expr =
   | InfixOp of string * expr option * expr option
           (* cond   then    elif elif-then      else *)
   | IfExp of expr * expr * (expr * expr) list * expr option
+  [@@deriving show]
+
+and literal =
+  | Int of int
+  | String of string
+  | Bool of bool
+  | Array of expr list
+  | Unit
   [@@deriving show]
 
 type top_level =

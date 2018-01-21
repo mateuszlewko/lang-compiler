@@ -1,3 +1,8 @@
+(* *** DISCLAIMER ***
+   Code in this file is based on code from:
+   https://github.com/smolkaj/ocaml-parsing/blob/master/src/Lexer.cppo.sedlex.ml
+   Modified by: Mateusz Lewko *)
+
 #include "tokens.ml"
   [@@deriving show]
 
@@ -136,6 +141,10 @@ and token state buf =
   | ':'  -> [COLON], state
   | ','  -> [COMMA], state
   | '='  -> [EQ], state
+  | "[|"  -> [ARRAY_OPEN], state
+  | "|]"  -> [ARRAY_CLOSE], state
+  | '['  -> [LBRACKET], state
+  | ']'  -> [RBRACKET], state
 
   | operator -> [OPERATOR (ascii buf)], state
 
