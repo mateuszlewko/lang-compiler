@@ -66,8 +66,8 @@ end
 
 let skip_void_vals =
   Array.filter ~f:(type_of %> classify_type %> (<>) TypeKind.Void)
-
 let kind_of = type_of %> classify_type
+let undef_val = undef (void_type (global_context ()))
 
 (* Converts type annotation to lltype *)
 let annot_to_lltype ctx ?func_as_ptr:(func_as_ptr=false) =
@@ -109,3 +109,24 @@ let get_var env var_name =
   | None   -> Env.print env;
               sprintf "Unbound variable %s" var_name
               |> failwith
+
+let open_expr env path =
+  let merge ~key = function
+                    | `Both (l, r)       -> Some r
+                    | `Left x | `Right x -> Some x in
+
+  let all_vars = StrMap.merge env.named_vals env.opened_vals ~f:merge in
+  let opened   =
+    (* Select symbols that will be opened *)
+    StrMap.filter_keys all_vars ~f:(flip starts_with (path ^ "."))
+    (* Remove path prefix from selected symbols *)
+    |> StrMap.fold ~init:StrMap.empty
+        ~f:(fun ~key ~data res ->
+          let path_len = length path + 1 in
+          let new_name = sub key path_len (length key - path_len) in
+          StrMap.set res ~key:new_name ~data:data)
+    (* Merge with previously opened symbols, possibly overwriting
+       some of them *)
+    |> StrMap.merge env.opened_vals ~f:merge
+
+  in undef_val, { env with opened_vals = opened }

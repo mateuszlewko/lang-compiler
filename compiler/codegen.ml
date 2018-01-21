@@ -9,7 +9,7 @@ let gen_literal ctx =
   function
   | Int i  -> const_int (i32_type ctx) i
   | Bool b -> const_int (i1_type ctx) (BatBool.to_int b)
-  | Unit   -> undef (void_type ctx)
+  | Unit   -> undef_val
   | other  -> show_literal other |> sprintf "Unsupported literal: %s"
               |> failwith
 
@@ -81,7 +81,7 @@ and gen_simple_if env cond then_exp else_exp =
         let incoming = [then_val, new_then_bb; else_val, new_else_bb] in
         build_phi incoming "if_result" env.builder
       )
-      else undef (void_type env.ctx)
+      else undef_val
     in
 
     (* Return to the start block to add the conditional branch. *)
@@ -110,7 +110,7 @@ and gen_simple_if env cond then_exp else_exp =
     ignore (build_br merge_bb env.builder);
 
     position_at_end merge_bb env.builder;
-    undef (void_type env.ctx)
+    undef_val
 
 and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let args = Array.of_list args in
@@ -169,7 +169,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
       let top_val = {ll=fn; of_ptr=false}
                   , g_var |> Option.map ~f:(fun v -> {ll=v; of_ptr=true}) in
       let env     = { env with top_vals = top_val::env.top_vals } in
-      let res_var = Option.value g_var ~default:(undef (void_type env.ctx)) in
+      let res_var = Option.value g_var ~default:undef_val in
 
       Env.add_var env name ~of_ptr:true res_var, res_var
   in
@@ -233,28 +233,13 @@ and gen_top_level env =
     let llval, inner_env = gen_top_levels inner_env es in
     llval, { inner_env with mod_prefix  = env.mod_prefix
                           ; opened_vals = env.opened_vals }
-  | Open path         ->
-    let merge ~key = function
-                     | `Both (l, r)       -> Some r
-                     | `Left x | `Right x -> Some x in
-
-    let all_vars = StrMap.merge env.named_vals env.opened_vals ~f:merge in
-    let opened   =
-      StrMap.filter_keys all_vars ~f:(flip starts_with (path ^ "."))
-      |> StrMap.fold ~init:StrMap.empty
-         ~f:(fun ~key ~data res ->
-            let path_len = length path + 1 in
-            let new_name = sub key path_len (length key - path_len) in
-            StrMap.set res ~key:new_name ~data:data)
-
-    in undef (void_type env.ctx), { env with opened_vals = opened }
+  | Open path         -> open_expr env path
   | other             -> show_top_level other
                          |> sprintf "Unsupported top level expression: %s"
                          |> failwith
 
 and gen_top_levels env top_lvl_exprs =
-  let nothing = undef (void_type env.ctx) in
-  List.fold top_lvl_exprs ~init:(nothing, env)
+  List.fold top_lvl_exprs ~init:(undef_val, env)
                              ~f:(fun (_, env) -> gen_top_level env)
 
 and insert_top_vals env =
