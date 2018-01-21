@@ -136,14 +136,8 @@ module G =
 
 open G
 
-let arr x =
-  [|
-    3; 5;
- 10
-  |]
-
-  3
-  4
+let arr : 3 intArray =
+  [| 3; 5; 10 |]
 
 let topval6 = 77
 

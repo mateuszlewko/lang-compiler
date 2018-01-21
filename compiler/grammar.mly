@@ -29,16 +29,17 @@ program: option(NEWLINE); es = top_expr+; option(NEWLINE); EOF { Prog (es) }
 
 single_type_anot:
   | UNIT { "()" }
-  | t = SYMBOL { t }
+  | i = INT { string_of_int i }
+  | ts = SYMBOL { ts }
 
 nested_sym:
   | s = NESTED_SYMBOL { s }
   | s = SYMBOL { s }
 
-type_anot: COLON; t = separated_list(ARROW, single_type_anot) { t }
+type_anot: COLON; t = separated_list(ARROW, single_type_anot+) { t }
 
 typed_var:
-  | s = UNIT; { "()", Some ["()"]  }
+  | s = UNIT; { "()", Some [["()"]]  }
   | LPAR; s = SYMBOL; t = type_anot?; RPAR { s, t }
   | s = SYMBOL; { s, None }
   /* | LPAR; t = option(typed_var); RPAR { t } */

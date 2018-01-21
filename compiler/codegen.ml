@@ -134,7 +134,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let ret_type = annot_to_lltype env.ctx ~func_as_ptr:true ret_type in
   (* printf "ret type of %s is %s\n" name (string_of_lltype ret_type); *)
   (* skip args of type unit *)
-  let args = Array.filter args ~f:(snd %> (<>) (Some ["()"])) in
+  let args = Array.filter args ~f:(snd %> (<>) (Some [["()"]])) in
   (* create types for args *)
   let arg_types =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in

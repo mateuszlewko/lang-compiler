@@ -75,10 +75,19 @@ let undef_val = undef (void_type (global_context ()))
 let annot_to_lltype ctx ?(func_as_ptr=false) =
   let single_type =
     function
-    | "int"  -> i32_type ctx
-    | "bool" -> i1_type ctx
-    | "()"   -> void_type ctx
-    | other  -> sprintf "Unsupported type annotation: %s" other |> failwith
+    | ["int"]         -> i32_type ctx
+    | ["bool"]        -> i1_type ctx
+    | [x; "intArray"] ->
+      begin
+      match BatInt32.of_string_opt x with
+        | Some x -> array_type (i32_type ctx) (Int.of_int32_exn x)
+        | None   -> failwith "intArray type needs integer parameter (length).
+                              \nTry '4 intArray' for an array of length 4"
+      end
+    | ["()"]          -> void_type ctx
+    | other           ->
+      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf "%s" %> (^) s) in
+      sprintf "Unsupported type annotation : %s" ts |> failwith
   in
   function
   | None     -> i32_type ctx
@@ -87,20 +96,12 @@ let annot_to_lltype ctx ?(func_as_ptr=false) =
   | Some []  -> failwith "Empty type (??)"
   | Some [t] -> single_type t
   | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
-                let ts  = List.filter ts ((<>) "()") in
+                let ts  = List.filter ts ((<>) ["()"]) in
                 let ret = single_type (List.hd_exn last_t) in
                 let ft  = function_type ret (Array.of_list_map ts single_type)
                 in if func_as_ptr
                    then pointer_type ft
                    else ft
-
-let get_literal ctx =
-  function
-  | Int i  -> const_int (i32_type ctx) i
-  | Bool b -> const_int (i1_type ctx) (BatBool.to_int b)
-  | Unit   -> undef (void_type ctx)
-  | other  -> show_literal other |> sprintf "Unsupported literal: %s"
-              |> failwith
 
 let get_var env var_name =
   match Env.find_bound_var env var_name with

@@ -1,6 +1,7 @@
 ; ModuleID = 'interactive'
 source_filename = "interactive"
 
+@arr_val = global [3 x i32] zeroinitializer
 @topval6_val = global i32 0
 @topval7_val = global i32 0
 @topval_val = global i32 0
@@ -109,9 +110,9 @@ entry:
   ret i32 %add_tmp
 }
 
-define i32 @arr(i32 %x) {
+define [3 x i32] @arr() {
 entry:
-  ret i32 4
+  ret [3 x i32] [i32 3, i32 5, i32 10]
 }
 
 define i32 @topval6() {
@@ -147,14 +148,16 @@ entry:
 define i32 @main() {
 calls_to_top_vals:
   call void @A.aaaaaa()
-  %ret = call i32 @topval6()
-  store i32 %ret, i32* @topval6_val
-  %ret10 = call i32 @topval7()
-  store i32 %ret10, i32* @topval7_val
-  %ret11 = call i32 @topval()
-  store i32 %ret11, i32* @topval_val
-  %ret12 = call i32 (i32)* @retfun()
-  store i32 (i32)* %ret12, i32 (i32)** @retfun_val
+  %ret = call [3 x i32] @arr()
+  store [3 x i32] %ret, [3 x i32]* @arr_val
+  %ret10 = call i32 @topval6()
+  store i32 %ret10, i32* @topval6_val
+  %ret11 = call i32 @topval7()
+  store i32 %ret11, i32* @topval7_val
+  %ret12 = call i32 @topval()
+  store i32 %ret12, i32* @topval_val
+  %ret13 = call i32 (i32)* @retfun()
+  store i32 (i32)* %ret13, i32 (i32)** @retfun_val
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals

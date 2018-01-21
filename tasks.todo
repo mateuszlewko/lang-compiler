@@ -44,15 +44,16 @@ Codegen:
     ✔ operators: <=, >=, <> @high @done(18-01-21 04:27)
     ❑ array operations: new, set, get @high @today
     ❑ array literal with ints @high  @today
-    ❑ currying @high @today
-    ❑ curried application @medium @today
     ❑ type checking @medium @today
     ❑ tail call
+
+    ❑ currying @medium
+    ❑ curried application @medium
     ❑ type char @medium
     ❑ type float @medium
+    ❑ arithmetic operations (float) @high
     ✔ entire program generation (single file) @high @done(18-01-17 11:39)
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
-    ❑ arithmetic operations (float) @high
     ❑ improved error handling @medium
     ❑ multi-file programs @low @optional
 
