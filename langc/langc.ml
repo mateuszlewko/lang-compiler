@@ -87,7 +87,6 @@ let main () : int =
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
 
-
 module A =
     external ll_putint : int -> ()
     external ll_print_line : () -> ()
@@ -141,20 +140,22 @@ let topval = 4
 
 (* let topval_fun : int -> int = mult2 *)
 
-let topval2 =
+(* let topval2 =
   let top_inner_adder a b =
     a + b + 10
 
   ll_putint(top_inner_adder 1 3)
   ll_print_line ()
-  G.testG 10 14
+  G.testG 10 14 *)
+
+let retfun : int -> int = mult2
 
 let main () : int =
 
-  ll_putint(topval2)
+  ll_putint((retfun) 109)
   ll_print_line ()
 
-  (* ll_putint(topval_fun 3)
+  (* ll_putint(topval2)
   ll_print_line () *)
 
   ll_putint(testG 2 3)

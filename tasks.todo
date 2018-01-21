@@ -56,7 +56,7 @@ Codegen:
 
 Bugs:
     ❑ can't reference symbols from parent module @critical
-    ❑ segfault when top-value returns function @critical
+    ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
     ❑ functions with same name should overwrite previous declarations @critical
     ❑ if-then-elif-else should accept complex expression and indented expressions
 

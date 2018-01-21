@@ -2,7 +2,7 @@
 source_filename = "interactive"
 
 @topval_val = global i32 0
-@topval2_val = global i32 0
+@retfun_val = global i32 (i32)* null
 
 declare void @ll_putint(i32)
 
@@ -112,20 +112,9 @@ entry:
   ret i32 4
 }
 
-define i32 @topval2() {
+define i32 (i32)* @retfun() {
 entry:
-  %call_tmp = call i32 @top_inner_adder(i32 1, i32 3)
-  call void @ll_putint(i32 %call_tmp)
-  call void @ll_print_line()
-  %call_tmp1 = call i32 @G.testG(i32 10, i32 14)
-  ret i32 %call_tmp1
-}
-
-define i32 @top_inner_adder(i32 %a, i32 %b) {
-entry:
-  %add_tmp = add i32 %a, %b
-  %add_tmp1 = add i32 %add_tmp, 10
-  ret i32 %add_tmp1
+  ret i32 (i32)* @mult2
 }
 
 define i32 @main() {
@@ -133,34 +122,35 @@ calls_to_top_vals:
   call void @A.aaaaaa()
   %ret = call i32 @topval()
   store i32 %ret, i32* @topval_val
-  %ret7 = call i32 @topval2()
-  store i32 %ret7, i32* @topval2_val
+  %ret8 = call i32 (i32)* @retfun()
+  store i32 (i32)* %ret8, i32 (i32)** @retfun_val
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals
-  %load_res = load i32, i32* @topval2_val
-  call void @ll_putint(i32 %load_res)
-  call void @ll_print_line()
-  %call_tmp = call i32 @G.testG(i32 2, i32 3)
+  %load_res = load i32 (i32)*, i32 (i32)** @retfun_val
+  %call_tmp = call i32 %load_res(i32 109)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %call_tmp1 = call i32 @A.testA(i32 101)
+  %call_tmp1 = call i32 @G.testG(i32 2, i32 3)
   call void @ll_putint(i32 %call_tmp1)
   call void @ll_print_line()
-  %call_tmp2 = call i32 @D.testD(i32 35)
+  %call_tmp2 = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp2)
   call void @ll_print_line()
-  %call_tmp3 = call i32 @fib(i32 35)
+  %call_tmp3 = call i32 @D.testD(i32 35)
   call void @ll_putint(i32 %call_tmp3)
   call void @ll_print_line()
-  %call_tmp4 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp4 = call i32 @fib(i32 35)
   call void @ll_putint(i32 %call_tmp4)
   call void @ll_print_line()
-  %call_tmp5 = call i32 @power(i32 3, i32 4)
+  %call_tmp5 = call i32 @apply(i32 (i32)* @mult2, i32 6)
   call void @ll_putint(i32 %call_tmp5)
   call void @ll_print_line()
-  %call_tmp6 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp6 = call i32 @power(i32 3, i32 4)
   call void @ll_putint(i32 %call_tmp6)
+  call void @ll_print_line()
+  %call_tmp7 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp7)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   call void @ll_print_line()
