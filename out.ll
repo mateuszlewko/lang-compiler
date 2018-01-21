@@ -1,6 +1,8 @@
 ; ModuleID = 'interactive'
 source_filename = "interactive"
 
+@topval6_val = global i32 0
+@topval7_val = global i32 0
 @topval_val = global i32 0
 @retfun_val = global i32 (i32)* null
 
@@ -109,7 +111,27 @@ entry:
 
 define i32 @arr(i32 %x) {
 entry:
-  ret i32 3
+  ret i32 4
+}
+
+define i32 @topval6() {
+entry:
+  ret i32 77
+}
+
+define i32 @topval7() {
+entry:
+  %load_res = load i32, i32* @topval6_val
+  %add_tmp = add i32 %load_res, 3
+  ret i32 %add_tmp
+}
+
+define i32 @topval8(i32 %x) {
+entry:
+  %load_res = load i32, i32* @topval7_val
+  %add_tmp = add i32 %load_res, 7
+  %add_tmp1 = add i32 %add_tmp, %x
+  ret i32 %add_tmp1
 }
 
 define i32 @topval() {
@@ -125,10 +147,14 @@ entry:
 define i32 @main() {
 calls_to_top_vals:
   call void @A.aaaaaa()
-  %ret = call i32 @topval()
-  store i32 %ret, i32* @topval_val
-  %ret8 = call i32 (i32)* @retfun()
-  store i32 (i32)* %ret8, i32 (i32)** @retfun_val
+  %ret = call i32 @topval6()
+  store i32 %ret, i32* @topval6_val
+  %ret10 = call i32 @topval7()
+  store i32 %ret10, i32* @topval7_val
+  %ret11 = call i32 @topval()
+  store i32 %ret11, i32* @topval_val
+  %ret12 = call i32 (i32)* @retfun()
+  store i32 (i32)* %ret12, i32 (i32)** @retfun_val
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals
@@ -136,26 +162,32 @@ entry:                                            ; preds = %calls_to_top_vals
   %call_tmp = call i32 %load_res(i32 109)
   call void @ll_putint(i32 %call_tmp)
   call void @ll_print_line()
-  %call_tmp1 = call i32 @G.testG(i32 2, i32 3)
-  call void @ll_putint(i32 %call_tmp1)
+  %load_res1 = load i32, i32* @topval7_val
+  call void @ll_putint(i32 %load_res1)
   call void @ll_print_line()
-  %call_tmp2 = call i32 @A.testA(i32 101)
+  %call_tmp2 = call i32 @topval8(i32 7)
   call void @ll_putint(i32 %call_tmp2)
   call void @ll_print_line()
-  %call_tmp3 = call i32 @D.testD(i32 35)
+  %call_tmp3 = call i32 @G.testG(i32 2, i32 3)
   call void @ll_putint(i32 %call_tmp3)
   call void @ll_print_line()
-  %call_tmp4 = call i32 @fib(i32 35)
+  %call_tmp4 = call i32 @A.testA(i32 101)
   call void @ll_putint(i32 %call_tmp4)
   call void @ll_print_line()
-  %call_tmp5 = call i32 @apply(i32 (i32)* @mult2, i32 6)
+  %call_tmp5 = call i32 @D.testD(i32 35)
   call void @ll_putint(i32 %call_tmp5)
   call void @ll_print_line()
-  %call_tmp6 = call i32 @power(i32 3, i32 4)
+  %call_tmp6 = call i32 @fib(i32 35)
   call void @ll_putint(i32 %call_tmp6)
   call void @ll_print_line()
-  %call_tmp7 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  %call_tmp7 = call i32 @apply(i32 (i32)* @mult2, i32 6)
   call void @ll_putint(i32 %call_tmp7)
+  call void @ll_print_line()
+  %call_tmp8 = call i32 @power(i32 3, i32 4)
+  call void @ll_putint(i32 %call_tmp8)
+  call void @ll_print_line()
+  %call_tmp9 = call i32 @app2(i32 (i32, i32)* @power, i32 2, i32 10)
+  call void @ll_putint(i32 %call_tmp9)
   call void @ll_print_line()
   call void @ll_putint(i32 104)
   call void @ll_print_line()

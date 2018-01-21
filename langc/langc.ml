@@ -142,6 +142,16 @@ let arr x =
  10
   |]
 
+  3
+  4
+
+let topval6 = 77
+
+let topval7 = topval6 + 3
+
+let topval8 x =
+  topval7 + 7 + x
+
 
 let topval = 4
 
@@ -162,8 +172,11 @@ let main () : int =
   ll_putint((retfun) 109)
   ll_print_line ()
 
-  (* ll_putint(topval2)
-  ll_print_line () *)
+  ll_putint(topval7)
+  ll_print_line ()
+
+  ll_putint(topval8 7)
+  ll_print_line ()
 
   ll_putint(testG 2 3)
   ll_print_line ()

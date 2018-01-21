@@ -5,11 +5,21 @@ open BatPervasives
 open BatString
 open CodegenUtils
 
-let gen_literal ctx =
+let rec gen_literal ctx =
+  let array_lit xs =
+    if List.exists xs ~f:(function LitExp (Int _) -> false | _ -> true)
+    then failwith "Only arrays of integers are currently supported";
+
+    let elems =
+      Array.of_list_map xs ~f:(function LitExp x -> x | _ -> assert false)
+      |> Array.map ~f:(gen_literal ctx) in
+    const_array (i32_type ctx) elems
+  in
+
   function
   | Int i    -> const_int (i32_type ctx) i
   | Bool b   -> const_int (i1_type ctx) (BatBool.to_int b)
-  | Array xs -> const_int (i32_type ctx) 3
+  | Array xs -> array_lit xs
   | Unit     -> undef_val
   | other    -> show_literal other |> sprintf "Unsupported literal: %s"
                 |> failwith
