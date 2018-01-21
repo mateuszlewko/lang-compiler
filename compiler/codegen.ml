@@ -162,7 +162,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
         if ret_is_void
         then None
         else
-          let null = const_pointer_null ret_type in
+          let null = const_null ret_type in
           Some (define_global (mod_name ^ "_val") null env.llmod)
       in
 

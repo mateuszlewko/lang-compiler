@@ -16,8 +16,10 @@ Parser:
     ✔ extern @done(18-01-16 02:48)
     ❑ arrays @today
     ❑ complex expression in if
-    ❑ lists
     ❑ lambda fun
+    ❑ correct priority of operators
+
+    ❑ lists
     ❑ record types
     ❑ mutable var
     ❑ tuples
@@ -26,7 +28,6 @@ Parser:
     ❑ function (pattern matching)
     ❑ algebraic types (unions / variants)
 
-    ✔ ast pretty-printer @high @done(18-01-10 01:21)
 
 Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
@@ -40,28 +41,30 @@ Codegen:
     ✔ first-class functions @done(18-01-19 02:11)
     ✔ let as value @high @today @done(18-01-21 02:52)
     ✔ modules & open @medium @done(18-01-20 22:21)
-    ❑ operators: <=, >=, <> @high
-    ❑ type char @medium
+    ✔ operators: <=, >=, <> @high @done(18-01-21 04:27)
     ❑ currying @high
+    ❑ curried application @medium
     ❑ type checking @medium
     ❑ tail call
+    ❑ type char @medium
+    ❑ type float @medium
     ✔ entire program generation (single file) @high @done(18-01-17 11:39)
-    ❑ source code compiler @medium
-    ❑ curried application @medium
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ❑ arithmetic operations (float) @high
     ❑ improved error handling @medium
-    ❑ multi-file programs @medium @optional
+    ❑ multi-file programs @low @optional
 
 Bugs:
-    ❑ can't reference symbols from parent module
-    ❑ segfault when top-value returns function
-    ❑ functions with same name should overwrite previous declarations
+    ❑ can't reference symbols from parent module @critical
+    ❑ segfault when top-value returns function @critical
+    ❑ functions with same name should overwrite previous declarations @critical
     ❑ if-then-elif-else should accept complex expression and indented expressions
 
 Syntactic check:
     ❑ types @high
 
 Other:
+    ❑ source code compiler @high
+    ✔ ast pretty-printer @high @done(18-01-10 01:21)
     ❑ interpreter @optional
     ❑ handle infix operators of different priority
