@@ -25,7 +25,7 @@ open Ast
 
 %%
 
-program: option(NEWLINE); es = top_expr+; option(NEWLINE); EOF { Prog (es) }
+program: NEWLINE*; es = top_expr+; NEWLINE*; EOF { Prog (es) }
 
 single_type_anot:
   | UNIT { "()" }

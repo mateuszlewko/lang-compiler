@@ -6,7 +6,7 @@ open BatPervasives
 open Ast
 open Codegen
 
-let compile_to_llvm prog =
+let gen_llvm prog =
   try
     let llval, env = gen_prog prog in
     string_of_llmodule env.llmod
@@ -17,10 +17,49 @@ let compile_to_llvm prog =
     printf "Compilation failed with unknown error!";
     raise e
 
+let llvm_out_only = ref false
+let output_path = ref ""
+let input_path = ref ""
+let usage = "Usage: " ^ Sys.argv.(0) ^ " <source file> [-o <output file> ] [--ll-only]"
+
+let specs = [
+    (* ("-"        , Arg.String (printf "got arg %s\n"), "blah"); *)
+    ("--ll-only", Arg.Set llvm_out_only
+                , " Save only generated llvm code in out.ll, without \
+                    building binary");
+    ("-o"       , Arg.Set_string output_path
+                , "<file> Place the output binary into <file>");
+  ] |> Arg.align
+
+let compile src =
+  (* printf "got src\n:%s\n" src; *)
+  let (Prog prog) = Parser.prog_of_string (src ^ "\n") in
+  let ll_code = gen_llvm prog in
+  if !llvm_out_only
+  then
+    BatFile.with_file_out "out.ll" (flip BatInnerIO.write_string ll_code);
+    printf "Saved generated LLVM IR code to out.ll successfully.\n"
+
 let _ =
+  (* parse command line arguments and display help *)
+  Arg.parse specs (fun x ->
+    if !input_path <> ""
+    then raise (Arg.Bad ("Unknown argument: " ^ x))
+    else input_path := x
+  ) usage;
+
+  (* printf "input path: %s" !input_path; *)
+  (* exit 0; *)
   (* enable pretty error messages *)
+  (* let src = BatFile.lines_of !input_path
+            |> BatEnum.fold (fun s l -> s ^ "\n" ^ l) "" in *)
+
   Parser.pp_exceptions ();
   Llvm.enable_pretty_stacktrace ();
+
+  BatFile.with_file_in !input_path (BatInnerIO.read_all %> compile);
+  flush_all ();
+  exit 0 |> ignore;
 
   let src =
 "
@@ -249,6 +288,5 @@ let main () : int =
   let (Prog prog) = Parser.prog_of_string src in
   (* printf "Ast:\n%s\n" (show_program (Prog prog));
   flush_all (); *)
-  compile_to_llvm prog
-  |> printf "%s\n";
+  gen_llvm prog |> printf "%s\n";
   flush_all ()
