@@ -5,16 +5,16 @@ open OUnit
 
 let tests = "parser" >:::
 [
-  "\n\tlet \n\tand same line var \n\tand vars or literals in next indented lines" >:: (fun () -> 
-    let src = 
+  "\n\tlet \n\tand same line var \n\tand vars or literals in next indented lines" >:: (fun () ->
+    let src =
 "
 let fn (a : string) b = a
   fn
   2
   a
 
-"   in 
-    let prog = 
+"   in
+    let prog =
       (Ast.Prog
         [(Ast.LetExp (("fn", None), [("a", (Some "string")); ("b", None)],
             (Some (Ast.VarExp "a")),
@@ -24,19 +24,19 @@ let fn (a : string) b = a
     in assert_equal (Parser.prog_of_string src) prog
   );
 
-  "\n\tlet \n\tand vars or literals or applications in next indented lines" >:: (fun () -> 
-    let src = 
-"   
+  "\n\tlet \n\tand vars or literals or applications in next indented lines" >:: (fun () ->
+    let src =
+"
 let fn a (b : int) : string =
     fn a b
     bbbb
     aa
-    
+
     3
     fn 2
 
-"   in 
-    let prog = 
+"   in
+    let prog =
       (Ast.Prog
         [(Ast.LetExp (("fn", (Some "string")), [("a", None); ("b", (Some "int"))],
             None,
@@ -48,13 +48,13 @@ let fn a (b : int) : string =
                         None))
                     ])
             ))
-          ]) 
+          ])
     in assert_equal (Parser.prog_of_string src) prog
   );
 
-  "complex program (multiple lets with infix op and application)" >:: (fun () -> 
-    let src = 
-" 
+  "complex program (multiple lets with infix op and application)" >:: (fun () ->
+    let src =
+"
 let fn a b =
     (fn2 a b)
       a b
@@ -71,9 +71,9 @@ let adder a b c =
   adder a b
 
 a + b + 2
-"     
-    in 
-    let prog = 
+"
+    in
+    let prog =
       (Ast.Prog
         [(Ast.LetExp (("fn", None), [("a", None); ("b", None)], None,
             (Some [(Ast.AppExp (

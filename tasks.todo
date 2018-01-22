@@ -67,7 +67,7 @@ Bugs:
 
 Other:
     ❑ Tests! @critical
-    ❑ source code compiler @high @today
+    ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
     ❑ interpreter @optional
     ❑ handle infix operators of different priority
