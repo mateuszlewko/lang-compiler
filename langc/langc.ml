@@ -186,12 +186,10 @@ let new size : int array =
 
 let my_arr : int array = (new 100)
 
-let rec add_one x n : aa =
+let rec add_one x n =
   if n = 0
   then x
   else (add_one (1 + x) (n - 1))
-
-let =
 
 let main () : int =
   ll_putint (add_one 0 100000000)

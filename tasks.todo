@@ -28,7 +28,6 @@ Parser:
     ❑ function (pattern matching)
     ❑ algebraic types (unions / variants)
 
-
 Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
     ✔ if-then-else @done(18-01-15 21:21)
@@ -66,12 +65,9 @@ Bugs:
     ❑ functions with same name should overwrite previous declarations @critical
     ❑ if-then-elif-else should accept complex expression and indented expressions
 
-Syntactic check:
-    ❑ types @high
-
 Other:
     ❑ Tests! @critical
-    ❑ source code compiler @high
+    ❑ source code compiler @high @today
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
     ❑ interpreter @optional
     ❑ handle infix operators of different priority

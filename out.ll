@@ -216,11 +216,6 @@ calls_to_top_vals:
   store i32 (i32)* %ret24, i32 (i32)** @retfun_val
   %ret25 = call [0 x i32]* @my_arr()
   store [0 x i32]* %ret25, [0 x i32]** @my_arr_val
-  %malloccall = tail call i8* @malloc(i32 trunc (i64 mul nuw (i64 ptrtoint (i32* getelementptr (i32, i32* null, i32 1) to i64), i64 2) to i32))
-  %malloc_tmp = bitcast i8* %malloccall to [2 x i32]*
-  store [2 x i32] [i32 1, i32 3], [2 x i32]* %malloc_tmp
-  %ptr32 = bitcast [2 x i32]* %malloc_tmp to [0 x i32]*
-  %extr_val = getelementptr [0 x i32], [0 x i32]* %ptr32, i32 1
   br label %entry
 
 entry:                                            ; preds = %calls_to_top_vals

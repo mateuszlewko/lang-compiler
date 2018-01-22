@@ -273,27 +273,7 @@ and insert_top_vals env =
         Option.iter g_var (fun g_var -> build_store ret_val g_var.ll builder
                                         |> ignore)
     );
-    let el = const_int (i32_type env.ctx) 3 in
-    let el1 = const_int (i32_type env.ctx) 1 in
-    (* let v =
-    build_bitcast (const_array (i32_type env.ctx) [|el; el|])
-                  (i32_type env.ctx |> pointer_type)
-                  "bit_arr"
-                  builder  in *)
-    let arr = (const_array (i32_type env.ctx) [|el1; el|]) in
-    let arr_size = size_of (type_of arr) in
-    let arr_ptr = build_malloc (type_of arr) "malloc_tmp" builder in
-    build_store arr arr_ptr builder |> ignore;
-    let res_ptr =
-      build_pointercast arr_ptr (array_type (i32_type env.ctx) 0 |> pointer_type) "ptr32" builder in
-    build_gep res_ptr [|el1|] "extr_val" builder;
-    (* build_array_malloc (type_of arr) arr
-     "ss" builder |> ignore; *)
-    (* build_load v "res" builder |> ignore; *)
     build_br entry_bb builder |> ignore
-
-(* and gen_builtin_funcs env = *)
-
 
 and gen_prog ?(module_name="interactive") top_lvl_exprs =
   let env = Env.create module_name in
