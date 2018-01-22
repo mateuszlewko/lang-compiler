@@ -11,6 +11,11 @@ let arr =
 
 let fn () = 4 + 5
 
+let fn11  =
+    let x = printfn "Does it print?"
+
+    12
+
 let fn2 = fn a
 
 module A =

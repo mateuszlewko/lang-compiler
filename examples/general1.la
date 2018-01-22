@@ -95,6 +95,16 @@ let rec add_one x n =
   then x
   else (add_one (1 + x) (n - 1))
 
+let fn111112 : int =
+  let xxx : int =
+    ll_putint 11111111
+    ll_print_line ()
+    0
+
+  ll_putint 222222
+  ll_print_line ()
+  5
+
 let main () : int =
   ll_putint (add_one 0 100000000)
   ll_print_line ()
