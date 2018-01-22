@@ -2,7 +2,7 @@
 
 (executable
  ((name langc)
-  (libraries (core batteries lang_compiler))
+  (libraries (core batteries lang_compiler llvm.analysis))
 ))
 
 (alias

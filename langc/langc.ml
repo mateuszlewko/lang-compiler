@@ -6,6 +6,17 @@ open BatPervasives
 open Ast
 open Codegen
 
+let compile_to_llvm prog =
+  try
+    let llval, env = gen_prog prog in
+    string_of_llmodule env.llmod
+  with Failure msg ->
+    printf "Compilation failed. \nFailure:\n\t%s" msg;
+    ""
+  | e ->
+    printf "Compilation failed with unknown error!";
+    raise e
+
 let _ =
   (* enable pretty error messages *)
   Parser.pp_exceptions ();
@@ -175,16 +186,17 @@ let new size : int array =
 
 let my_arr : int array = (new 100)
 
-let rec add_one x n =
+let rec add_one x n : aa =
   if n = 0
   then x
   else (add_one (1 + x) (n - 1))
 
+let =
+
 let main () : int =
-  ll_putint (add_one 0 1000000000)
+  ll_putint (add_one 0 100000000)
   ll_print_line ()
 
-  (*
   set_ith my_arr 78 108
   ll_putint (get_ith my_arr 78)
   ll_print_line ()
@@ -231,7 +243,7 @@ let main () : int =
   ll_print_line ()
 
   ll_putint 104
-  ll_print_line () *)
+  ll_print_line ()
   0
 "
   in
@@ -239,8 +251,6 @@ let main () : int =
   let (Prog prog) = Parser.prog_of_string src in
   (* printf "Ast:\n%s\n" (show_program (Prog prog));
   flush_all (); *)
-
-  let llval, env = gen_prog prog in
-
-  string_of_llmodule env.llmod |> printf "%s\n";
-  flush_all ();
+  compile_to_llvm prog
+  |> printf "%s\n";
+  flush_all ()

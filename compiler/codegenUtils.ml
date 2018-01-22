@@ -87,8 +87,8 @@ let annot_to_lltype ctx ?(func_as_ptr=false) =
       end *)
     | ["()"]           -> void_type ctx
     | other            ->
-      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf " %s" %> (^) s) in
-      sprintf "Unsupported type annotation : %s" ts |> failwith
+      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf "%s " %> (^) s) in
+      sprintf "Unsupported type: %s" ts |> failwith
   in
   function
   | None     -> i32_type ctx

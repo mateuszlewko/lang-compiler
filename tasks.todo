@@ -16,9 +16,9 @@ Parser:
     ✔ extern @done(18-01-16 02:48)
     ✔ arrays @today @done(18-01-21 16:46)
     ❑ complex expression in if @today
-    ❑ lambda fun @today
     ❑ correct priority of operators
 
+    ❑ lambda fun
     ❑ lists
     ❑ record types
     ❑ mutable var
@@ -44,9 +44,9 @@ Codegen:
     ✔ operators: <=, >=, <> @high @done(18-01-21 04:27)
     ✔ array operations: new, set, get @high @today @done(18-01-21 23:08)
     ✔ array literal with ints @high  @today @done(18-01-21 22:59)
-    ❑ type checking @medium @today
     ✔ tail call @done(18-01-21 23:46)
 
+    ❑ type checking @medium
     ❑ currying @medium
     ❑ curried application @medium
     ❑ type char @medium
@@ -54,10 +54,11 @@ Codegen:
     ❑ arithmetic operations (float) @high
     ✔ entire program generation (single file) @high @done(18-01-17 11:39)
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
-    ❑ improved error handling @medium
+    ✔ improved error handling @medium @done(18-01-22 00:54)
     ❑ multi-file programs @low @optional
 
 Bugs:
+    ❑ application should accept list of simple expr
     ❑ let-value in another let expression body may not be correct
     ❑ can't reference symbols from parent module @critical
     ❑ complex expression in first line of let
