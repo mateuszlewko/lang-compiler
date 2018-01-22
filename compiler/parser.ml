@@ -3,8 +3,8 @@
 (* let ast_of_string ?pos (s : string) =
   Lexer.parse_string ?pos s Grammar.top_let *)
 
-let prog_of_string ?pos (s : string) =
-  Lexer.parse_string ?pos s Grammar.program
+let prog_of_string ?pos file_name (s : string) =
+  Lexer.parse_string ?pos ~file_name:file_name s Grammar.program
 
 (* let ast_of_file (file : string) =
   Lexer.parse_file ~file Grammar.top_let *)

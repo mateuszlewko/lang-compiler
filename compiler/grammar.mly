@@ -25,6 +25,10 @@ open Ast
 
 %%
 
+/* ending:
+  | EOF {}
+  | NEWLINE {} */
+
 program: NEWLINE*; es = top_expr+; NEWLINE*; EOF { Prog (es) }
 
 single_type_anot:
@@ -113,7 +117,7 @@ complex_expr:
   | l = letexp; NEWLINE* { l }
   | e = if_exp; NEWLINE* { e }
   | a = application; NEWLINE* { a }
-  | s = simple_expr; NEWLINE+ { s }
+  | s = simple_expr; NEWLINE* { s }
   | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
 
 external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }

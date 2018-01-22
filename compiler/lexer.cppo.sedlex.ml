@@ -198,8 +198,8 @@ let parse buf p =
   | LexError (pos, s) -> raise (LexError (pos, s))
   | _                 -> raise (ParseError (!last_token))
 
-let parse_string ?pos s p =
-  parse (LexBuffer.of_ascii_string ?pos s) p
+let parse_string ?pos ?(file_name="<n/a>") s p =
+  parse (LexBuffer.of_ascii_string ?pos s file_name) p
 
 let parse_file ~file p =
   parse (LexBuffer.of_ascii_file file) p

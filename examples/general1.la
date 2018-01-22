@@ -1,4 +1,3 @@
-
 external ll_putint : int -> ()
 external ll_print_line : () -> ()
 external ll_get_ith_elem_of_int_array : int array -> int -> int
@@ -89,6 +88,7 @@ let new size : int array =
   ll_new_int_array size
 
 let my_arr : int array = (new 100)
+let fn11 = 5
 
 let rec add_one x n =
   if n = 0

@@ -110,7 +110,7 @@ let get_var env var_name =
     if bv.of_ptr
     then build_load bv.ll "load_res" env.builder
     else bv.ll
-  | None   -> Env.print env;
+  | None   -> (*Env.print env;*)
               sprintf "Unbound variable %s" var_name
               |> failwith
 
