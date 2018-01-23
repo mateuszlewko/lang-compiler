@@ -1,7 +1,10 @@
 (* *** DISCLAIMER ***
    Code in this file is based on code from:
    https://github.com/smolkaj/ocaml-parsing/blob/master/src/Lexer.cppo.sedlex.ml
-   Modified by: Mateusz Lewko *)
+   Modified by: Mateusz Lewko
+   Added:
+     - tokenize indentation
+     - parsing tokens defines in grammar *)
 
 #include "tokens.ml"
   [@@deriving show]
@@ -125,30 +128,30 @@ and token state buf =
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
 
-  | "let" -> [LET], state
-  | "rec" -> [REC], state
-  | "if"  -> [IF], state
+  | "let"   -> [LET], state
+  | "rec"   -> [REC], state
+  | "if"    -> [IF], state
   | "else"  -> [ELSE], state
   | "elif"  -> [ELIF], state
   | "then"  -> [THEN], state
 
-  | "true" -> [BOOL true], state
+  | "true"  -> [BOOL true], state
   | "false" -> [BOOL true], state
 
   | "external" -> [EXTERNAL], state
-  | "module" -> [MODULE], state
-  | "open" -> [OPEN], state
+  | "module"   -> [MODULE], state
+  | "open"     -> [OPEN], state
 
-  | '"'  -> [QUOTE], state
-  | "->" -> [ARROW], state
-  | ';'  -> [SEMICOL], state
-  | ':'  -> [COLON], state
-  | ','  -> [COMMA], state
-  | '='  -> [EQ], state
+  | '"'   -> [QUOTE], state
+  | "->"  -> [ARROW], state
+  | ';'   -> [SEMICOL], state
+  | ':'   -> [COLON], state
+  | ','   -> [COMMA], state
+  | '='   -> [EQ], state
   | "[|"  -> [ARRAY_OPEN], state
   | "|]"  -> [ARRAY_CLOSE], state
-  | '['  -> [LBRACKET], state
-  | ']'  -> [RBRACKET], state
+  | '['   -> [LBRACKET], state
+  | ']'   -> [RBRACKET], state
 
   | operator -> [OPERATOR (ascii buf)], state
 
