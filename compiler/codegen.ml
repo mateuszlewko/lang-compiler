@@ -33,11 +33,6 @@ let rec gen_infix_op env op lhs rhs =
     let lhs_val = gen_expr env lhs |> fst in
     let rhs_val = gen_expr env rhs |> fst in
     begin
-(*
-      if is_constant lhs_val
-      then build_add (const_int (i32_type ctx 0)) lhs_val "" builder;
-           set_value_name "rhs" rhs_val; *)
-
       let build_fn, name =
         match op with
         (* operators returning int *)
@@ -161,12 +156,13 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   in let bb = append_block env.ctx "entry" fn in
 
   (* create new builder for body *)
-  let body_env   = { body_env with builder = Llvm.builder_at_end env.ctx bb } in
+  let body_env   = { body_env with builder  = Llvm.builder_at_end env.ctx bb
+                                 ; top_vals = [] } in
   let body       = Option.value body_lines ~default:[] in
   let body_exprs = Option.fold fst_line ~init:body ~f:(flip List.cons) in
 
   (* build body and return value of last expression as a value of let *)
-  let ret_val     = gen_exprs body_env fn body_exprs |> fst in
+  let ret_val, body_res_env = gen_exprs body_env fn body_exprs in
   (* env extended with new binding to generated let *)
   let ret_is_void = kind_of ret_val = TypeKind.Void in
   let env_with_let, expr_result =
@@ -182,13 +178,16 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
           Some (define_global (mod_name ^ "_val") null env.llmod)
       in
 
-      let top_val = {ll=fn; of_ptr=false}
-                  , g_var |> Option.map ~f:(fun v -> {ll=v; of_ptr=true}) in
+      let top_val = {ll = fn; of_ptr = false}
+                  , g_var |> Option.map ~f:(fun v -> {ll = v; of_ptr = true}) in
       let env     = { env with top_vals = top_val::env.top_vals } in
       let res_var = Option.value g_var ~default:undef_val in
 
       Env.add_var env name ~of_ptr:true res_var, res_var
   in
+
+  (* insert let-values into body of created function *)
+  insert_vals body_res_env fn;
 
   (* generate body and return function definition *)
   (if ret_is_void
@@ -261,11 +260,8 @@ and gen_top_levels env top_lvl_exprs =
   List.fold top_lvl_exprs ~init:(undef_val, env)
                              ~f:(fun (_, env) -> gen_top_level env)
 
-and insert_top_vals env =
-  match lookup_function "main" env.llmod with
-  | None    -> failwith "Main function (main : () -> int) is not defined."
-  | Some main ->
-    let entry_bb = entry_block main in
+and insert_vals env add_to_func =
+    let entry_bb = entry_block add_to_func in
     let bb       = insert_block env.ctx "calls_to_top_vals" entry_bb in
     let builder  = builder_at_end env.ctx bb in
 
@@ -277,6 +273,11 @@ and insert_top_vals env =
                                         |> ignore)
     );
     build_br entry_bb builder |> ignore
+
+and insert_top_vals env =
+    match lookup_function "main" env.llmod with
+  | None      -> failwith "Main function (main : () -> int) is not defined."
+  | Some main -> insert_vals env main
 
 and gen_prog ?(module_name="interactive") top_lvl_exprs =
   let env = Env.create module_name in

@@ -11,7 +11,7 @@ let arr =
 
 let fn () = 4 + 5
 
-let fn11  =
+let fn11  a =
     let x = printfn "Does it print?"
 
     12

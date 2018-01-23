@@ -57,9 +57,9 @@ Codegen:
     ❑ multi-file programs @low @optional
 
 Bugs:
-    ❑ adding int constant to variable may not work
-    ❑ application should accept list of simple expr
     ❑ let-value in another let expression body may not be correct
+    ✔ adding int constant to variable may not work @done(18-01-23 17:13)
+    ❑ application should accept list of simple expr
     ❑ can't reference symbols from parent module @critical
     ❑ complex expression in first line of let
     ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)

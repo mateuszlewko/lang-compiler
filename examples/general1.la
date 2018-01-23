@@ -99,13 +99,24 @@ let fn111112 : int =
   let xxx : int =
     ll_putint 11111111
     ll_print_line ()
+
+    let yyy : () =
+      ll_putint 333333
+      ll_print_line ()
+
     0
 
   ll_putint 222222
   ll_print_line ()
   5
 
+let addtwo x =
+  1110 - (x - 10)
+
 let main () : int =
+  ll_putint (addtwo 7)
+  ll_print_line ()
+
   ll_putint (add_one 0 100000000)
   ll_print_line ()
 

@@ -86,9 +86,8 @@ let annot_to_lltype ctx ?(func_as_ptr=false) =
                               \nTry '4 intArray' for an array of length 4."
       end *)
     | ["()"]           -> void_type ctx
-    | other            ->
-      let ts = List.fold other ~init:"" ~f:(fun s -> sprintf "%s " %> (^) s) in
-      sprintf "Unsupported type: %s" ts |> failwith
+    | other            -> BatString.concat " " other
+                          |> sprintf "Unsupported type: %s" |> failwith
   in
   function
   | None     -> i32_type ctx
