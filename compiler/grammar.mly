@@ -20,7 +20,7 @@ open Ast
 %token ARRAY_OPEN ARRAY_CLOSE
 %left OPERATOR
 
-%start <Ast.expr> top_let
+/* %start <Ast.expr> top_let */
 %start <Ast.program> program
 
 %%
@@ -57,40 +57,39 @@ module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
 
 open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 
-top_let:
+/* top_let:
   | NEWLINE; e = top_let { e }
-  | e = letexp; NEWLINE? { e }
+  | e = letexp; NEWLINE? { e } */
 
 letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
-    rett = type_anot?; EQ; e = simple_expr?;
+    rett = type_anot?; EQ; e = value_expr?;
     NEWLINE+; es = indented?
     { LetExp (is_rec, (n, rett), vs, e, es) }
 
+/* indent_cont: NEWLINE+; e = indented { e } */
+
 application:
-  | s = simple_expr; es1 = simple_expr+; option(NEWLINE);
-    es2 = indented?; NEWLINE?
-    { AppExp (s, es1, es2) }
-  | s = simple_expr; NEWLINE;
-    es2 = indented; NEWLINE?
-    { AppExp (s, [], Some es2) }
+  | s = simple_expr; es1 = simple_expr+
+    /* es2 = indent_cont?; */
+    { AppExp (s, es1, None) }
 
 infix_op:
-  | l = simple_expr; o = OPERATOR; r = simple_expr
+  | l = value_expr; o = OPERATOR; r = value_expr
     { InfixOp (o, Some l, Some r) }
-  | l = simple_expr; EQ; r = simple_expr
+  | l = value_expr; EQ; r = value_expr
     { InfixOp ("=", Some l, Some r) }
 
-else_exp: ELSE; exp = simple_expr {exp}
+else_exp: ELSE; exp = complex_expr {exp}
 
-elif_exp: ELIF; cond = simple_expr; NEWLINE*; THEN; true_ex = complex_expr;
+elif_exp: ELIF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr;
           NEWLINE? { cond, true_ex }
 
-if_exp: IF; cond = simple_expr; NEWLINE*; THEN; true_ex = complex_expr;
+if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = complex_expr;
         NEWLINE?; elif_exps = elif_exp*; else_ex = else_exp?;
         NEWLINE? { IfExp (cond, true_ex, elif_exps, else_ex) }
 
-indented: INDENT; es = complex_expr*; DEDENT { es }
+%inline indented: INDENT; es = complex_expr+; DEDENT { es }
 
 %inline white_space:
   | NEWLINE { }
@@ -112,16 +111,20 @@ literal:
 
 simple_expr:
   | l = literal { LitExp l }
+  | s = nested_sym { VarExp s }
   | i = infix_op { i }
   | LPAR; a = application; RPAR { a }
-  | s = nested_sym { VarExp s }
   | LPAR; e = simple_expr; RPAR { e }
+
+value_expr:
+  | e = application { e }
+  | e = simple_expr { e }
 
 complex_expr:
   | l = letexp; NEWLINE* { l }
   | e = if_exp; NEWLINE* { e }
-  | a = application; NEWLINE* { a }
-  | s = simple_expr; NEWLINE+ { s }
+  /* | a = application; NEWLINE* { a } */
+  | s = value_expr; NEWLINE+ { s }
   | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
 
 external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }

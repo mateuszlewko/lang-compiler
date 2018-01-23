@@ -61,8 +61,8 @@ Bugs:
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
     ❑ can't reference symbols from parent module @critical
     ❑ functions with same name should overwrite previous declarations @critical
-    ❑ application should accept list of simple expr
-    ❑ complex expression in first line of let
+    ✔ application should accept list of simple expr @done(18-01-23 23:21)
+    ❑ application in first line of let
     ❑ if-then-elif-else should accept complex expression and indented expressions
     ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
 
@@ -71,4 +71,4 @@ Other:
     ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
     ❑ interpreter @optional
-    ❑ handle infix operators of different priority
+    ❑ handle infix operators of different priority @high
