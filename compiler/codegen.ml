@@ -40,18 +40,19 @@ let rec gen_infix_op env op lhs rhs =
 
       let build_fn, name =
         match op with
+        (* operators returning int *)
         | "+"   -> build_add , "add_tmp"
         | "-"   -> build_sub , "sub_tmp"
         | "*"   -> build_mul , "mul_tmp"
         | "/"   -> build_sdiv, "div_tmp"
-
+        (* operators returning bool *)
         | "="   -> build_icmp Icmp.Eq , "eq_cmp"
         | "<"   -> build_icmp Icmp.Slt, "slt_cmp"
         | "<="  -> build_icmp Icmp.Sle, "sle_cmp"
         | ">"   -> build_icmp Icmp.Sgt, "sgt_cmp"
         | ">="  -> build_icmp Icmp.Sge, "sgt_cmp"
         | "<>"  -> build_icmp Icmp.Ne , "ne_cmp"
-
+        (* raise when operator is unknown *)
         | other -> sprintf "Unsupported operator: %s" other |> failwith
       in build_fn lhs_val rhs_val name env.builder
     end
