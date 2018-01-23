@@ -115,8 +115,14 @@ let addtwo x =
   1110 - (x - 10) + 10 +20
 
 let main () : int =
+     (*
+  if fn111112 0 = 5
+  then ll_putint 919
+  *)
   fn111112 1
   fn111112 2
+
+  ll_print_line ()
 
   ll_putint (addtwo 7)
   ll_print_line ()

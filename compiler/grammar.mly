@@ -31,6 +31,10 @@ open Ast
 
 program: NEWLINE*; es = top_expr+; NEWLINE*; EOF { Prog (es) }
 
+empty_line:
+  | NEWLINE                     { }
+  | INDENT; empty_line*; DEDENT { }
+
 single_type_anot:
   | UNIT { "()" }
   | i = INT { string_of_int i }
@@ -79,10 +83,10 @@ infix_op:
 
 else_exp: ELSE; exp = simple_expr {exp}
 
-elif_exp: ELIF; cond = simple_expr; NEWLINE*; THEN; true_ex = simple_expr;
+elif_exp: ELIF; cond = simple_expr; NEWLINE*; THEN; true_ex = complex_expr;
           NEWLINE? { cond, true_ex }
 
-if_exp: IF; cond = simple_expr; NEWLINE*; THEN; true_ex = simple_expr;
+if_exp: IF; cond = simple_expr; NEWLINE*; THEN; true_ex = complex_expr;
         NEWLINE?; elif_exps = elif_exp*; else_ex = else_exp?;
         NEWLINE? { IfExp (cond, true_ex, elif_exps, else_ex) }
 
@@ -117,7 +121,7 @@ complex_expr:
   | l = letexp; NEWLINE* { l }
   | e = if_exp; NEWLINE* { e }
   | a = application; NEWLINE* { a }
-  | s = simple_expr; NEWLINE* { s }
+  | s = simple_expr; NEWLINE+ { s }
   | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
 
 external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }

@@ -59,12 +59,12 @@ Codegen:
 Bugs:
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
-    ❑ application should accept list of simple expr
     ❑ can't reference symbols from parent module @critical
-    ❑ complex expression in first line of let
-    ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
     ❑ functions with same name should overwrite previous declarations @critical
+    ❑ application should accept list of simple expr
+    ❑ complex expression in first line of let
     ❑ if-then-elif-else should accept complex expression and indented expressions
+    ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
 
 Other:
     ❑ Tests! @critical

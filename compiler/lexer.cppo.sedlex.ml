@@ -91,29 +91,33 @@ let rec indentation state buf =
   match%sedlex buf with
   | space   -> indentation { state with level = state.level + 1 } buf
   | newline -> indentation { state with level = 0 } buf
+  | "(*"    -> let state = comment 1 { state with level = state.level + 2 } buf
+               in indentation state buf
   | _       -> end_of_indent buf state
 
 (* swallows whitespace and comments *)
-and garbage buf =
+and garbage state buf =
   match%sedlex buf with
-  | Plus blank -> garbage buf
-  | "(*"       -> comment 1 buf
-  | _          -> ()
+  | blank -> garbage { state with level = state.level + 1 } buf
+  | "(*"  -> comment 1 { state with level = state.level + 2 } buf
+  | _     -> state
 
 (* nested comments *)
-and comment depth buf =
+and comment depth state buf =
   if depth = 0
-  then garbage buf
-  else match%sedlex buf with
-       | eof  -> failwith buf "Unterminated comment at end of file."
-       | "(*" -> comment (depth + 1) buf
-       | "*)" -> comment (depth - 1) buf
-       | any  -> comment depth buf
-       | _    -> assert false
+  then garbage state buf
+  else let state2 = { state with level = state.level + 2 } in
+       match%sedlex buf with
+       | eof     -> failwith buf "Unterminated comment at end of file."
+       | "(*"    -> comment (depth + 1) state2 buf
+       | "*)"    -> comment (depth - 1) state2 buf
+       | newline -> comment depth { state with level = 0} buf
+       | any     -> comment depth { state with level = state.level + 1 } buf
+       | _       -> assert false
 
 (* returns the next token *)
 and token state buf =
-  garbage buf;
+  let state = garbage state buf in
 
   match%sedlex buf with
   | eof -> [EOF], state
@@ -164,7 +168,7 @@ and token state buf =
 
 (* wrapper around `token` that records start and end locations *)
 let loc_token state buf =
-  let () = garbage buf in (*  dispose of garbage before recording start location *)
+  let state = garbage state buf in (*  dispose of garbage before recording start location *)
   let loc_start = next_loc buf in
   let ts, state = token state buf in
   let loc_end   = next_loc buf in
