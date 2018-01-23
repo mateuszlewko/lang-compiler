@@ -44,7 +44,7 @@ empty_line:
 
 single_type_anot:
   | UNIT { "()" }
-  | i = INT { string_of_int i }
+  /* | i = INT { string_of_int i } */
   | ts = SYMBOL { ts }
 
 nested_sym:

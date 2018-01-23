@@ -114,7 +114,18 @@ let fn111112 x : int =
 let addtwo x =
   1110 - (x - 10) + 10 +20
 
+let bool2int (b : bool) =
+  if b
+  then 1
+  else 100008
+
 let main () : int =
+
+  ll_putint (bool2int true)
+  ll_print_line ()
+
+  ll_putint (bool2int false)
+  ll_print_line ()
 
   if fn111112 0 = 6
   then 
@@ -127,6 +138,7 @@ let main () : int =
     ll_putint 921
     let xel : () = ll_putint 6
     3
+  else 0
 
 
   fn111112 1

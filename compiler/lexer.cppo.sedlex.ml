@@ -140,7 +140,7 @@ and token state buf =
   | "then"  -> [THEN], state
 
   | "true"  -> [BOOL true], state
-  | "false" -> [BOOL true], state
+  | "false" -> [BOOL false], state
 
   | "external" -> [EXTERNAL], state
   | "module"   -> [MODULE], state

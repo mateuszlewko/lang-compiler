@@ -1,2 +1,20 @@
-let aaaaaa : () =
-  ll_putint 3 4
+external ll_putint : int -> ()
+external ll_print_line : () -> ()
+external ll_get_ith_elem_of_int_array : int array -> int -> int
+external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+external ll_new_int_array : int -> int array
+
+let bool2int (b : bool) =
+  if b
+  then 1
+  else 0
+
+let main () : int =
+
+  ll_putint (bool2int true)
+  ll_print_line ()
+
+  ll_putint (bool2int false)
+  ll_print_line ()
+
+  0

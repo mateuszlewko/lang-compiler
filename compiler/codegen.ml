@@ -47,6 +47,8 @@ let rec gen_infix_op env op lhs rhs =
         | ">"   -> build_icmp Icmp.Sgt, "sgt_cmp"
         | ">="  -> build_icmp Icmp.Sge, "sgt_cmp"
         | "<>"  -> build_icmp Icmp.Ne , "ne_cmp"
+        | "&&"  -> build_and, "and_cmp"
+        | "||"  -> build_or , "and_cmp"
         (* raise when operator is unknown *)
         | other -> sprintf "Unsupported operator: %s" other |> failwith
       in build_fn lhs_val rhs_val name env.builder

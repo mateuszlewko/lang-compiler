@@ -7,7 +7,8 @@ type type_declaration =
   | RecordType of record_declaration
   [@@deriving show]
 
-  (* type a1 t1 -> t2 -> ... -> tn is represented as a list [[a1; t1]; [t2]; ...; [tn]] *)
+(* type a1 t1 -> a2 t2 -> ... -> tn is represented as a list [[a1; t1];
+                                                  [[a2; t2]; ...; [tn]] *)
 type type_annot = string list list
 [@@deriving show]
 (* Type is either Some type, or none which means it's integer *)
