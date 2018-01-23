@@ -182,18 +182,20 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
                   , g_var |> Option.map ~f:(fun v -> {ll = v; of_ptr = true}) in
       let env     = { env with top_vals = top_val::env.top_vals } in
       let res_var = Option.value g_var ~default:undef_val in
+      (* Generate call to let-value and store result.
+         This won't generate any code for top-level let (which is fine). *)
+      let ret_name = if Option.is_some g_var then "ret" else "" in
+      let ret_val  = build_call fn [||] ret_name env.builder in
+      Option.iter g_var (fun g_var -> build_store ret_val g_var env.builder
+                                      |> ignore);
 
       Env.add_var env name ~of_ptr:true res_var, res_var
   in
 
-  (* insert let-values into body of created function *)
-  insert_vals body_res_env fn;
-
   (* generate body and return function definition *)
-  (if ret_is_void
-   then build_ret_void body_env.builder
-   else build_ret ret_val body_env.builder)
-  |> ignore;
+  let _ = if ret_is_void
+          then build_ret_void body_env.builder
+          else build_ret ret_val body_env.builder in
 
   expr_result, env_with_let
 

@@ -95,14 +95,15 @@ let rec add_one x n =
   then x
   else (add_one (1 + x) (n - 1))
 
-let fn111112 : int =
+let fn111112 x : int =
   let xxx : int =
     ll_putint 11111111
     ll_print_line ()
 
-    let yyy : () =
+    let yyy : int =
       ll_putint 333333
       ll_print_line ()
+      3
 
     0
 
@@ -111,9 +112,12 @@ let fn111112 : int =
   5
 
 let addtwo x =
-  1110 - (x - 10)
+  1110 - (x - 10) + 10 +20
 
 let main () : int =
+  fn111112 1
+  fn111112 2
+
   ll_putint (addtwo 7)
   ll_print_line ()
 
