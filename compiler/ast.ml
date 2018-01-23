@@ -22,6 +22,7 @@ type expr =
   | InfixOp of string * expr option * expr option
           (* cond   then    elif elif-then      else *)
   | IfExp of expr * expr * (expr * expr) list * expr option
+  | Exprs of expr list
   [@@deriving show]
 
 and literal =

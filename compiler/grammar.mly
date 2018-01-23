@@ -1,6 +1,13 @@
 %{
 open Core
 open Ast
+
+let to_exps fst_line rest = 
+  let exps = Option.value rest ~default:[] in
+  let exps = match fst_line with 
+                  | None   -> exps 
+                  | Some e -> e::exps
+  in Exprs exps
 %}
 
 %token <string> SYMBOL
@@ -64,7 +71,7 @@ open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
     rett = type_anot?; EQ; e = value_expr?;
-    NEWLINE+; es = indented?
+    NEWLINE*; es = indented?
     { LetExp (is_rec, (n, rett), vs, e, es) }
 
 /* indent_cont: NEWLINE+; e = indented { e } */
@@ -80,14 +87,17 @@ infix_op:
   | l = value_expr; EQ; r = value_expr
     { InfixOp ("=", Some l, Some r) }
 
-else_exp: ELSE; exp = complex_expr {exp}
+else_exp: ELSE; exp = value_expr?; NEWLINE*; exps = indented?
+          { to_exps exp exps }
 
-elif_exp: ELIF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr;
-          NEWLINE? { cond, true_ex }
+elif_exp: ELIF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
+          NEWLINE*; true_exps = indented? 
+          { cond, to_exps true_ex true_exps }
 
-if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = complex_expr;
-        NEWLINE?; elif_exps = elif_exp*; else_ex = else_exp?;
-        NEWLINE? { IfExp (cond, true_ex, elif_exps, else_ex) }
+if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
+        NEWLINE*; true_exps = indented? NEWLINE*; elif_exps = elif_exp*; 
+        else_ex = else_exp?; NEWLINE? 
+        { IfExp (cond, to_exps true_ex true_exps, elif_exps, else_ex) }
 
 %inline indented: INDENT; es = complex_expr+; DEDENT { es }
 

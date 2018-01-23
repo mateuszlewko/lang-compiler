@@ -162,7 +162,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let body_exprs = Option.fold fst_line ~init:body ~f:(flip List.cons) in
 
   (* build body and return value of last expression as a value of let *)
-  let ret_val, body_res_env = gen_exprs body_env fn body_exprs in
+  let ret_val, body_res_env = gen_exprs body_env body_exprs in
   (* env extended with new binding to generated let *)
   let ret_is_void = kind_of ret_val = TypeKind.Void in
   let env_with_let, expr_result =
@@ -199,7 +199,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
 
   expr_result, env_with_let
 
-and gen_exprs env let_block =
+and gen_exprs env =
   function
   | []    -> failwith "Let body can't be empty"
   | e::es -> let llval, env = gen_expr env e in
@@ -235,6 +235,7 @@ and gen_expr env =
   | IfExp (cond, then_exp, elif_exps, else_exp) ->
     gen_if_with_elif env cond then_exp elif_exps else_exp, env
   | VarExp var_name -> get_var env var_name, env
+  | Exprs exps -> gen_exprs env exps
 
 and gen_extern env name tp =
   let ftype = annot_to_lltype env.ctx (Some tp) in

@@ -116,8 +116,18 @@ let addtwo x =
 
 let main () : int =
 
-  if fn111112 0 = 5
-  then ll_putint 919
+  if fn111112 0 = 6
+  then 
+    ll_putint 919
+    ll_putint 919
+    3
+  elif fn111112 0 = 5
+  then 
+    ll_putint 920
+    ll_putint 921
+    let xel : () = ll_putint 6
+    3
+
 
   fn111112 1
   fn111112 2
