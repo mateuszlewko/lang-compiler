@@ -114,7 +114,7 @@ let get_var env var_name =
               sprintf "Unbound variable %s" var_name
               |> failwith
 
-let open_expr env path =
+let gen_open env path =
   let merge ~key = function
                    | `Both (l, r)       -> Some r
                    | `Left x | `Right x -> Some x in

@@ -241,16 +241,18 @@ and gen_extern env name tp =
   let env = Env.add_var env name fn in
   fn, env
 
+and gen_module env name exprs =
+  let inner_env = { env with mod_prefix = env.mod_prefix ^ name ^ "."} in
+  let llval, inner_env = gen_top_levels inner_env exprs in
+  llval, { inner_env with mod_prefix  = env.mod_prefix
+                        ; opened_vals = env.opened_vals }
+
 and gen_top_level env =
   function
   | Expr e            -> gen_expr env e
   | Extern (name, tp) -> gen_extern env name tp
-  | Module (name, es) ->
-    let inner_env = { env with mod_prefix = env.mod_prefix ^ name ^ "."} in
-    let llval, inner_env = gen_top_levels inner_env es in
-    llval, { inner_env with mod_prefix  = env.mod_prefix
-                          ; opened_vals = env.opened_vals }
-  | Open path         -> open_expr env path
+  | Open path         -> gen_open env path
+  | Module (name, es) -> gen_module env name es
   | other             -> show_top_level other
                          |> sprintf "Unsupported top level expression: %s"
                          |> failwith
