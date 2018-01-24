@@ -91,8 +91,8 @@ let annot_to_lltype ctx ?(func_as_ptr=false) =
   in
   function
   | None     -> i32_type ctx
-                (* TODO: FIXME: This will probably be incorrect when I start
-                                implementing currying *)
+                (* TODO: This will probably be incorrect when I start
+                         implementing currying *)
   | Some []  -> failwith "Empty type (??)"
   | Some [t] -> single_type t
   | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
@@ -109,7 +109,7 @@ let get_var env var_name =
     if bv.of_ptr
     then build_load bv.ll "load_res" env.builder
     else bv.ll
-  | None   -> Env.print env;
+  | None   -> (*Env.print env;*)
               sprintf "Unbound variable %s" var_name
               |> failwith
 
