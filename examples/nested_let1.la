@@ -35,6 +35,20 @@ module Prelude =
 
 open Prelude
 
-let main () : int =
+module A =
 
+  let fn1 : () =
+    printin 1
+  
+    let x : () = printin 2
+                 printin 3 
+
+    printin 4 
+
+    let dontprint arg : () = 
+      printin 9999
+
+    printin 5
+
+let main () : int =
   0

@@ -18,15 +18,15 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ❑ correct priority of operators
 
-    ❑ lambda fun
-    ❑ lists
-    ❑ record types
-    ❑ mutable var
-    ❑ tuples
-    ❑ tuples pattern matching
-    ❑ match (...) with (...)
-    ❑ function (pattern matching)
-    ❑ algebraic types (unions / variants)
+  /  ❑ lambda fun
+  /  ❑ lists
+  /  ❑ record types
+  /  ❑ mutable var
+  /  ❑ tuples
+  /  ❑ tuples pattern matching
+  /  ❑ match (...) with (...)
+  /  ❑ function (pattern matching)
+  /  ❑ algebraic types (unions / variants)
 
 Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)
@@ -45,18 +45,19 @@ Codegen:
     ✔ array literal with ints @high  @today @done(18-01-21 22:59)
     ✔ tail call @done(18-01-21 23:46)
 
-    ❑ type checking @medium
-    ❑ currying @medium
-    ❑ curried application @medium
-    ❑ type char @medium
-    ❑ type float @medium
-    ❑ arithmetic operations (float) @medium
-    ✔ entire program generation (single file) @high @done(18-01-17 11:39)
-    ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
-    ✔ improved error handling @medium @done(18-01-22 00:54)
-    ❑ multi-file programs @low @optional
+  /  ❑ type checking @medium
+  /  ❑ currying @medium
+  /  ❑ curried application @medium
+  /  ❑ type char @medium
+  /  ❑ type float @medium
+  /  ❑ arithmetic operations (float) @medium
+  /  ✔ entire program generation (single file) @high @done(18-01-17 11:39)
+  /  ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
+  /  ✔ improved error handling @medium @done(18-01-22 00:54)
+  /  ❑ multi-file programs @low @optional
 
 Bugs:
+    ❑ nested functions can't access values from outer scope (not global) @critical
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
     ✔ can't reference symbols from parent module @critical @done(18-01-24 01:01)
@@ -70,5 +71,5 @@ Other:
     ❑ Tests! @critical
     ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
-    ❑ interpreter @optional
-    ❑ handle infix operators of different priority @high
+  /  ❑ interpreter @optional
+  /  ❑ handle infix operators of different priority @optional

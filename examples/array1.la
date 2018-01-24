@@ -36,5 +36,12 @@ module Prelude =
 open Prelude
 
 let main () : int =
+  let ar : int array = Array.new 10
+  Array.set ar 0 1
+  Array.set ar 1 2
+  Array.set ar 2 4
+  Array.set ar 0 9
+
+  Array.printn ar 10
 
   0
