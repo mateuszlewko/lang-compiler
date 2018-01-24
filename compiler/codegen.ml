@@ -148,7 +148,7 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
     Array.foldi (params fn) ~init:env ~f:(
       fun i env arg ->
         let name = fst args.(i) in
-        set_value_name (Env.name_of env name) arg;
+        set_value_name name arg;
         Env.add_var env name arg
       )
     |> fun env ->

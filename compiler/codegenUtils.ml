@@ -41,9 +41,9 @@ struct
 
   (* Print named_vals and opened_vals from environment *)
   let print env =
-    printf "Env:\nnamed_vals";
+    printf "Env:\nnamed_vals\n";
     StrMap.iter_keys env.named_vals ~f:(printf "+ %s\n");
-    printf "Env:\nopened_vals";
+    printf "opened_vals\n";
     StrMap.iter_keys env.opened_vals ~f:(printf "* %s\n");
     printf "\n";
     flush_all ()
@@ -51,7 +51,7 @@ struct
   let name_of env raw_name = env.mod_prefix ^ raw_name
 
   let find_bound_var env name =
-    match StrMap.find env.opened_vals (name_of env name) with
+    match StrMap.find env.opened_vals name with
     | None  -> StrMap.find env.named_vals (name_of env name)
     | other -> other
 
@@ -61,9 +61,9 @@ struct
   let add_var env raw_name ?(of_ptr=false) var =
     let name    = name_of env raw_name in
     let var     = { ll = var; of_ptr = of_ptr } in
-    let add map = StrMap.set map ~key:name ~data:var in
-    { env with named_vals  = add env.named_vals
-             ; opened_vals = add env.opened_vals }
+    let add map name = StrMap.set map ~key:name ~data:var in
+    { env with named_vals  = add env.named_vals name
+             ; opened_vals = add env.opened_vals raw_name }
 end
 
 let skip_void_vals =
@@ -109,7 +109,7 @@ let get_var env var_name =
     if bv.of_ptr
     then build_load bv.ll "load_res" env.builder
     else bv.ll
-  | None   -> (*Env.print env;*)
+  | None   -> Env.print env;
               sprintf "Unbound variable %s" var_name
               |> failwith
 

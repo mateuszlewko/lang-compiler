@@ -1,0 +1,38 @@
+(* This file can be used as a template for further testing *)
+
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+
+  let ln () : () = ll_print_line ()
+
+  let printi x : () = ll_putint x
+
+  let printin x : () = ll_putint x
+                       ln () 
+
+  module Array = 
+    let new size : int array = 
+      ll_new_int_array size
+
+    let set (arr : int array) ix elem : () = 
+      ll_set_ith_elem_of_int_array  arr ix elem
+
+    let get (arr : int array) ix = 
+      ll_get_ith_elem_of_int_array arr ix
+
+    let printn (arr : int array) size : () = 
+      let rec aux pos left : () = 
+        if left = 0 
+        then ln ()
+        else printin (get arr pos)
+             aux (pos + 1) (left - 1)
+
+      aux 0 size
+
+let main () : int =
+
+  0
