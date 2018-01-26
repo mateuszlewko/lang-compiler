@@ -16,7 +16,7 @@ Parser:
     ✔ extern @done(18-01-16 02:48)
     ✔ arrays @today @done(18-01-21 16:46)
     ✔ complex expression in if @today @done(18-01-24 00:44)
-    ❑ correct priority of operators
+    ✔ correct priority of operators @done(18-01-26 23:17)
 
   /  ❑ lambda fun
   /  ❑ lists

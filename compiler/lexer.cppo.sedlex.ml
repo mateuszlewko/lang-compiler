@@ -157,6 +157,19 @@ and token state buf =
   | '['   -> [LBRACKET], state
   | ']'   -> [RBRACKET], state
 
+  | "&&" -> [AND], state
+  | "||" -> [OR], state
+  | "<=" -> [LEQ], state
+  | '<'  -> [LE], state
+  | '>'  -> [GE], state
+  | ">=" -> [GEQ], state
+  | '='  -> [EQ], state
+  | "<>" -> [NEQ], state
+  | '+'  -> [PLUS], state
+  | '-'  -> [MINUS], state
+  | '*'  -> [MULT], state
+  | '/'  -> [DIV], state
+
   | operator -> [OPERATOR (ascii buf)], state
 
   | decnum -> [INT (ascii buf |> int_of_string)], state

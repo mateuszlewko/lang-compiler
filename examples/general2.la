@@ -68,6 +68,8 @@ let rec repeat (fn : () -> ()) times : () =
     fn ()
     repeat fn (dec times)
 
+let mult2 x = x * 2
+
 let main () : int =
 
   repeat printer2 10
@@ -76,5 +78,12 @@ let main () : int =
 
   Array.printn global_arr 3
 
+  ln ()
+
+  printin (2 * 2 + 2)
+  printin (2 + 2 * 2)
+
+  printin (2 + mult2 2)
+  printin (mult2 2 + 2)
 
   0

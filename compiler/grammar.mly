@@ -27,6 +27,12 @@ let to_exps fst_line rest =
 %token ARRAY_OPEN ARRAY_CLOSE
 %left OPERATOR
 
+%token LEQ GEQ LE GE NEQ PLUS MINUS DIV MULT AND OR
+%left AND OR
+%left LEQ GEQ EQ LE GE NEQ 
+%left PLUS MINUS
+%left DIV MULT
+
 /* %start <Ast.expr> top_let */
 %start <Ast.program> program
 
@@ -81,11 +87,26 @@ application:
     /* es2 = indent_cont?; */
     { AppExp (s, es1, None) }
 
+%inline oper:
+  | AND { "&&" }
+  | OR { "||" }
+  | LEQ { "<=" }
+  | LE { "<" }
+  | GE { ">" }
+  | GEQ { ">=" }
+  | EQ { "=" }
+  | NEQ { "<>" }
+  | PLUS { "+"}
+  | MINUS { "-"}
+  | MULT { "*"}
+  | DIV { "/"}
+  | o = OPERATOR { o }
+
 infix_op:
-  | l = value_expr; o = OPERATOR; r = value_expr
+  | l = value_expr; o = oper; r = value_expr
     { InfixOp (o, Some l, Some r) }
-  | l = value_expr; EQ; r = value_expr
-    { InfixOp ("=", Some l, Some r) }
+  /* | l = value_expr; EQ; r = value_expr
+    { InfixOp ("=", Some l, Some r) } */
 
 else_exp: ELSE; exp = value_expr?; NEWLINE*; exps = indented?
           { to_exps exp exps }
@@ -127,8 +148,8 @@ simple_expr:
   | LPAR; e = simple_expr; RPAR { e }
 
 value_expr:
-  | e = application { e }
   | e = simple_expr { e }
+  | e = application { e }
 
 complex_expr:
   | l = letexp; NEWLINE* { l }
