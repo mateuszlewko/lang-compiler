@@ -143,23 +143,29 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let ftype = function_type ret_type arg_types in
   let fn    = declare_function (Env.name_of env name) ftype env.llmod in
 
+  let bb = append_block env.ctx "entry" fn in
+
+  (* create new builder for body *)
+  let body_env = { env with builder = Llvm.builder_at_end env.ctx bb
+                                    ; top_vals = [] } in
+
   (* name arguments for later use in let's scope *)
   let body_env =
-    Array.foldi (params fn) ~init:env ~f:(
+    Array.foldi (params fn) ~init:body_env ~f:(
       fun i env arg ->
         let name = fst args.(i) in
         set_value_name name arg;
-        Env.add_var env name arg
+
+        let null = const_null (type_of arg) in
+        let g_arg = define_global ("g_arg_" ^ name) null env.llmod in
+        build_store arg g_arg env.builder |> ignore;
+        Env.add_var env name g_arg ~of_ptr:true
       )
     |> fun env ->
         if is_rec (* add binding to currently created let inside body *)
         then Env.add_var env name fn
         else env
-  in let bb = append_block env.ctx "entry" fn in
-
-  (* create new builder for body *)
-  let body_env   = { body_env with builder  = Llvm.builder_at_end env.ctx bb
-                                 ; top_vals = [] } in
+  in
   let body       = Option.value body_lines ~default:[] in
   let body_exprs = Option.fold fst_line ~init:body ~f:(flip List.cons) in
 

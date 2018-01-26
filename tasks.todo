@@ -57,7 +57,7 @@ Codegen:
   /  ❑ multi-file programs @low @optional
 
 Bugs:
-    ❑ nested functions can't access values from outer scope (not global) @critical
+    ✔ nested functions can't access values from outer scope (not global) @critical @done(18-01-26 22:35)
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
     ✔ can't reference symbols from parent module @critical @done(18-01-24 01:01)
