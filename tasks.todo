@@ -61,7 +61,7 @@ Bugs:
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
     ✔ can't reference symbols from parent module @critical @done(18-01-24 01:01)
-    ❑ functions with same name should overwrite previous declarations @critical
+    ✔ functions with same name should overwrite previous declarations @critical @done(18-01-26 22:39)
     ✔ application should accept list of simple expr @done(18-01-23 23:21)
     ✔ application in first line of let @done(18-01-24 00:11)
     ✔ if-then-elif-else should accept complex expression and indented expressions @done(18-01-24 00:11)

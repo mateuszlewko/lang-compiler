@@ -41,9 +41,21 @@ let dec x = x - 1
 
 let global_arr : int array = [|1; 0; 1|]
 
+let global_arr : int array = [|1; 10; 1|]
+
 let printer _ : () = 
   let x : () = 
     printin (Array.get global_arr 1)
+    Array.set global_arr 1 ((Array.get global_arr 1) + 1)
+
+  ()
+
+let printer2 _ : () = 
+  let x : () = 
+    printin (Array.get global_arr 1)
+    ln ()
+    printin 99999
+    ln ()
     Array.set global_arr 1 ((Array.get global_arr 1) + 1)
 
   ()

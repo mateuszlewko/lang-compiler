@@ -141,9 +141,8 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
   let ftype = function_type ret_type arg_types in
-  let fn    = declare_function (Env.name_of env name) ftype env.llmod in
-
-  let bb = append_block env.ctx "entry" fn in
+  let fn    = define_function (Env.name_of env name) ftype env.llmod in
+  let bb    = entry_block fn in
 
   (* create new builder for body *)
   let body_env = { env with builder = Llvm.builder_at_end env.ctx bb
