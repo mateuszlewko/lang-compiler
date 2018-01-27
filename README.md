@@ -5,7 +5,7 @@
 
 ## Language features
 
-- indent sensitive syntax
+- indent sensitive syntax - produce cleaner and shorter code
 - functional first with imperative features (printing, mutable arrays)
 - functions are first class citizen
 - simple modules (like in *F#*)
@@ -361,6 +361,8 @@ let main () : int =
   0
 ```
 
+**For more examples check `examples` folder and `test/compiler-test-srcs`.**
+
 ## Important notes
 
 - *Langc* compiler currently doesn't do any type checking, it's only done on *llvm* static compiler level. If you forget about type annotation (for non-integer type) compiler will complain with an error relating to produced *llvm* intermediate representation code.
@@ -394,3 +396,15 @@ let main () : int =
   You can check produced llvm code in file `.langc_build_temp_1517087594.000000.ll`, present in current directory.
   
   In rare cases compiler may crash with segmentation fault or other low-level exception when given incorrect code. This happens because of bindings to *C++ llvm* api being used. Make sure to double check type annotations or indentation.
+
+- There is a subtle difference between negative integer literal and minus operator:
+
+```ocaml
+(* This is subtraction *)
+let x = 5 - 5
+let sub x = 5 - x
+
+(* This is negative literal *)
+
+let ten = sub -5 (* notice '-' is just before integer without any whitespace *)
+```
