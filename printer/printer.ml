@@ -26,7 +26,7 @@ let rec interactive curr_string =
       let src = curr_string ^ "\n" ^ line ^ "\n" in
       (* printf "src: %s" src; *)
 
-      let (Prog prog) = Parser.prog_of_string src "interpreter" in
+      let (Prog prog) = Parser.prog_of_string src "stdin" in
       List.iter prog ~f:(show_top_level %> printf "%s\n");
 
       prompt ();
