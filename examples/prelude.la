@@ -6,6 +6,7 @@ module Prelude =
   external ll_get_ith_elem_of_int_array : int array -> int -> int
   external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
   external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
 
   let ln () : () = ll_print_line ()
 
@@ -13,6 +14,10 @@ module Prelude =
 
   let printin x : () = ll_putint x
                        ln () 
+
+  let putbool (b : bool) : () =
+    ll_print_bool b
+    ln ()
 
   module Array = 
     let new size : int array = 

@@ -12,8 +12,11 @@ module Prelude =
 
   let printi x : () = ll_putint x
 
+
   let printin x : () = ll_putint x
                        ln () 
+
+  let putint : int -> () = printin
 
   let putbool (b : bool) : () =
     ll_print_bool b
@@ -30,7 +33,6 @@ module Prelude =
       ll_get_ith_elem_of_int_array arr ix
 
     let printn (arr : int array) size : () = 
-      
       let rec aux (arr : int array) pos left : () = 
         if left = 0 
         then ln ()
@@ -41,24 +43,29 @@ module Prelude =
 
 open Prelude
 
-module A =
+let zero = 0
 
-  let fn1 : () =
-    printin 1
-  
-    let x : () = printin 2
-                 printin 3 
+module A = 
+  let testA = 1
 
-    printin 4 
+  module B = 
+    let testB  = 2
+    (* we can use values define in outer scope *)
+    let testB2 = testA + testB + zero
 
-    let dontprint arg : () = 
-      printin 9999
+  let testA = 4 (* overrides previous definition of testA *)
 
-    let dontprint2 () : () =
-      printin 99999
+let testA = 999
 
-    printin 5
-
+open A (* opening module A will override top-level definition of testA *)
 
 let main () : int =
+
+  putint testA 
+  Prelude.putint A.testA (* we can use qualified name although 
+                            Prelude has been opened *)
+  Prelude.putint B.testB (* we opened module A so module B is available *)
+
+  putint A.B.testB2 (* qualified name is still fine *)
+
   0

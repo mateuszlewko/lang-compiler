@@ -28,7 +28,6 @@ module Prelude =
       ll_get_ith_elem_of_int_array arr ix
 
     let printn (arr : int array) size : () = 
-      (* let arr2 : int array = [|1; 3; 5; 7; 9|] *)
 
       let rec aux pos left : () = 
         if left = 0 
@@ -40,30 +39,46 @@ module Prelude =
 
 open Prelude
 
-let dec x = x - 1
+let global_arr : int array = 
+  [|1; 10; 
+     1 
+  |] (* valid array literal may be define over multiple lines, 
+        but must have closing bracket at the same column as opening 
+        bracket*)
 
-let global_arr : int array = [|1; 0; 1|]
+  (* 
+  [|1; 2
+    |]  --> invalid array literal
+   *)
 
-let global_arr : int array = [|1; 10; 1|]
+(* override previous definition *)
+let global_arr : int array = [|1; 0; 1|] 
 
 let printer _ : () = 
+  (* x is unit, side effect of initializing x is printing *)
   let x : () = 
     printin (Array.get global_arr 1)
+    (* array is mutable so this will change cell at index 1 *)
     Array.set global_arr 1 ((Array.get global_arr 1) + 1)
 
   ()
 
+(* this function will be overridden by next let printer2 *)
+(* _ is a valid variable name (no type annotation => int type) *)
 let printer2 _ : () = 
   let x : () = 
     printin (Array.get global_arr 1)
     ln ()
-    printin 99999
+    printin 99999 (* this won't be printed *)
     ln ()
     Array.set global_arr 1 ((Array.get global_arr 1) + 1)
 
   ()
 
+(* wrapper for print *)
 let printer2 () : () = printer 0
+
+let dec x = x - 1
 
 let rec repeat (fn : () -> ()) times : () =
   if times > 0
@@ -79,14 +94,17 @@ let main () : int =
   
   ln ()
 
-  Array.printn global_arr 3
+  (* print first 3 elements of an array *)
+  (* value of element at index 1 changed to 10 because of previous operations *)
+  Array.printn global_arr 3 
+
+  printin (2 * 2 + 2) (* correct priority of operators *)
+  printin (2 + 2 * 2) (* correct priority of operators *)
 
   ln ()
 
-  printin (2 * 2 + 2)
-  printin (2 + 2 * 2)
-
   printin (2 + mult2 2)
-  printin (mult2 2 + 2)
+  printin (mult2 2 + 4) (* prints result of 2 * 2 + 4 
+                                 instead of 2 * (2 + 4) *)
 
   0

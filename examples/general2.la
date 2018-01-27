@@ -1,89 +1,195 @@
-(* This file can be used as a template for further testing *)
+(* This example is really big so maybe not very useful.
+   Try looking at some other examples first. *)
 
-module Prelude =
-  external ll_putint : int -> ()
-  external ll_print_line : () -> ()
-  external ll_get_ith_elem_of_int_array : int array -> int -> int
-  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
-  external ll_new_int_array : int -> int array
+external ll_putint : int -> ()
+external ll_print_line : () -> ()
+external ll_get_ith_elem_of_int_array : int array -> int -> int
+external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+external ll_new_int_array : int -> int array
 
-  let ln () : () = ll_print_line ()
+module A =
+    external ll_putint : int -> ()
+    external ll_print_line : () -> ()
 
-  let printi x : () = ll_putint x
+    let aaaaaa : () =
+      ll_putint (1)
+      ll_print_line ()
 
-  let printin x : () = ll_putint x
-                       ln () 
+    let testA x = x * 2
 
-  module Array = 
-    let new size : int array = 
-      ll_new_int_array size
+    module B =
+      let testB x y =
+        x + y
 
-    let set (arr : int array) ix elem : () = 
-      ll_set_ith_elem_of_int_array  arr ix elem
+module D =
+    module E =
+      let adder x y = x + y
 
-    let get (arr : int array) ix = 
-      ll_get_ith_elem_of_int_array arr ix
+    let testD x =
+      E.adder 21 x
 
-    let printn (arr : int array) size : () = 
-      (* let arr2 : int array = [|1; 3; 5; 7; 9|] *)
+let apply (fn : int -> int) arg =
+  fn arg
 
-      let rec aux pos left : () = 
-        if left = 0 
-        then ln ()
-        else printin (get arr pos)
-             aux (pos + 1) (left - 1)
+let mult2 x =
+  x * 2
 
-      aux 0 size
+let rec power a n =
+  if n = 0
+  then 1
+  else a * (power a (n - 1))
 
-open Prelude
+let fib n =
+  let rec aux n a b =
+    if n = 0
+    then b
+    else (aux (n-1) b (a+b))
 
-let dec x = x - 1
+  aux n 0 1
 
-let global_arr : int array = [|1; 0; 1|]
+let app2 (fn : int -> int -> int) arg1 arg2 =
+  fn arg1 arg2
 
-let global_arr : int array = [|1; 10; 1|]
+module G =
+  let testG a b =
+    a + b
 
-let printer _ : () = 
-  let x : () = 
-    printin (Array.get global_arr 1)
-    Array.set global_arr 1 ((Array.get global_arr 1) + 1)
+open G
 
-  ()
+let arr : int array =
+  [| 3; 5; 10111 |]
 
-let printer2 _ : () = 
-  let x : () = 
-    printin (Array.get global_arr 1)
-    ln ()
-    printin 99999
-    ln ()
-    Array.set global_arr 1 ((Array.get global_arr 1) + 1)
+let topval6 = 77
 
-  ()
+let topval7 = topval6 + 3
 
-let printer2 () : () = printer 0
+let topval8 x =
+  topval7 + 7 + x
 
-let rec repeat (fn : () -> ()) times : () =
-  if times > 0
-  then 
-    fn ()
-    repeat fn (dec times)
 
-let mult2 x = x * 2
+let topval = 4
+
+let retfun : int -> int = mult2
+
+let get_ith (arr : int array) ix =
+  ll_get_ith_elem_of_int_array arr ix
+
+let set_ith (arr : int array) ix val : () =
+  ll_set_ith_elem_of_int_array arr ix val
+
+let new size : int array =
+  ll_new_int_array size
+
+let my_arr : int array = (new 100)
+let fn11 = 5
+
+let rec add_one x n =
+  if n = 0
+  then x
+  else (add_one (1 + x) (n - 1))
+
+let fn111112 x : int =
+  let xxx : int =
+    ll_putint 11111111
+    ll_print_line ()
+
+    let yyy : int =
+      ll_putint 333333
+      ll_print_line ()
+      3
+
+    0
+
+  ll_putint 222222
+  ll_print_line ()
+  5
+
+let addtwo x =
+  1110 - (x - 10) + 10 +20
+
+let bool2int (b : bool) =
+  if b
+  then 1
+  else 100008
 
 let main () : int =
 
-  repeat printer2 10
-  
-  ln ()
+  ll_putint (bool2int true)
+  ll_print_line ()
 
-  Array.printn global_arr 3
+  ll_putint (bool2int false)
+  ll_print_line ()
 
-  ln ()
+  if fn111112 0 = 6
+  then 
+    ll_putint 919
+    ll_putint 919
+    3
+  elif fn111112 0 = 5
+  then 
+    ll_putint 920
+    ll_putint 921
+    let xel : () = ll_putint 6
+    3
+  else 0
 
-  printin (2 * 2 + 2)
-  printin (2 + 2 * 2)
 
-  printin (2 + mult2 2)
-  printin (mult2 2 + 2)
+  fn111112 1
+  fn111112 2
 
+  ll_print_line ()
+
+  ll_putint (addtwo 7)
+  ll_print_line ()
+
+  ll_putint (add_one 0 100000000)
+  ll_print_line ()
+
+  set_ith my_arr 78 108
+  ll_putint (get_ith my_arr 78)
+  ll_print_line ()
+
+  ll_putint (get_ith my_arr 79)
+  ll_print_line ()
+
+  ll_putint (get_ith arr 2)
+  ll_print_line ()
+
+  set_ith arr 2 999
+
+  ll_putint (get_ith arr 2)
+  ll_print_line ()
+
+  ll_putint((retfun) 109)
+  ll_print_line ()
+
+  ll_putint(topval7)
+  ll_print_line ()
+
+  ll_putint(topval8 7)
+  ll_print_line ()
+
+  ll_putint(testG 2 3)
+  ll_print_line ()
+
+  ll_putint(A.testA 101)
+  ll_print_line ()
+
+  ll_putint(D.testD 35)
+  ll_print_line ()
+
+  ll_putint(fib 35)
+  ll_print_line ()
+
+  ll_putint (apply mult2 6)
+  ll_print_line ()
+
+  ll_putint(power 3 4)
+  ll_print_line ()
+
+  ll_putint(app2 power 2 10)
+  ll_print_line ()
+
+  ll_putint 104
+  ll_print_line ()
   0

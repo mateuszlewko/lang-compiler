@@ -1,12 +1,9 @@
-(* This file can be used as a template for further testing *)
-
 module Prelude =
   external ll_putint : int -> ()
   external ll_print_line : () -> ()
   external ll_get_ith_elem_of_int_array : int array -> int -> int
   external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
   external ll_new_int_array : int -> int array
-  external ll_print_bool : bool -> ()
 
   let ln () : () = ll_print_line ()
 
@@ -14,10 +11,6 @@ module Prelude =
 
   let printin x : () = ll_putint x
                        ln () 
-
-  let putbool (b : bool) : () =
-    ll_print_bool b
-    ln ()
 
   module Array = 
     let new size : int array = 
@@ -30,7 +23,6 @@ module Prelude =
       ll_get_ith_elem_of_int_array arr ix
 
     let printn (arr : int array) size : () = 
-      
       let rec aux (arr : int array) pos left : () = 
         if left = 0 
         then ln ()
@@ -41,24 +33,18 @@ module Prelude =
 
 open Prelude
 
-module A =
+let fib n =
+  let rec aux n a b =
+    if n = 0
+    then b
+    else (aux (n-1) b (a+b))
 
-  let fn1 : () =
-    printin 1
-  
-    let x : () = printin 2
-                 printin 3 
+  aux n 0 1
 
-    printin 4 
+let main () =
+  printin (fib 3)
+  printin (fib 5)
 
-    let dontprint arg : () = 
-      printin 9999
+  printin (fib (100 * 1000 * 1000)) (* no stack overflow *)
 
-    let dontprint2 () : () =
-      printin 99999
-
-    printin 5
-
-
-let main () : int =
   0

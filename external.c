@@ -29,5 +29,3 @@ extern int* ll_new_int_array(int size) {
 extern void ll_print_bool(bool x) {
   printf(x ? "true" : "false");
 }
-
-// int main () {}

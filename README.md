@@ -52,3 +52,6 @@ Check [tasks.todo](https://github.com/mateuszlewko/lang-compiler/blob/master/tas
 - [Sedlex](https://github.com/alainfrisch/sedlex) - lexer generator
 - Jane Street's [core](https://ocaml.janestreet.com/ocaml-core/latest/doc/), the inofficial standard library for OCaml
 - Jane Street's [jbuilder](https://github.com/janestreet/jbuilder), an OCaml build system
+
+
+<https://stackoverflow.com/questions/12149217/printf-doesnt-print-a-string-immediatly>

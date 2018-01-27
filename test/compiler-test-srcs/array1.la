@@ -1,5 +1,3 @@
-(* This file can be used as a template for further testing *)
-
 module Prelude =
   external ll_putint : int -> ()
   external ll_print_line : () -> ()
@@ -30,7 +28,6 @@ module Prelude =
       ll_get_ith_elem_of_int_array arr ix
 
     let printn (arr : int array) size : () = 
-      
       let rec aux (arr : int array) pos left : () = 
         if left = 0 
         then ln ()
@@ -41,24 +38,17 @@ module Prelude =
 
 open Prelude
 
-module A =
-
-  let fn1 : () =
-    printin 1
-  
-    let x : () = printin 2
-                 printin 3 
-
-    printin 4 
-
-    let dontprint arg : () = 
-      printin 9999
-
-    let dontprint2 () : () =
-      printin 99999
-
-    printin 5
-
-
 let main () : int =
+  let ar : int array = Array.new 10
+
+  Array.set ar 0 9999
+  Array.set ar 1 2
+  Array.set ar 2 4
+  Array.set ar 0 1
+  Array.set ar 9 10
+
+  (* Array.set ar 10 10 --> this could cause an error (out of bounds) *)
+
+  Array.printn ar 10
+
   0
