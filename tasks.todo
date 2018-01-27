@@ -68,7 +68,7 @@ Bugs:
     ✔ segfault when top-value returns function @critical @done(18-01-21 15:30)
 
 Other:
-    ❑ Tests! @critical
+    ✔ Tests! @critical @done(18-01-27 03:16)
     ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
   /  ❑ interpreter @optional

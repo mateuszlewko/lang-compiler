@@ -5,6 +5,16 @@
   (libraries (core batteries lang_compiler llvm.analysis))
 ))
 
+
+(library
+ ((name    langc_lib)
+  (wrapped true)
+  (libraries (core batteries lang_compiler llvm.analysis))
+  (virtual_deps (cppo menhir))
+  (preprocess (pps (ppx_deriving.std ppx_enumerate)))
+ )
+)
+
 (alias
   ((name runlangc)
    (deps ((file langc.exe)))
