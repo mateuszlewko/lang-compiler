@@ -1,24 +1,40 @@
 # *Lang* compiler
 
-*Lang* is a functional programming language based on [Ocaml](https://ocaml.org/) and [F#](http://fsharp.org/). *Langc* is a compiler for this language (written in [Ocaml](https://ocaml.org/))
+*Lang* is a functional programming language based on [Ocaml](https://ocaml.org/) and [F#](http://fsharp.org/). *Langc* is a [LLVM](https://llvm.org/) compiler for this language (written in [Ocaml](https://ocaml.org/)).
 
 This is a work in progress.
 
 ## Language features
 
 - indent sensitive syntax
-- functional first with imperative statements (TODO)
+- functional first with imperative features (printing, mutable arrays)
+- functions are first class citizen
+- simple modules (like in *F#*)
+- nested lets, recursion 
+- easy and zero-cost C bindings
+- currently only supports `int`, `bool` and `unit` as basic types
 
 ## How to build, test & run
-- Get source code: 
+- Get the source code: 
 ```
-git clone https://github.com/mateuszlewko/lang-compiler.git && cd lang-compiler
+$ git clone https://github.com/mateuszlewko/lang-compiler.git && cd lang-compiler
 ```
-- install *opam* and *jbuilder*
-- install rest of dependencies: 
+### Install dependencies:
+- install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
+- configure *opam* in the current shell: 
 ```
-jbuilder external-lib-deps --missing @@runlangc
+$ eval `opam config env`
 ```
+- install *jbuilder*: 
+```
+$ opam install jbuilder
+```
+- install rest of dependencies by following output from this commands: 
+```
+$ jbuilder external-lib-deps --missing @runlangc
+$ jbuilder external-lib-deps --missing @runtest
+```
+  They will ask to to install required modules through *opam*, and some external ones through *depext* (like *CMake* and *LLVM*).
 
 ### Test:
 ```
