@@ -47,5 +47,4 @@ let tests = "compiler tests" >::: [
     "modules 1" >:: 
       ("4\n4\n2\n3"
        |> create_test_of "modules1.la")
-
   ]
