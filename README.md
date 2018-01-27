@@ -16,65 +16,82 @@
 
 ## How to build, test & run
 - Get the source code: 
-```
+```bash
 $ git clone https://github.com/mateuszlewko/lang-compiler.git && cd lang-compiler
 ```
-### Install dependencies:
+### Install dependencies
 - install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
 - switch to *ocaml* version `4.05.0`:
-```
+```bash
 $ opam switch 4.05.0
 ```
 - configure *opam* in the current shell: 
-```
+```bash
 $ eval `opam config env`
 ```
 - install *jbuilder*: 
-```
+```bash
 $ opam install jbuilder
 ```
 - install rest of dependencies by following output from this commands (except for `menhirLib`): 
-```
+```bash
 $ jbuilder external-lib-deps --missing @runlangc
 $ jbuilder external-lib-deps --missing @runtest
 ```
-  They will ask you to install required modules through *opam*, and some external libraries through *depext*.
-- install [LLVM](https://llvm.org/) and *gcc* (*gcc* is usually present on linux distributions)
+  You will be asked to install required modules through *opam*, and some external libraries through *depext*.
+- install [LLVM 5](https://llvm.org/) and *gcc* (*gcc* is usually present on linux)
   
  Finally check whether you installed everything correctly:
-```
-$ llc --version
+```bash
+$ llc --version    # Expect something like LLVM version 5.0.1, later versions should also be fine. 
+                   # NOTE: Version 3.8 will *not* work.
 $ gcc --version
 $ jbuilder --version
 ```
 
-### Test:
-Run following command from the root directory of the project as relative paths to input files used for tests are hardcoded into code (source files in `test/compiler-test-srcs/`).
-```
+### Test
+Run following command from the root directory of the project, because relative paths to input files used for tests are hardcoded into source code (files in `test/compiler-test-srcs/`).
+```bash
 $ make test && ./_build/default/test/test.exe
 ```
+  You can add your own tests by creating *lang* source files in `test/compiler-test-srcs/` and specifying expected output in file: `test/compiler_tests.ml` (take a look at this file for examples).
 
-### Ast pretty-printer:
-```
+### Ast pretty-printer
+```bash
 make printer && ./_build/default/printer/printer.exe
+```
+
+### Compile some code!
+- First make sure compiler is built:
+```bash
+$ make langc -B
+```
+  It's best if you compile files in project root directory as compiler expect file `external.c` to be present at currenty directory. If you are compiling *lang* source from other directory, make sure to copy `external.c` in there.
+- Compile `example.la`:
+```bash
+$ _build/default/langc/langc.exe example.la
+```
+  If everythinh went fine, compiler generated binary `a.out`. Check it by running:
+ ```bash
+ $ ./a.out
+ ```
+  *Langc* compiler also other options like saving generate *LLVM IR* code in `out.ll`, or chaning binary output file with `-o other.out`. For a full list of options check:
+```bash
+$ _build/default/langc/langc.exe --help
 ```
 
 ## Project structure
 - `compiler/` - compiler library which contains: lexer, parser and codegen 
 - `compiler/gammar.mly` - grammar in [Menhir](http://gallium.inria.fr/~fpottier/menhir/) format
 - `compiler/lexer.cppo.sedlex.ml` - lexer 
-- `printer/` - pretty-printer 
+
+- `printer/` - pretty-printer for abstract syntax tree
 - `langc/` - compiler executable
 
-## Currently done
+- `test/` - tests
+- `test/compiler-test-srcs` - input files for compiler tests
 
-- Lexer and parser for simple programs (multiple `let` expression with function applications and arithmetic operations)
-- Ast pretty printer
-
-## TODO
-Check [tasks.todo](https://github.com/mateuszlewko/lang-compiler/blob/master/tasks.todo) for a list of things needed to be done.
-
-## Used libraries:
+## Used libraries and code:
 
 - [ocaml-parsing](https://github.com/smolkaj/ocaml-parsing) - boilerplate code for parsing in OCaml
 - [Menhir](http://gallium.inria.fr/~fpottier/menhir/) - LR(1) parser generator
