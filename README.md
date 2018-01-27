@@ -66,7 +66,7 @@ make printer && ./_build/default/printer/printer.exe
 ```bash
 $ make langc -B
 ```
-  It's best if you compile files in project root directory as compiler expect file `external.c` to be present at currenty directory. If you are compiling *lang* source from other directory, make sure to copy `external.c` in there.
+  It's best if you compile files in project root directory as compiler expects file `external.c` to be present at currenty directory. If you are compiling *lang* source from other directory, make sure to copy `external.c` in there.
 - Compile `example.la`:
 ```bash
 $ _build/default/langc/langc.exe example.la
@@ -75,7 +75,7 @@ $ _build/default/langc/langc.exe example.la
  ```bash
  $ ./a.out
  ```
-  *Langc* compiler also other options like saving generate *LLVM IR* code in `out.ll`, or chaning binary output file with `-o other.out`. For a full list of options check:
+  *Langc* compiler also other options like saving generated *LLVM IR* code in `out.ll`, or changing binary output file with `-o other.out`. For a full list of available options check:
 ```bash
 $ _build/default/langc/langc.exe --help
 ```
@@ -84,11 +84,13 @@ $ _build/default/langc/langc.exe --help
 - `compiler/` - compiler library which contains: lexer, parser and codegen 
 - `compiler/gammar.mly` - grammar in [Menhir](http://gallium.inria.fr/~fpottier/menhir/) format
 - `compiler/lexer.cppo.sedlex.ml` - lexer 
+- `compiler/codegen.ml` - main *LLVM IR* code generation 
+- `compiler/codegenUtils.ml` - some helper functions for code generation 
 
 - `printer/` - pretty-printer for abstract syntax tree
 - `langc/` - compiler executable
 
-- `test/` - tests
+- `test/` - tests for compiler and parser
 - `test/compiler-test-srcs` - input files for compiler tests
 
 ## Used libraries and code:
@@ -98,6 +100,6 @@ $ _build/default/langc/langc.exe --help
 - [Sedlex](https://github.com/alainfrisch/sedlex) - lexer generator
 - Jane Street's [core](https://ocaml.janestreet.com/ocaml-core/latest/doc/), the inofficial standard library for OCaml
 - Jane Street's [jbuilder](https://github.com/janestreet/jbuilder), an OCaml build system
-
+- Other specified in jbuild files
 
 <https://stackoverflow.com/questions/12149217/printf-doesnt-print-a-string-immediatly>
