@@ -50,7 +50,7 @@ module A =
 
   module B = 
     let testB  = 2
-    (* we can use values define in outer scope *)
+    (* we can use values defined in outer scope *)
     let testB2 = testA + testB + zero
 
   let testA = 4 (* overrides previous definition of testA *)
