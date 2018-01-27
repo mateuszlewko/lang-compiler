@@ -2,7 +2,7 @@
 
 *Lang* is a functional programming language based on [Ocaml](https://ocaml.org/) and [F#](http://fsharp.org/). *Langc* is a [LLVM](https://llvm.org/) compiler for this language (written in [Ocaml](https://ocaml.org/)).
 
-This is a work in progress.
+*This is a work in progress, although usable version is already available.*
 
 ## Language features
 
@@ -21,6 +21,10 @@ $ git clone https://github.com/mateuszlewko/lang-compiler.git && cd lang-compile
 ```
 ### Install dependencies:
 - install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
+- switch to *ocaml* version `4.05.0`:
+```
+$ opam switch 4.05.0
+```
 - configure *opam* in the current shell: 
 ```
 $ eval `opam config env`
@@ -29,16 +33,25 @@ $ eval `opam config env`
 ```
 $ opam install jbuilder
 ```
-- install rest of dependencies by following output from this commands: 
+- install rest of dependencies by following output from this commands (except for `menhirLib`): 
 ```
 $ jbuilder external-lib-deps --missing @runlangc
 $ jbuilder external-lib-deps --missing @runtest
 ```
-  They will ask to to install required modules through *opam*, and some external ones through *depext* (like *CMake* and *LLVM*).
+  They will ask you to install required modules through *opam*, and some external libraries through *depext*.
+- install [LLVM](https://llvm.org/) and *gcc* (*gcc* is usually present on linux distributions)
+  
+ Finally check whether you installed everything correctly:
+```
+$ llc --version
+$ gcc --version
+$ jbuilder --version
+```
 
 ### Test:
+Run following command from the root directory of the project as relative paths to input files used for tests are hardcoded into code (source files in `test/compiler-test-srcs/`).
 ```
-make test && ./_build/default/test/test.exe
+$ make test && ./_build/default/test/test.exe
 ```
 
 ### Ast pretty-printer:
