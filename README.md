@@ -108,7 +108,7 @@ $ make langc -B
 $ _build/default/langc/langc.exe example.la
 ```
 
-  If everythinh went fine, compiler generated binary `a.out`. Check it by running:
+  If everything went fine, compiler generated binary `a.out`. Check it by running:
 
  ```bash
  $ ./a.out
@@ -408,3 +408,5 @@ let sub x = 5 - x
 
 let ten = sub -5 (* notice '-' is just before integer without any whitespace *)
 ```
+
+- There is no garbage collector
