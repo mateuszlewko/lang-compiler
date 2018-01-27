@@ -19,7 +19,7 @@ extern void ll_set_ith_elem_of_int_array(int* arr, int i, int val) {
 }
 
 extern int* ll_new_int_array(int size) {
-  return (int *)malloc(sizeof(int) * size);
+  return (int*)malloc(sizeof(int) * size);
 }
 
 extern void ll_print_bool(bool x) {
