@@ -42,7 +42,7 @@ open Prelude
 let global_arr : int array = 
   [|1; 10; 
      1 
-  |] (* valid array literal may be define over multiple lines, 
+  |] (* valid array literal may be defined over multiple lines, 
         but must have closing bracket at the same column as opening 
         bracket*)
 

@@ -32,6 +32,7 @@ let to_exps fst_line rest =
 %left LEQ GEQ EQ LE GE NEQ 
 %left PLUS MINUS
 %left DIV MULT
+/* %nonassoc UMINUS */
 
 /* %start <Ast.expr> top_let */
 %start <Ast.program> program
@@ -134,13 +135,14 @@ if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
 array_lit: ARRAY_OPEN; es = separated_list(SEMICOL, array_elem); ARRAY_CLOSE;
            { Array es }
 
-literal:
+%inline literal:
   | UNIT { Unit }
+  /* | MINUS i = INT %prec UMINUS { Int (-i) } */
   | i = INT { Int i }
   | b = BOOL { Bool b }
   | ar = array_lit { ar }
 
-simple_expr:
+simple_expr:  
   | l = literal { LitExp l }
   | s = nested_sym { VarExp s }
   | i = infix_op { i }

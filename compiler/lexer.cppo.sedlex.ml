@@ -55,7 +55,9 @@ let id = [%sedlex.regexp? id_init, Star id_cont ]
 let id_nest = [%sedlex.regexp? id_init, Star id_nest_cont ]
 let hex = [%sedlex.regexp? digit | 'a'..'f' | 'A'..'F' ]
 let hexnum = [%sedlex.regexp? '0', 'x', Plus hex ]
-let decnum = [%sedlex.regexp? Plus digit]
+let decnum_pos = [%sedlex.regexp? Plus digit]
+let decnum_neg = [%sedlex.regexp? '-', Plus digit]
+(* let decnum = [%sedlex.regexp? decnum_pos | decnum_neg] *)
 let decbyte = [%sedlex.regexp? (digit,digit,digit) | (digit,digit) | digit ]
 let hexbyte = [%sedlex.regexp? hex,hex ]
 let blank = [%sedlex.regexp? ' ' | '\t' ]
@@ -157,6 +159,9 @@ and token state buf =
   | '['   -> [LBRACKET], state
   | ']'   -> [RBRACKET], state
 
+  | decnum_neg -> [INT (ascii buf |> int_of_string)], state
+  | decnum_pos -> [INT (ascii buf |> int_of_string)], state
+  
   | "&&" -> [AND], state
   | "||" -> [OR], state
   | "<=" -> [LEQ], state
@@ -172,7 +177,6 @@ and token state buf =
 
   | operator -> [OPERATOR (ascii buf)], state
 
-  | decnum -> [INT (ascii buf |> int_of_string)], state
   | id -> [SYMBOL (ascii buf)], state
   | id_nest -> [NESTED_SYMBOL (ascii buf)], state
 

@@ -45,6 +45,6 @@ let main () =
   printin (fib 3)
   printin (fib 5)
 
-  printin (fib (100 * 1000 * 1000)) (* no stack overflow *)
+  printin (fib (10 * 1 * 1000)) (* no stack overflow *)
 
   0
