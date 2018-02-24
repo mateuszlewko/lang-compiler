@@ -38,10 +38,10 @@ let rec repeat fn times =
 ```fsharp
 let sumOfSquaredOddNumbers =
     (0..)
-    |> map (n => n * n)                   // All natural numbers squared
-    |> takeWhile (nSqr => nSqr < upper)   // Below upper limit
-    |> filter (nSqr => is_odd(n_squared)) // That are odd
-    |> fold (acc nSqr => acc + nSqr) 0    // Sum them
+    |> map (n => n * n)                 // All natural numbers squared
+    |> takeWhile (nSqr => nSqr < upper) // Below upper limit
+    |> filter (nSqr => nSqr % 2 <> 0)   // That are odd
+    |> fold (acc nSqr => acc + nSqr) 0  // Sum them
 ```
 
 ### Option 2 (rust / haskell inspired)
@@ -50,10 +50,10 @@ let sumOfSquaredOddNumbers =
 let sumOfSquaredOddNumbers2 =
     -- (.) is just a function application operator
     (0..) 
-    .map (\n -> n * n)                   -- All natural numbers squared
-    .takeWhile (\nSqr -> nSqr < upper)   -- Below upper limit
-    .filter (\nSqr -> is_odd(n_squared)) -- That are odd
-    .fold (\acc nSqr -> acc + nSqr) 0    -- Sum them
+    .map (\n -> n * n)                 -- All natural numbers squared
+    .takeWhile (\nSqr -> nSqr < upper) -- Below upper limit
+    .filter (\nSqr -> nSqr % 2 = 1)    -- That are odd
+    .fold (\acc nSqr -> acc + nSqr) 0  -- Sum them
 
 let isEmpty set = 
     set . size = 0
@@ -67,10 +67,10 @@ let isEmptyGeneric container =
 ```fsharp
 let sumOfSquaredOddNumbers =
     (0..)
-    |> map (fun n -> n * n)                   // All natural numbers squared
-    |> takeWhile (fun nSqr -> nSqr < upper)   // Below upper limit
-    |> filter (fun nSqr -> is_odd(n_squared)) // That are odd
-    |> fold (fun acc nSqr -> acc + nSqr) 0    // Sum them
+    |> map (fun n -> n * n)                 // All natural numbers squared
+    |> takeWhile (fun nSqr -> nSqr < upper) // Below upper limit
+    |> filter (fun nSqr -> isOdd nSqr)      // That are odd
+    |> fold ~f:(fun acc nSqr -> acc + nSqr) ~init:0 // Sum them
 ```
 
 ## Algebraic data types (variants)
