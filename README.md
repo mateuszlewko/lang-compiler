@@ -61,7 +61,7 @@ $ eval `opam config env`
 $ opam install jbuilder
 ```
 
-- install rest of dependencies by following output from this commands (except for `menhirLib`):
+- install rest of dependencies by following output from these commands (except for `menhirLib`):
 
 ```bash
 $ jbuilder external-lib-deps --missing @runlangc
