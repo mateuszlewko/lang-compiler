@@ -200,6 +200,9 @@ let transform ~shape ~x:dx ~y:dy ?reverse=false ?handler =
         case handler of 
         | Some handler -> handler (x + dx) (y + dy)
         | None         -> Sqaure 0 0
+
+module String = 
+    let findPattern 
 ```
 
 ## Record types
@@ -213,6 +216,11 @@ type User = { name   : string
 
 type Rectangle = { a : int; b : int; posX : int; posY : int
                  ; color : Color }
+with
+    let deltaPos r = r.a + r.posX, r.b + posY
+
+printfn "%A" (Rectangle.deltaPos { a = 1; b = 2; posX = 0; posY = 0
+                                   color = Colors.Blue })
 ```
 
 ## Higher order types (type classes / traits)
