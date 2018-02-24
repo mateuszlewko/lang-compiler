@@ -221,7 +221,7 @@ type Rectangle = { a : int; b : int; posX : int; posY : int
 
 ## Modules
 
-```haskell
+```fsharp
 open MyLibrary
 
 --                      package name and explicit version (used by )
