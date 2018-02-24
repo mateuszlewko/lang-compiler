@@ -134,15 +134,29 @@ let sumOf =
 
 ### Option 2 (haskell)
 
-```fsharp
-let sumOf =
-    function
-    | Circle x y z  -> x + y + z
-    | Square x      -> x * x
-    | Rectangle a b -> a + b
+```haskell
+sumOf Circle x y z  = x + y + z
+sumOf Square x      = x * x
+sumOf Rectangle a b = a + b
 ```
 
-### Option 3 (haskell / fsharp)
+### Option 3a (sml / haskell)
+
+```haskell
+sumOf Circle x y z  = x + y + z
+    | Square x      = x * x
+    | Rectangle a b = a + b
+```
+
+### Option 3b (sml / haskell / fsharp)
+
+```haskell
+let sumOf Circle x y z  = x + y + z
+        | Square x      = x * x
+        | Rectangle a b = a + b
+```
+
+### Option 4 (haskell / fsharp)
 
 ```haskell
 let sumOf shape =
@@ -154,19 +168,19 @@ let sumOf shape =
 
 let sumOf shape1 shape2 =
     case shape1 of
-    | Circle x y z  -> 
+    | Circle x y z  ->
         let sumOf shape =
             case shape1 of
             | Circle x y z  -> x + y + z
             | Square x      -> x * x
             | Rectangle a b -> a + b
-        
+
         sumOf shape2 + x + y + z
     | Square x      -> x * x
     | Rectangle a b -> a + b
 ```
 
-### Option 4 (haskell)
+### Option 5 (haskell)
 
 ```haskell
 let sumOf shape =
