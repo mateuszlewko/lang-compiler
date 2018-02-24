@@ -8,6 +8,7 @@
 val adder : int -> int -> int
 let adder x y = x + y
 
+// unit type as ()
 val repeat : (() -> ()) -> int -> ()
 let rec repeat fn times : () =
   if times > 0
@@ -21,6 +22,7 @@ let rec repeat fn times : () =
 ```fsharp
 let adder (x : int) (y : int) : int = x + y
 
+// unit type as 'unit'
 val repeat : (unit -> unit) -> int -> unit
 let rec repeat fn times =
   if times > 0
