@@ -46,11 +46,29 @@ let sumOfSquaredOddNumbers =
 
 ```haskell
 let sumOfSquaredOddNumbers2 =
-    (0..)
+    -- (.) is just a function application operator
+    (0..) 
     .map (\n -> n * n)                   -- All natural numbers squared
     .takeWhile (\nSqr -> nSqr < upper)   -- Below upper limit
     .filter (\nSqr -> is_odd(n_squared)) -- That are odd
     .fold (\acc nSqr -> acc + nSqr) 0    -- Sum them
+
+let isEmpty set = 
+    set . size = 0
+
+let isEmptyGeneric container =
+    container.size = 0
+```
+
+### Option 3 (fsharp / ocaml)
+
+```fsharp
+let sumOfSquaredOddNumbers =
+    (0..)
+    |> map (fun n -> n * n)                   // All natural numbers squared
+    |> takeWhile (fun nSqr -> nSqr < upper)   // Below upper limit
+    |> filter (fun nSqr -> is_odd(n_squared)) // That are odd
+    |> fold (fun acc nSqr -> acc + nSqr) 0    // Sum them
 ```
 
 ## Algebraic data types (variants)
@@ -122,7 +140,7 @@ let sumOf =
     | Rectangle a b -> a + b
 ```
 
-### Option 3 (haskell)
+### Option 3 (haskell / fsharp)
 
 ```haskell
 let sumOf shape =
@@ -146,7 +164,7 @@ let sumOf shape1 shape2 =
     | Rectangle a b -> a + b
 ```
 
-### Option 3 (haskell)
+### Option 4 (haskell)
 
 ```haskell
 let sumOf shape =
@@ -163,8 +181,43 @@ let sumOf shape1 shape2 =
                     Circle x y z  -> x + y + z
                     Square x      -> x * x
                     Rectangle a b -> a + b
-            
+
             sumOf shape2 + x + y + z
         Square x      -> x * x
         Rectangle a b -> a + b
 ```
+
+## Named and optional arguments (as in ocaml)
+
+```ocaml 
+                      (* argument name, when calling function *)
+                        /    (* arg name in function scope (optional) *)
+                       /       /
+let transform ~shape ~x:dx ~y:dy ?reverse=false ?handler =
+    case shape with                               \
+      Circle x y -> Circle (x + dx) (y + dy)    (* has option type *)  
+    | Square x y -> 
+        case handler of 
+        | Some handler -> handler (x + dx) (y + dy)
+        | None         -> Sqaure 0 0
+```
+
+## Record types
+
+```fsharp
+type User = { name   : string
+              age    : int
+              height : float
+              status : Status
+            }
+
+type Rectangle = { a : int; b : int; posX : int; posY : int
+                 ; color : Color }
+```
+
+## Higher order types (type classes / traits)
+
+## Modules
+
+## Exceptions in function types
+
