@@ -217,7 +217,59 @@ type Rectangle = { a : int; b : int; posX : int; posY : int
 
 ## Higher order types (type classes / traits)
 
+## List comprehension
+
 ## Modules
+
+```haskell
+open MyLibrary
+
+--                      package name and explicit version (used by )
+--                     /
+--    vvvvvvvvvvvvvvvvv
+open "tools-lib.2.10.12" ToolsLib
+
+--                            package directory
+--                           /
+--    vvvvvvvvvvvvvvvvvvvvvvv
+open "~/packaged/otherPackage" qualified OtherPackage.{Math}
+
+--                        package local directory (relative to file location)
+--                       /
+--    vvvvvvvvvvvvvvvvvvv
+open "./libs/localPackage" LocalPackage
+
+--                                package on github
+--                                                \
+--    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+open "https://github.com/mateuszlewko/lang-compiler"
+      qualified CompilerTools.{AST} hiding AST.Expr
+
+module A =
+    module B =
+      let adder x y = x + y
+      let sub x y = x - y
+      let testA = 11
+
+    let testA x =
+      B.adder 21 x
+
+let testA x y = x + y
+
+open A hiding testA
+open B.{adder, sub}
+```
 
 ## Exceptions in function types
 
+## Basic parallelism (Coroutines, processes, locks)
+
+## Basic Garbage Collector
+
+### Option 1
+
+There should be one.
+
+### Option 2
+
+There won't be any :(
