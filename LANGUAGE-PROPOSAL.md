@@ -224,24 +224,24 @@ type Rectangle = { a : int; b : int; posX : int; posY : int
 ```fsharp
 open MyLibrary
 
---                      package name and explicit version (used by )
---                     /
---    vvvvvvvvvvvvvvvvv
+//                      package name and explicit version (used by )
+//                     /
+//    vvvvvvvvvvvvvvvvv
 open "tools-lib.2.10.12" ToolsLib
 
---                            package directory
---                           /
---    vvvvvvvvvvvvvvvvvvvvvvv
+//                            package directory
+//                           /
+//    vvvvvvvvvvvvvvvvvvvvvvv
 open "~/packaged/otherPackage" qualified OtherPackage.{Math}
 
---                        package local directory (relative to file location)
---                       /
---    vvvvvvvvvvvvvvvvvvv
+//                        package local directory (relative to file location)
+//                       /
+//    vvvvvvvvvvvvvvvvvvv
 open "./libs/localPackage" LocalPackage
 
---                                package on github
---                                                \
---    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+//                                package on github
+//                                                \
+//    vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 open "https://github.com/mateuszlewko/lang-compiler"
       qualified CompilerTools.{AST} hiding AST.Expr
 
