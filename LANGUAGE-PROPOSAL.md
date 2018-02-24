@@ -224,7 +224,7 @@ type Rectangle = { a : int; b : int; posX : int; posY : int
 ```fsharp
 open MyLibrary
 
-//                      package name and explicit version (used by )
+//                      package name and explicit version (used by main package repository)
 //                     /
 //    vvvvvvvvvvvvvvvvv
 open "tools-lib.2.10.12" ToolsLib
