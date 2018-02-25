@@ -290,6 +290,8 @@ open B.{adder, sub}
 
 ## Basic Garbage Collector
 
+## Polymorphic variants 
+
 ### Option 1
 
 There should be one.
