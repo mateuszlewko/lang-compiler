@@ -55,10 +55,10 @@ $ opam switch 4.05.0
 $ eval `opam config env`
 ```
 
-- install *jbuilder*:
+- install *jbuilder* and *sedlex*:
 
 ```bash
-$ opam install jbuilder
+$ opam install jbuilder sedlex
 ```
 
 - install rest of dependencies by following output from these commands (except for `menhirLib`):
