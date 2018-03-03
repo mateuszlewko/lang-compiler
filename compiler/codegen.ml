@@ -144,6 +144,9 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let fn    = define_function (Env.name_of env name) ftype env.llmod in
   let bb    = entry_block fn in
 
+  if not is_val 
+  then set_gc (Some "shadow-stack") fn;
+
   (* create new builder for body *)
   let body_env = { env with builder = Llvm.builder_at_end env.ctx bb
                                     ; top_vals = [] } in

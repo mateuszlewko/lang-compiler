@@ -9,7 +9,16 @@ let bool2int (b : bool) =
   then 1
   else 0
 
+let get_array len fst : int array =
+  let arr : int array = ll_new_int_array len
+  ll_set_ith_elem_of_int_array arr 0 fst 
+  arr
+
 let main () : int =
+  let arrmain : int array = get_array 3 9
+
+  ll_putint (ll_get_ith_elem_of_int_array arrmain 0)
+  ll_print_line ()
 
   ll_putint (bool2int true)
   ll_print_line ()

@@ -168,7 +168,7 @@ let sumOf shape =
 
 let sumOf shape1 shape2 =
     case shape1 of
-    | Circle x y z  ->
+    | Circle x y z  ->****
         let sumOf shape =
             case shape1 of
             | Circle x y z  -> x + y + z
@@ -290,10 +290,13 @@ open B.{adder, sub}
 
 ## Basic Garbage Collector
 
-### Option 1
+## Unboxed types
 
-There should be one.
+### First solution
+
+General purpose, garbage collecting storage allocator for an uncooperative
+environment: [bdwgc](https://github.com/ivmai/bdwgc)
 
 ### Option 2
 
-There won't be any :(
+More advanced, moving gc (parallel?).
