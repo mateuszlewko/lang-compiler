@@ -5,6 +5,8 @@ open BatPervasives
 open BatString
 open CodegenUtils
 
+let (>>*) x f = f x; x
+
 let rec gen_literal env =
   let array_lit xs =
     if List.exists xs ~f:(function LitExp (Int _) -> false | _ -> true)
@@ -148,8 +150,8 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   then set_gc (Some "shadow-stack") fn;
 
   (* create new builder for body *)
-  let body_env = { env with builder = Llvm.builder_at_end env.ctx bb
-                                    ; top_vals = [] } in
+  let body_env = { env with builder  = Llvm.builder_at_end env.ctx bb
+                          ; top_vals = [] } in
 
   (* name arguments for later use in let's scope *)
   let body_env =
@@ -217,8 +219,8 @@ and gen_exprs env =
 
 and gen_application env callee line_args rest_of_args =
   let args     = line_args @ Option.value rest_of_args ~default:[] in
-  let args_val = Array.of_list_map args ~f:(gen_expr env %> fst)
-                 |> skip_void_vals in
+  let args_val = Array.of_list_map (List.rev args) ~f:(gen_expr env %> fst)
+                 >>* Array.rev_inplace |> skip_void_vals in
 
   let callee_val = gen_expr env callee |> fst in
   (* string_of_llvalue callee_val |> printf "callee val: %s\n";

@@ -6,9 +6,14 @@ open BatString
 
 module StrMap = Map.Make(String)
 
+type val_type = {
+  annot : type_annot
+}
+
 type bound_var = {
     ll     : llvalue
   ; of_ptr : bool
+
   }
 
 type environment = {
@@ -17,11 +22,11 @@ type environment = {
   ; llmod       : llmodule
   ; builder     : llbuilder
   ; ctx         : llcontext
-  (* List of top level values or side-effects.
+  (** List of top level values or side-effects.
      Each pair is a function with 0 arguments and variable
      equal to result of function call (if any) *)
   ; top_vals    : (bound_var * bound_var option) list
-  (* current module prefix *)
+  (** current module prefix *)
   ; mod_prefix  : string
   }
 

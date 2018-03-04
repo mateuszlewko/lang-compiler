@@ -14,6 +14,19 @@ let get_array len fst : int array =
   ll_set_ith_elem_of_int_array arr 0 fst 
   arr
 
+let getAdder x : int -> int =
+  let adder a = a + x
+  adder
+
+let fn1 x y : int -> int =
+  let f a = a + x + y
+  f
+
+let get x = 
+  ll_putint x
+  ll_print_line ()
+  x
+
 let main () : int =
   let arrmain : int array = get_array 3 9
 
@@ -24,6 +37,18 @@ let main () : int =
   ll_print_line ()
 
   ll_putint (bool2int false)
+  ll_print_line ()
+
+  let a1 : int -> int = getAdder 5
+  let a2 : int -> int = getAdder 12
+
+  ll_putint (a1 0)
+  ll_print_line ()
+
+  ll_putint (a2 0)
+  ll_print_line ()
+
+  ll_putint ((fn1 (get 1) (get 2)) (get 3))
   ll_print_line ()
 
   0
