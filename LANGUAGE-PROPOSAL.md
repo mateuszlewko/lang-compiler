@@ -288,9 +288,11 @@ open B.{adder, sub}
 
 ## Basic parallelism (Coroutines, processes, locks)
 
-## Basic Garbage Collector
-
 ## Unboxed types
+
+## Polymorphic variants
+
+## Basic Garbage Collector
 
 ### First solution
 
