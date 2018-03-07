@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <string.h>
+#include <gc.h>
 
 typedef unsigned char uchar;
 
@@ -12,6 +13,8 @@ struct thunk {
     size_t curr_bytes;
     size_t needed_bytes;
 };
+
+#define malloc(x) GC_MALLOC((x))
 
 /*
 let getAdder x = 
@@ -68,12 +71,13 @@ struct thunk* pre_getAdder(char* data) {
 }
 
 char* generic_apply(struct thunk* th, uchar cnt, char* args, size_t args_size) {
-    char* final_args = malloc(th->curr_bytes + args_size);
 
     // copy all required bytes to one array
-    memcpy(final_args, th->args, th->curr_bytes);
     size_t diff_bytes = th->needed_bytes - th->curr_bytes;
     size_t used_bytes = args_size < diff_bytes ? args_size : diff_bytes;
+
+    char* final_args = malloc(th->curr_bytes + used_bytes);
+    memcpy(final_args, th->args, th->curr_bytes);
     memcpy(final_args + th->curr_bytes, args, used_bytes);
 
     if (th->left_arity <= cnt) {
@@ -102,20 +106,36 @@ char* generic_apply(struct thunk* th, uchar cnt, char* args, size_t args_size) {
 
 struct thunk g;
 
-void test() {
+int x = 2;
+
+void __attribute__((always_inline)) test(int i) {
     struct thunk* th = getAdder(1<<20);
-    int next_args[] = {2, 15, 19};
+    int next_args[] = {2, 15, i};
     struct thunk* res1 = (struct thunk*)generic_apply(th, 3, (char*)&next_args, sizeof(int) * 3);
 
-    for (int i = 0; i < 4; i++) {
-        printf("%d\n", ((int*)res1->args)[i]);
-    }
+    x ^= ((int*)res1->args)[3];
+
+    // for (int i = 0; i < 4; i++) {
+    //     printf("%d\n", ((int*)res1->args)[i]);
+    // }
 }
 
+int fast_add2(int a, int b, int c, int d) {
+    x ^= b;
+    return a + b + c + 3 * d;
+}
+int fast_add1(int a, int b, int c, int d) {
+    x ^= fast_add2(a, b, c, d);
+    return a * b + c - d + fast_add2(a, b, c, d);
+}
 int fast_add(int a, int b, int c, int d) {
-    return a + b + c + d;
+    x ^= fast_add1(a, b, c, d);
+    return a + b + c - d + fast_add1(a, b, c, d);
 }
 
 int main() {
-    test();
+    for (int i = 0; i < 100000000; i++)
+        test(i);
+
+    printf("%d\n", x);
 }
