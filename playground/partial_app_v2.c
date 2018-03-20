@@ -136,6 +136,9 @@ let getAdder x =
     
 // }
 
+#define STACK_SIZE 100000
+byte stack[STACK_SIZE];
+size_t sp = 0;
 
 typedef unsigned char uchar;
 typedef unsigned char byte;
@@ -178,6 +181,9 @@ inline struct thunk wrapped_adder(int a, int b, int c) {
     t.left_args = 2;
     t.used_bytes = sizeof(int) * 3;
 
+    // put stack args to t.args
+    // call t.fn if too many args and return
+    // or just return thunk
     return t;
 }
 
@@ -209,6 +215,15 @@ inline struct thunk get_adder() {
 
 int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */, 
                     int a, int b, int c, int d, int e) /* -> int */ {
+    void (*fn)() = *t.fn;
+    int (*fn2)() = fn;
+
+    if (t.left_args == 5) {
+        fn2(0, a, b, c, d, e, t.args);
+    }
+    else {
+        fn2(5 - t.left_args, a, b, c, d, e);
+    }
     // apply a b c d e get int
     // if too many args 
     //     put extra args on stack
