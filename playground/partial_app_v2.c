@@ -136,44 +136,70 @@ let getAdder x =
     
 // }
 
-#define STACK_SIZE 100000
-byte stack[STACK_SIZE];
-size_t sp = 0;
-
 typedef unsigned char uchar;
 typedef unsigned char byte;
 
+// #define STACK_SIZE 100000
+// byte stack[STACK_SIZE];
+// size_t sp = 0;
+
 struct thunk {
-    void (**fn)();
+    void (*fn)();
     uchar *args;
     uchar left_args;
     uchar arity;
     int used_bytes;   
 };
 
-volatile int adder5(int a, int b, int c, int d, int e) {
+inline int adder5(int a, int b, int c, int d, int e) {
     return a + b + c + d + e;
 }
 
-int pre_adder5_1(int e, byte *data) {
-    return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], 
-                  ((int*)data)[3], e);
+int pre_adder5(byte env_args, byte cnt, byte* data,
+                      int a, int b, int c, int d, int e) {
+    switch (env_args) {
+        case 0:
+            return adder5(a, b, c, d, e);
+            break;
+        case 1:
+            return adder5(((int*)data)[0], a, b, c, d);
+            break;
+        case 2:
+            return adder5(((int*)data)[0], ((int*)data)[1], a, b, c);
+            break;
+        case 3:
+            return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], 
+                          a, b);
+            break;
+        case 4:
+            return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], 
+                          ((int*)data)[3], a);
+        case 5:
+            return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], 
+                          ((int*)data)[3], ((int*)data)[4]);
+            break;
+    }
 }
 
-int pre_adder5_2(int d, int e, byte *data) {
-    return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], d, e);
-}
+// int pre_adder5_1(int e, byte *data) {
+//     return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], 
+//                   ((int*)data)[3], e);
+// }
+
+// int pre_adder5_2(int d, int e, byte *data) {
+//     return adder5(((int*)data)[0], ((int*)data)[1], ((int*)data)[2], d, e);
+// }
 
 /// 5_3 ... 5_4
 
-void (*adder5_ptrs[])() = {(void(*))adder5, 
-                           (void(*))pre_adder5_2, 
-                           (void(*))pre_adder5_1};
+// void (*adder5_ptrs[])() = {(void(*))adder5, 
+//                            (void(*))pre_adder5_2, 
+//                            (void(*))pre_adder5_1};
 
 inline struct thunk wrapped_adder(int a, int b, int c) {
     struct thunk t;
-    t.fn = &(adder5_ptrs[2]);
-    t.args = malloc(sizeof(int) * 5);
+    t.fn = pre_adder5;
+    t.args = malloc(sizeof(int) * 3);
     ((int*)t.args)[0] = a;
     ((int*)t.args)[1] = b;
     ((int*)t.args)[2] = c;
@@ -181,28 +207,65 @@ inline struct thunk wrapped_adder(int a, int b, int c) {
     t.left_args = 2;
     t.used_bytes = sizeof(int) * 3;
 
-    // put stack args to t.args
-    // call t.fn if too many args and return
-    // or just return thunk
     return t;
 }
 
-inline struct thunk wrapped_adder_1(int c, byte *data) {
-    return wrapped_adder(((int*)data)[0], ((int*)data)[1], c);
-}
-
-inline struct thunk wrapped_adder_2(int b, int c, byte *data) {
-    return wrapped_adder(((int*)data)[0], b, c);
-}
-
-void (*wrapped_adder_ptrs[])() = {(void(*))wrapped_adder, 
-                                  (void(*))wrapped_adder_2, 
-                                  (void(*))wrapped_adder_1};
-
-inline struct thunk get_adder() {
+struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
+                               int a, int b, int c, int d, int e) {
     struct thunk t;
-    t.fn = &(wrapped_adder_ptrs[0]);
-    t.args = malloc(sizeof(int) * 3);
+    switch (env_args) {
+        case 0:
+            t = wrapped_adder(a, b, c);
+            break;
+        case 1:
+            t = wrapped_adder(((int*)data)[0], a, b);
+            break;
+        case 2:
+            t = wrapped_adder(((int*)data)[0], ((int*)data)[1], a);
+            break;
+    }
+
+    if ((short)t.left_args < (short)env_args + cnt - 3) {
+        byte pass_env_args = t.arity - t.left_args;
+        struct thunk (*fn)() = t.fn;
+
+        switch (env_args + cnt - 3) {
+            case 1:
+                return fn(pass_env_args, 1, t.args, e);
+                break;
+            case 2:
+                return fn(pass_env_args, 2, t.args, d, e);
+                break;
+            case 3:
+                return fn(pass_env_args, 3, t.args, c, d, e);
+                break;
+            case 4:
+                return fn(pass_env_args, 4, t.args, b, c, d, e);
+                break;
+            case 5:
+                return fn(pass_env_args, 5, t.args, a, b, c, d, e);
+                break;
+        }
+    }
+    else return t;
+}
+
+// inline struct thunk wrapped_adder_1(int c, byte *data) {
+//     return wrapped_adder(((int*)data)[0], ((int*)data)[1], c);
+// }
+
+// inline struct thunk wrapped_adder_2(int b, int c, byte *data) {
+//     return wrapped_adder(((int*)data)[0], b, c);
+// }
+
+// void (*wrapped_adder_ptrs[])() = {(void(*))wrapped_adder, 
+//                                   (void(*))wrapped_adder_2, 
+//                                   (void(*))wrapped_adder_1};
+
+struct thunk get_adder() {
+    struct thunk t;
+    t.fn = pre_wrapped_adder;
+    // t.args = malloc(sizeof(int) * 3);
     // ((int*)t.args)[0] = a;
     // ((int*)t.args)[1] = b;
     // ((int*)t.args)[2] = c;
@@ -214,15 +277,40 @@ inline struct thunk get_adder() {
 }
 
 int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */, 
-                    int a, int b, int c, int d, int e) /* -> int */ {
-    void (*fn)() = *t.fn;
-    int (*fn2)() = fn;
+               int a, int b, int c, int d, int e) /* -> int */ {
+    void (*fn)() = t.fn;
 
     if (t.left_args == 5) {
-        fn2(0, a, b, c, d, e, t.args);
+        int (*fn2)() = fn;
+        fn2(t.arity - t.left_args, 5, t.args, a, b, c, d, e);
     }
     else {
-        fn2(5 - t.left_args, a, b, c, d, e);
+        struct thunk (*fn2)(byte, byte, byte*, int, int, int, int, int) = fn;
+        struct thunk res = fn2(t.arity - t.left_args, (uchar)5, t.args, a, b, c, 
+                               d, e);
+                               
+        byte env_cnt = res.arity - res.left_args;
+
+        switch (res.left_args) {
+            case 0:
+                return ((int(*)(byte, byte, byte*))(*res.fn))
+                        (env_cnt, 0, res.args);
+            case 1:
+                return ((int(*)(byte, byte, byte*, int))(*res.fn))
+                        (env_cnt, 1, res.args, e);
+            case 2:
+                return ((int(*)(byte, byte, byte*, int, int))(*res.fn)) 
+                        (env_cnt, 2, res.args, d, e);
+            case 3:
+                return ((int(*)(byte, byte, byte*, int, int, int))(*res.fn))
+                        (env_cnt, 3, res.args, c, d, e);
+            case 4:
+                return ((int(*)(byte, byte, byte*, int, int, int, int))(*res.fn))
+                        (env_cnt, 4, res.args, b, c, d, e);
+            case 5:
+                return ((int(*)(byte, byte, byte*, int, int, int, int, int))(*res.fn))
+                        (env_cnt, 5, res.args, a, b, c, d, e);
+        }
     }
     // apply a b c d e get int
     // if too many args 
@@ -230,50 +318,50 @@ int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */,
     //     call t.fn with required args and extra args count
     //     get last thunk
     //     call thunk with only env (data / args) and return
-    return 0;
+    return -1;
 }
 
-int applyIIII(struct thunk t /* int -> int -> int -> int */, 
-                    int c, int d, int e) /* -> int */ {
-    // apply c d e get int
-    return 0;
-}
+// int applyIIII(struct thunk t /* int -> int -> int -> int */, 
+//                     int c, int d, int e) /* -> int */ {
+//     // apply c d e get int
+//     return 0;
+// }
 
-struct thunk applyII(struct thunk t /* int -> int -> int -> int -> int */, 
-                    int a, int b) /* -> int -> int -> int -> int */ {
-    // apply a b get thunk
-    return t;
-}
+// struct thunk applyII(struct thunk t /* int -> int -> int -> int -> int */, 
+//                     int a, int b) /* -> int -> int -> int -> int */ {
+//     // apply a b get thunk
+//     return t;
+// }
 
-int applyIII(struct thunk t /* int -> int -> int -> int */, 
-                    int c, int d, int e) /* -> int */ {
-    // apply c d e get int
-    return 0;
-}
+// int applyIII(struct thunk t /* int -> int -> int -> int */, 
+//                     int c, int d, int e) /* -> int */ {
+//     // apply c d e get int
+//     return 0;
+// }
 
-int applyI (struct thunk th /* fn : int -> int */, int c) {
-   // if (th.left_args == 1) {
-        void (*fn)() = *th.fn;
-        int (*fn2)() = fn;
-        return fn2(c, th.args);
-    // } 
-}
-
-
+// int applyI (struct thunk th /* fn : int -> int */, int c) {
+//    // if (th.left_args == 1) {
+//         void (*fn)() = *th.fn;
+//         int (*fn2)() = fn;
+//         return fn2(c, th.args);
+//     // } 
+// }
 
 int gg = 123;
 
-inline int test1(int a, int b, int c) {
-    struct thunk t = applyII(a, b);
-    return applyI(t, c);
-    // printf("%d\n", res);
-}
+// inline int test1(int a, int b, int c) {
+//     // struct thunk t = applyII(a, b);
+//     // return applyI(t, c);
+//     // printf("%d\n", res);
+// }
 
 void perf_test() {
-    int x = rand() % 10 + 4;
+    int x = rand() % 3 + 4;
 
     for (int i = 0; i < 100000000; i++) {
-        gg ^= test1(i * x, i + x + 5, i * i - x);
+        struct thunk t = get_adder();
+        gg ^= applyIIIII(t, i * x, i + x + 5, i * i + x, i, i + x);
+        // gg ^= test1(i * x, i + x + 5, i * i - x);
         // gg ^= ((int*)th.args)[0];
         // gg ^= ((int*)th.args)[2];
     }
@@ -281,11 +369,41 @@ void perf_test() {
     printf("%d\n", gg);
 }
 
+// int test_pass(int cnt, int a, int b, int c, int d) {
+//     switch (cnt) {
+//         case 1:
+//             return a;
+//         case 2:
+//             return a + b;
+//         case 3:
+//             return a + b + c;
+//         case 4:
+//             return a + b + c + d;
+//     }
+// }
 
+void test_new() {
+    struct thunk t = get_adder();
+    int res = applyIIIII(t, 1, 3, 5, 7, 9);
+
+    printf("%d\n", res);
+}
 
 int main() {
-    // test1();
+
     perf_test();
+
+    // test1();
+    // perf_test();
+    // int (*fn1)(int, int) = &test_pass;
+    // int res1 = fn1(1, 3); 
+    // printf("%d\n", res1);
+
+    // int (*fn3)(int, int, int, int) = &test_pass;
+    // int res3 = fn3(3, 3, 5, 34000000); 
+    // printf("%d\n", res3);
+
+
 
     // int res = call_fn(add3_slim, 3);
     // printf("%d\n", res);
