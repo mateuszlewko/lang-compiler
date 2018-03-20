@@ -84,7 +84,7 @@ char* generic_apply(struct thunk* th, uchar cnt, char* args, size_t args_size) {
         // pass thunk with all args (as byte array) to th->fn
         if (used_bytes == args_size) 
             return (char*)(th->fn(final_args));
-        else {
+        else { // <
             struct thunk* mid_th = (struct thunk*)th->fn(final_args);
             return generic_apply(mid_th, 
                                  cnt - th->left_arity,
@@ -134,8 +134,10 @@ int fast_add(int a, int b, int c, int d) {
 }
 
 int main() {
+    int x = rand() % 100 + 1;
+
     for (int i = 0; i < 100000000; i++)
-        test(i);
+        fast_add(i * x, i / x, i + x * 2, 3 * x * i);
 
     printf("%d\n", x);
 }
