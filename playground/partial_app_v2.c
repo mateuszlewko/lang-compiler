@@ -63,7 +63,7 @@ int pre_adder5(byte env_args, byte cnt, byte* data,
 struct thunk wrapped_adder(int a, int b, int c) {
     struct thunk t;
     t.fn = pre_adder5;
-    t.args = malloc(sizeof(int) * 3);
+    t.args = malloc(sizeof(int) * 5);
     ((int*)t.args)[0] = a;
     ((int*)t.args)[1] = b;
     ((int*)t.args)[2] = c;
@@ -125,7 +125,7 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
 struct thunk get_adder() {
     struct thunk t;
     t.fn = pre_wrapped_adder;
-    // t.args = malloc(sizeof(int) * 3);
+    t.args = malloc(sizeof(int) * 3);
     // ((int*)t.args)[0] = a;
     // ((int*)t.args)[1] = b;
     // ((int*)t.args)[2] = c;
@@ -225,8 +225,9 @@ void perf_test() {
 
     for (int i = 0; i < 100000000; i++) {
         struct thunk t = get_adder();
-        struct thunk res1 = applyIIII(t, i * x, i + x + 5, i * i + x, i);
-        gg ^= applyI(res1, i + x);
+        gg ^= applyIIIII(t, i * x, i + x + 5, i * i + x, i, i + x);
+        // struct thunk res1 = applyIIII(t, i * x, i + x + 5, i * i + x, i);
+        // gg ^= applyI(res1, i + x);
     }
 
     printf("%d\n", gg);
