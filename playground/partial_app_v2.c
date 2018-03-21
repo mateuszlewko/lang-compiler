@@ -3,6 +3,7 @@
 #include <time.h>
 #include <string.h>
 #include <gc.h>
+#include <assert.h>
 
 #define malloc(x) GC_MALLOC((x))
 
@@ -11,9 +12,15 @@
 let complexAdder add x y =
     x + y + add x y
 
-let getAdder x = 
+let rr = ref 0
+
+let getAdder2 x = 
+    rr := !rr + x;
     let adder x y z = 
-        let innerAdder x y z w q = x + y + z + w + q
+        rr := !rr + x + z;
+        let innerAdder x y z w q = 
+            rr := !rr + x + y + z + q;
+            x + y + z + w + q
         in innerAdder x y z 
     in adder x 
 */
@@ -151,7 +158,7 @@ struct thunk {
     int used_bytes;   
 };
 
-inline int adder5(int a, int b, int c, int d, int e) {
+int adder5(int a, int b, int c, int d, int e) {
     return a + b + c + d + e;
 }
 
@@ -196,7 +203,7 @@ int pre_adder5(byte env_args, byte cnt, byte* data,
 //                            (void(*))pre_adder5_2, 
 //                            (void(*))pre_adder5_1};
 
-inline struct thunk wrapped_adder(int a, int b, int c) {
+struct thunk wrapped_adder(int a, int b, int c) {
     struct thunk t;
     t.fn = pre_adder5;
     t.args = malloc(sizeof(int) * 3);
@@ -247,7 +254,15 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
                 break;
         }
     }
-    else return t;
+    else {
+        // memcpy to res.args
+        int data[] = {a, b, c, d, e}; 
+        memcpy(t.args + t.used_bytes, &data[3 - env_args], 
+               sizeof(int) * (env_args + cnt - 3));
+        t.left_args -= env_args + cnt - 3;
+        t.used_bytes += sizeof(int) * (env_args + cnt - 3);
+        return t;
+    }
 }
 
 // inline struct thunk wrapped_adder_1(int c, byte *data) {
@@ -321,6 +336,64 @@ int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */,
     return -1;
 }
 
+struct thunk applyIIII(struct thunk t /* int -> int -> int -> int -> int -> int */, 
+                       int a, int b, int c, int d) /* -> int -> int */ {
+    // void (*fn)() = t.fn;
+
+    if (t.left_args > 4) {
+        struct thunk res = t;
+        res.args = malloc(sizeof(int) * 4);
+        memcpy(res.args, t.args, t.used_bytes);
+        ((int*)(res.args + t.used_bytes))[0] = a;
+        ((int*)(res.args + t.used_bytes))[1] = b;
+        ((int*)(res.args + t.used_bytes))[2] = c;
+        ((int*)(res.args + t.used_bytes))[3] = d;
+        res.left_args -= 4;
+        res.used_bytes += sizeof(int) * 4;
+
+        return res;
+    }
+    else {
+        struct thunk (*fn2)(byte, byte, byte*, int, int, int, int) = t.fn;
+        struct thunk res = fn2(t.arity - t.left_args, (uchar)4, t.args, a, b, c, 
+                               d);
+        return res;
+        // byte env_cnt = res.arity - res.left_args;
+
+        // switch (res.left_args) {
+        //     case 0:
+        //         return res;
+        //     case 1:
+        //         ((int*)(res.args + res.used_bytes))[0] = d;
+        //         res.used_bytes += sizeof(int);
+        //         res.left_args -= 1;
+        //         return res;
+        //     case 2:
+        //         ((int*)(res.args + res.used_bytes))[0] = c;
+        //         ((int*)(res.args + res.used_bytes))[1] = d;
+        //         res.used_bytes += sizeof(int) * 2;
+        //         res.left_args -= 2;
+        //         return res;
+        //     case 3:
+        //         ((int*)(res.args + res.used_bytes))[0] = b;
+        //         ((int*)(res.args + res.used_bytes))[1] = c;
+        //         ((int*)(res.args + res.used_bytes))[2] = d;
+        //         res.used_bytes += sizeof(int) * 3;
+        //         res.left_args -= 3;
+        //         return res;
+        //     case 4:
+        //         assert(0);
+        // }
+    }
+    // apply a b c d e get int
+    // if too many args 
+    //     put extra args on stack
+    //     call t.fn with required args and extra args count
+    //     get last thunk
+    //     call thunk with only env (data / args) and return
+    // return -1;
+}
+
 // int applyIIII(struct thunk t /* int -> int -> int -> int */, 
 //                     int c, int d, int e) /* -> int */ {
 //     // apply c d e get int
@@ -339,13 +412,12 @@ int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */,
 //     return 0;
 // }
 
-// int applyI (struct thunk th /* fn : int -> int */, int c) {
-//    // if (th.left_args == 1) {
-//         void (*fn)() = *th.fn;
-//         int (*fn2)() = fn;
-//         return fn2(c, th.args);
-//     // } 
-// }
+int applyI (struct thunk t /* fn : int -> int */, int e) {
+   // if (th.left_args == 1) {
+    int (*fn)(byte, byte, byte*, int) = t.fn;
+    return fn(t.arity - t.left_args, 1, t.args, e);
+    // } 
+}
 
 int gg = 123;
 
@@ -360,7 +432,11 @@ void perf_test() {
 
     for (int i = 0; i < 100000000; i++) {
         struct thunk t = get_adder();
-        gg ^= applyIIIII(t, i * x, i + x + 5, i * i + x, i, i + x);
+        struct thunk res1 = applyIIII(t, i * x, i + x + 5, i * i + x, i);
+        gg ^= applyI(res1, i + x);
+
+        // struct thunk t = get_adder();
+        // gg ^= applyIIIII(t, i * x, i + x + 5, i * i + x, i, i + x);
         // gg ^= test1(i * x, i + x + 5, i * i - x);
         // gg ^= ((int*)th.args)[0];
         // gg ^= ((int*)th.args)[2];
@@ -389,9 +465,17 @@ void test_new() {
     printf("%d\n", res);
 }
 
+void test_new2() {
+    struct thunk t = get_adder();
+    struct thunk res1 = applyIIII(t, 1, 3, 5, 7);
+    int res = applyI(res1, 9);
+    printf("%d\n", res);
+}
+
 int main() {
 
     perf_test();
+    // test_new2();
 
     // test1();
     // perf_test();
