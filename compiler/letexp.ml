@@ -28,12 +28,29 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
   (** first basic block after switch cases  *)
   let next_bb = append_block env.ctx "after_switch" fn in
 
+  let ll_data         = fn_params.(2) in
+  let raw_fn_arg_ts   = Array.map (params raw_fn) type_of in
+  let raw_fn_struct_t = packed_struct_type (env.ctx) raw_fn_arg_ts in
+  let data_struct     =
+    build_bitcast ll_data (pointer_type raw_fn_struct_t) "data" entry_builder in
+
   (** builds case with call to raw function *)
   let build_case ix cnt =
     let arg_cnt = raw_arg_cnt - cnt in 
     let bb      = insert_block env.ctx (sprintf "case %d-%d" ix cnt) next_bb in
     let bd      = builder_at_end env.ctx bb in
-    let args    = Array.slice fn_params ix (ix + arg_cnt) in
+  
+    let data_args = 
+      let rec get args = 
+        function 
+        | 0 -> args |> Array.of_list
+        | n -> let arg = build_struct_gep data_struct (n - 1) 
+                                          (sprintf "%d-arg-%d" cnt (n - 1)) bd 
+               in get (arg::args) (n - 1)  
+      in get [] cnt in
+
+    let passed_args = Array.slice fn_params ix (ix + arg_cnt) in
+    let args        = Array.append data_args passed_args in
 
     build_call raw_fn args "raw" bd |> ignore;
     build_br next_bb bd |> ignore;
@@ -66,7 +83,7 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn =
   let raw_arg_cnt = Array.length raw_params in
 
   let last_bb = build_call_switch env fn fn_params raw_fn raw_arg_cnt in
- 
+
   build_ret (const_null closure_t) (builder_at_end env.ctx last_bb) |> ignore;
 
   ()
