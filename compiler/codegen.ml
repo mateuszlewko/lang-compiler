@@ -207,7 +207,7 @@ and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
           else build_ret ret_val body_env.builder in
 
   if Array.length args > 1
-  then Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs;
+  then Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs fn;
 
   expr_result, env_with_let
 

@@ -25,6 +25,12 @@ let output_path = ref "a.out"
 let input_path = ref ""
 let usage = "Usage: " ^ Sys.argv.(0) ^ " <source file> [-o <output file> ] [--ll-only]"
 
+let write_str_to_file str file_path =
+  let oc = Pervasives.open_out file_path in 
+
+  fprintf oc "%s\n" str;  
+  Pervasives.close_out oc         
+
 let specs = [
     ("--ll-only", Arg.Set llvm_out_only
                 , " Save only generated llvm code in out.ll, without \
@@ -35,9 +41,8 @@ let specs = [
 
 let compile ?(log=true) file_name output_path llvm_out_only src =
   let (Prog prog) = Parser.prog_of_string (src ^ "\n") file_name in
-  let ll_code = gen_llvm_exn prog in
-  let save_llvm file_name =
-    BatFile.with_file_out file_name (flip BatInnerIO.write_string ll_code) in
+  let ll_code     = gen_llvm_exn prog in
+  let save_llvm   = write_str_to_file ll_code in
 
   if llvm_out_only
   then begin
