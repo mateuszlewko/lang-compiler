@@ -44,6 +44,7 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
       let rec get args = 
         function 
         | 0 -> args |> Array.of_list
+        (* TODO: arg is ptr, so load arg instruction *)
         | n -> let arg = build_struct_gep data_struct (n - 1) 
                                           (sprintf "%d-arg-%d" cnt (n - 1)) bd 
                in get (arg::args) (n - 1)  
@@ -66,9 +67,9 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
 
   (** add cases to switch *)
   Array.iteri cases (const_int (byte_t) %> add_case switch);
-  next_bb
+  next_bb, const_null closure_t
 
-let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn = 
+let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if = 
   let arg_names, arg_ts = Array.of_list args |> Array.unzip in
   let arg_ts            = 
    Array.map arg_ts ~f:(annot_to_lltype env.ctx ~func_as_ptr:true) in
@@ -82,7 +83,34 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn =
   let raw_params  = params raw_fn in
   let raw_arg_cnt = Array.length raw_params in
 
-  let last_bb = build_call_switch env fn fn_params raw_fn raw_arg_cnt in
+  let last_bb, raw_closure = 
+    build_call_switch env fn fn_params raw_fn raw_arg_cnt in
+
+  let u            = (LitExp Unit) in
+  let cnt_sub_arg = InfixOp ("-", Some (VarExp "lang.cnt")
+                                , Some (LitExp (Int raw_arg_cnt))) in
+  let condExp = InfixOp ("<", Some (VarExp ("lang.left_args")) 
+                            , Some (InfixOp ("+"
+                                           , Some (VarExp("lang.env_args"))
+                                           , Some cnt_sub_arg
+                                            )
+                                   ) 
+                        ) in
+
+  let bv v      = { ll = v; of_ptr = false } in
+  let builder   = builder_at_end env.ctx last_bb in 
+  let left_args = build_extractvalue raw_closure 2 "lang.left_args" builder in
+
+  let if_env = { env with opened_vals = 
+                            [ "lang.cnt", bv fn_params.(1)
+                            ; "lang.env_args", bv fn_params.(0) 
+                            ; "lang.left_args", bv left_args ] 
+                            |> StrMap.of_alist_exn 
+
+                        ; builder = builder } in 
+  
+  let then_bb, else_bb, _ = gen_raw_if if_env condExp u (Some u) in
+  
 
   build_ret (const_null closure_t) (builder_at_end env.ctx last_bb) |> ignore;
 

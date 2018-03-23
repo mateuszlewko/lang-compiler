@@ -89,6 +89,19 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
             break;
     }
 
+    /*
+        IfExp (InfixOp("<", Some VarExp(left_args), 
+                            Some( InfixOp("+", Some VarExp(env_args)
+                                             , Some LitExp Int cnt
+                                         ) 
+                                )
+                      )
+                <then>,
+                []
+                Some <else>
+              )
+    */
+
     if ((short)t.left_args < (short)env_args + cnt - 3) {
         byte pass_env_args = t.arity - t.left_args;
         struct thunk (*fn)() = t.fn;
