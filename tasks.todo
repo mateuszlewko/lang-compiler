@@ -50,7 +50,11 @@ Codegen:
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ✔ improved error handling @medium @done(18-01-22 00:54)
 
-    ❑ partial application @high 
+    ❑ partial application @high @today
+        ❑ pre-* function which returns closure
+        ❑ pre-* function which returns value
+        ❑ call-site 
+        ❑ return PAPP
     ❑ record types
     ❑ lambda (fun or =>)
     ❑ mutable var
@@ -64,11 +68,15 @@ Codegen:
     ❑ type char @medium
     ❑ type float @medium
     ❑ arithmetic operations (float) @medium
-    ❑ type checking / basic type inference @medium
+    ❑ type checking / basic type inference @high
     ❑ multi-file programs @low @optional
+
+    ❑ polymorphism
 
 Bugs:
     ❑ fix nested let @critical 
+        ❑ closure conversion 
+        ❑ lambda lifting
     ✔ nested functions can't access values from outer scope (not global) @critical @done(18-01-26 22:35)
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
