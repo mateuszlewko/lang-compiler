@@ -33,13 +33,14 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
   let raw_fn_struct_t = packed_struct_type (env.ctx) raw_fn_arg_ts in
   let data_struct     =
     build_bitcast ll_data (pointer_type raw_fn_struct_t) "data" entry_builder in
+  let closure         = build_alloca closure_t "closure" entry_builder in
 
   (** builds case with call to raw function *)
   let build_case ix cnt =
     let arg_cnt = raw_arg_cnt - cnt in 
-    let bb      = insert_block env.ctx (sprintf "case %d-%d" ix cnt) next_bb in
+    let bb      = insert_block env.ctx (sprintf "case-%d-%d" ix cnt) next_bb in
     let bd      = builder_at_end env.ctx bb in
-  
+
     let data_args = 
       let rec get args = 
         function 
@@ -67,7 +68,12 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
 
   (** add cases to switch *)
   Array.iteri cases (const_int (byte_t) %> add_case switch);
-  next_bb, const_null closure_t
+  (* build_alloca closure_t *)
+
+  let fields = [|fn_t (void_type env.ctx) [||] |> ptr_t; ptr_t byte_t
+               ; byte_t; byte_t; i32_type env.ctx |] in
+
+  next_bb, closure
 
 let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if = 
   let arg_names, arg_ts = Array.of_list args |> Array.unzip in
@@ -99,19 +105,23 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
 
   let bv v      = { ll = v; of_ptr = false } in
   let builder   = builder_at_end env.ctx last_bb in 
-  let left_args = build_extractvalue raw_closure 2 "lang.left_args" builder in
+  let left_args = build_struct_gep raw_closure 2 "lang.left_args" builder in
 
   let if_env = { env with opened_vals = 
                             [ "lang.cnt", bv fn_params.(1)
                             ; "lang.env_args", bv fn_params.(0) 
-                            ; "lang.left_args", bv left_args ] 
-                            |> StrMap.of_alist_exn 
+                            ; "lang.left_args", bv left_args 
+                            ] |> StrMap.of_alist_exn 
 
                         ; builder = builder } in 
   
   let then_bb, else_bb, _ = gen_raw_if if_env condExp u (Some u) in
+  let then_bd = builder_at env.ctx (instr_begin then_bb) in 
   
+  let arity         = 
+    build_struct_gep raw_closure 3 "arity" then_bd in
+  let pass_env_args = build_sub arity left_args "pass_env_args" then_bd in
 
-  build_ret (const_null closure_t) (builder_at_end env.ctx last_bb) |> ignore;
+  build_ret (const_null closure_t) if_env.builder |> ignore;
 
   ()

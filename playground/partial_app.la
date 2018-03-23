@@ -1,5 +1,7 @@
 
-let adder3 a b c = a + b + c
+let adder5 a b c d e = a + b + c + d + e 
+
+let adder3 a b c : int -> int -> int = adder5 a b c
 
 let main () : int =
     
