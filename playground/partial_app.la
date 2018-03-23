@@ -1,0 +1,6 @@
+
+let adder3 a b c = a + b + c
+
+let main () : int =
+    
+    0

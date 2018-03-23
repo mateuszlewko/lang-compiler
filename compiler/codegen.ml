@@ -126,8 +126,8 @@ and gen_simple_if env cond then_exp else_exp =
     position_at_end merge_bb env.builder;
     undef_val
 
-and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
-  let args = Array.of_list args in
+and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
+  let args = Array.of_list args_raw in
   let is_val = Array.is_empty args in
   if is_rec && is_val
   then failwith "Can't define recursive value. Either remove 'rec' from let \
@@ -145,9 +145,6 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let ftype = function_type ret_type arg_types in
   let fn    = define_function (Env.name_of env name) ftype env.llmod in
   let bb    = entry_block fn in
-
-  if not is_val 
-  then set_gc (Some "shadow-stack") fn;
 
   (* create new builder for body *)
   let body_env = { env with builder  = Llvm.builder_at_end env.ctx bb
@@ -208,6 +205,9 @@ and gen_letexp env is_rec (name, ret_type) args fst_line body_lines =
   let _ = if ret_is_void
           then build_ret_void body_env.builder
           else build_ret ret_val body_env.builder in
+
+  if Array.length args > 1
+  then Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs;
 
   expr_result, env_with_let
 

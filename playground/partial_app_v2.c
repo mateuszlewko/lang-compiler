@@ -35,7 +35,7 @@ int adder5(int a, int b, int c, int d, int e) {
 }
 
 int pre_adder5(byte env_args, byte cnt, byte* data,
-                      int a, int b, int c, int d, int e) {
+               int a, int b, int c, int d, int e) {
     switch (env_args) {
         case 0:
             return adder5(a, b, c, d, e);
@@ -223,7 +223,7 @@ int gg = 123;
 void perf_test() {
     int x = rand() % 3 + 4;
 
-    for (int i = 0; i < 100000000; i++) {
+    for (int i = 0; i < 1; i++) {
         struct thunk t = get_adder();
         gg ^= applyIIIII(t, i * x, i + x + 5, i * i + x, i, i + x);
         // struct thunk res1 = applyIIII(t, i * x, i + x + 5, i * i + x, i);

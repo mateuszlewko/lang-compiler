@@ -33,3 +33,4 @@ a.out
 **/*.ll
 **/*.e
 **/*.dSYM
+playground/out
