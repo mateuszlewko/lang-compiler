@@ -138,3 +138,8 @@ let gen_open env path =
     |> StrMap.merge env.opened_vals ~f:merge
 
   in undef_val, { env with opened_vals = opened }
+
+  module Const = struct 
+    let i32 = const_int (i32_type (global_context ()))
+    let i8 = const_int (i8_type (global_context ()))
+  end

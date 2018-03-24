@@ -111,7 +111,7 @@ and gen_raw_if env cond then_exp else_exp =
 
     (* Finally, set the builder to the end of the merge block. *)
     position_at_end merge_bb env.builder;
-    then_bb, Some else_bb, result
+    then_bb, Some else_bb, merge_bb, result
   | None when not res_is_void ->
     failwith "If expression needs an else branch or must return unit."
   | None ->
@@ -124,10 +124,10 @@ and gen_raw_if env cond then_exp else_exp =
     ignore (build_br merge_bb env.builder);
 
     position_at_end merge_bb env.builder;
-    then_bb, None, undef_val
+    then_bb, None, merge_bb, undef_val
 
 and gen_simple_if env cond then_exp else_exp =
-  let _, _, res = gen_raw_if env cond then_exp else_exp in res
+  let _, _, _, res = gen_raw_if env cond then_exp else_exp in res
 
 and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
   let args = Array.of_list args_raw in
