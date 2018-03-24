@@ -74,6 +74,47 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
 
   next_bb, closure
 
+let build_ret_call_switch env fn_params raw_closure then_bd left_args 
+                          raw_arg_cnt then_bb arg_ts if_cont_bb = 
+  let arity         = 
+    build_struct_gep raw_closure 3 "arity" then_bd in
+  let pass_env_args = build_sub arity left_args "pass_env_args" then_bd in
+  let args_data     = build_struct_gep raw_closure 1 "args_data" then_bd in
+ 
+  let left_args    =
+    let total_args = build_add fn_params.(0) fn_params.(1) "" then_bd in
+    build_sub total_args (const_int (i32_type env.ctx) raw_arg_cnt) "" then_bd
+  in 
+
+  (** builds case with call to raw function *)
+  let build_case ix cnt =
+    let bb = insert_block env.ctx (sprintf "case-ret-%d" cnt) then_bb in
+    let bd = builder_at_end env.ctx bb in
+
+    let data_args   = [|pass_env_args; Const.i32 cnt; args_data|] in
+    let passed_args = Array.slice fn_params ix (ix + cnt) in
+    let args        = Array.append data_args passed_args in
+  
+    let call_fn = 
+      let fn = build_struct_gep raw_closure 0 "call.fn.pre" bd in   
+      build_bitcast fn (function_type closure_t [||] |> ptr_t ) "call.fn" bd in
+
+    let res = build_call call_fn args "res" bd in
+    build_ret res bd |> ignore;
+    bb
+  in
+ 
+  (** basic blocks for all switch cases  *)
+  let arg_cnt = Array.length arg_ts in 
+  let cases   = 
+    Array.init arg_cnt (fun i -> build_case (arg_cnt - i - 1) (i + 1)) in
+
+  (** switch of env_args (first argument of fn) *)
+  let switch = build_switch left_args if_cont_bb raw_arg_cnt then_bd in
+
+  (** add cases to switch *)
+  Array.iteri cases ((fun i -> Const.i8 (i + 1)) %> add_case switch)
+
 let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if = 
   let arg_names, arg_ts = Array.of_list args |> Array.unzip in
   let arg_ts            = 
@@ -86,6 +127,7 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   let fn          = def_fun (Env.name_of env name) fn_type env.llmod in
   let fn_params   = params fn in
   let raw_params  = params raw_fn in
+  let raw_arg_ts  = Array.map raw_params type_of in
   let raw_arg_cnt = Array.length raw_params in
 
   let last_bb, raw_closure = 
@@ -117,44 +159,12 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   let then_bb, else_bb, if_cont_bb, _ = gen_raw_if if_env condExp u (Some u) in
   let then_bd = builder_at env.ctx (instr_begin then_bb) in 
   
-  let arity         = 
-    build_struct_gep raw_closure 3 "arity" then_bd in
-  let pass_env_args = build_sub arity left_args "pass_env_args" then_bd in
-  let args_data     = build_struct_gep raw_closure 1 "args_data" then_bd in
- 
-  let left_args    =
-    let total_args = build_add fn_params.(0) fn_params.(1) "" then_bd in
-    build_sub total_args (const_int (i32_type env.ctx) raw_arg_cnt) "" then_bd
-  in 
+  build_ret_call_switch env fn_params raw_closure then_bd left_args raw_arg_cnt 
+                        then_bb arg_ts if_cont_bb;
 
-  (** builds case with call to raw function *)
-  let build_case ix cnt =
-    let bb = insert_block env.ctx (sprintf "case-ret-%d" cnt) then_bb in
-    let bd = builder_at_end env.ctx bb in
+  let args_struct_t = packed_struct_type env.ctx raw_arg_ts in
+  let else_bd = builder_at env.ctx (instr_begin else_bb) in 
+   const_packed_struct env.ctx raw_params
+  build_alloca args_struct_t "data" else_bd 
 
-    let data_args   = [|pass_env_args; Const.i32 cnt; args_data |] in
-    let passed_args = Array.slice fn_params ix (ix + cnt) in
-    let args        = Array.append data_args passed_args in
-  
-    let call_fn = 
-      let fn = build_struct_gep raw_closure 0 "call.fn.pre" bd in   
-      build_bitcast fn (function_type closure_t [||] |> ptr_t ) "call.fn" bd in
-
-    let res = build_call call_fn args "res" bd in
-    build_ret res bd |> ignore;
-    bb
-  in
- 
-  (** basic blocks for all switch cases  *)
-  let arg_cnt = Array.length arg_ts in 
-  let cases   = 
-    Array.init arg_cnt (fun i -> build_case (arg_cnt - i - 1) (i + 1)) in
-
-  (** switch of env_args (first argument of fn) *)
-  let switch = build_switch left_args if_cont_bb raw_arg_cnt then_bd in
-
-  (** add cases to switch *)
-  Array.iteri cases ((fun i -> Const.i8 (i + 1)) %> add_case switch);
-
-  build_ret (const_null closure_t) if_env.builder |> ignore;
   ()
