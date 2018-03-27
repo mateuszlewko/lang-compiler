@@ -125,10 +125,15 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
         }
     }
     else {
+        int from_b[] = {0, 4, 8, 12};
+        int to_b[] = {0, 4, 8, 12, 14};
+
         // memcpy to res.args
         int data[] = {a, b, c, d, e}; 
-        memcpy(t.args + t.used_bytes, &data[3 - env_args], 
-               sizeof(int) * (env_args + cnt - 3));
+        int from = from_b[3 - env_args];
+
+        memcpy(t.args + t.used_bytes, data + from, 
+               to_b[cnt - 1] - from);
         t.left_args -= env_args + cnt - 3;
         t.used_bytes += sizeof(int) * (env_args + cnt - 3);
         return t;
@@ -274,7 +279,8 @@ void test_new2() {
 }
 
 int main() {
+    test_new();
+    test_new2();
 
-    perf_test();
-    // test_new2();
+    // perf_test();
 }
