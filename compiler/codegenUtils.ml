@@ -149,3 +149,14 @@ let gen_open env path =
     let i32 = const_int (i32_type (global_context ()))
     let i8 = const_int (i8_type (global_context ()))
   end
+
+(** declare void @llvm.memcpy.p0i8.p0i8.i32(i8* <dest>, i8* <src>,
+                                            i32 <len>, i1 <isvolatile>)
+*)
+let build_memcpy ?(is_volatile=false) dest src len builder llmod =
+  let ctx      = global_context () in
+  let memcpy_t = i32_type ctx in
+  let memcpy   = declare_global memcpy_t "llvm.memcpy.p0i8.p0i8.i32" llmod in
+  
+  
+  ()

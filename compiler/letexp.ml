@@ -55,6 +55,7 @@ let build_call_switch env fn fn_params raw_fn raw_arg_cnt =
     let args        = Array.append data_args passed_args in
 
     build_call raw_fn args "raw" bd |> ignore;
+    (* TODO: store call result in thunk or build phi instruction *)
     build_br next_bb bd |> ignore;
     bb
   in
@@ -173,17 +174,24 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
     let ptr = build_alloca args_struct_t "data" else_bd in
     build_store params_struct ptr else_bd in
 
-  let from_b_arr = 
-    let pref_sum arr = 
-      let n   = Array.length arr in
-      let res = Array.init n (const 0) in
-      for i = 1 to n - 1 do res.(i) <- res.(i - 1) + arr.(i - 1) done;
-      res in
+  let pref_sum n arr = 
+    let res = Array.init n (const 0) in
+    for i = 1 to n - 1 do res.(i) <- res.(i - 1) + arr.(i - 1) done;
+    res in
 
-    let from_ixs = Array.map arg_lang_ts size_of_lang |> pref_sum 
-                   |> Array.map ~f:Const.i32 in
-    let arr      = const_array (i32_type env.ctx) from_ixs in 
+  let make_ixs n name = Array.map arg_lang_ts size_of_lang 
+                    |> pref_sum n 
+                    |> Array.map ~f:Const.i32
+                    |> const_array (i32_type env.ctx) 
+                    |> fun arr -> define_global name arr env.llmod in
 
-    define_global "from_b" arr env.llmod in
+  let from_b_arr = make_ixs raw_arg_cnt "from_b" in 
+  let to_b_arr   = make_ixs (raw_arg_cnt + 1) "to_b" in 
+
+  let args       = build_struct_gep raw_closure 1 "t.args" else_bd in
+  let used_bytes = build_struct_gep raw_closure 4 "t.used_bytes" else_bd in
+  let from_ix    = build_sub (Const.i32 raw_arg_cnt) fn_params.(0) "" else_bd in 
+  let from       = build_in_bounds_gep from_b_arr [|Const.i32 0; from_ix|]
+                                       "from" else_bd in
 
   ()
