@@ -193,5 +193,23 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   let from_ix    = build_sub (Const.i32 raw_arg_cnt) fn_params.(0) "" else_bd in 
   let from       = build_in_bounds_gep from_b_arr [|Const.i32 0; from_ix|]
                                        "from" else_bd in
-
+  (* from_pos = ((byte*)data) + from *)
+  (* dest = t.args + t.used_bytes *)
+  (* to_b_pos = to_b[cnt] *)
+  (* b_cnt = to_b[cnt] - from *)
+  (* build_memcpy dest from_pos b_cnt *)
+  (* insertelement: t.left_args = t.left_args - env_args + cnt - 3 *)
+  (* insertelement: t.used_bytes = t.used_bytes + b_cnt; *)
+  (* ret closure *)
   ()
+
+let build_pre_fn_value = 
+  (* TODO: First switch from gen_pre_fn *)
+  ()
+
+let build_papp fn args = 
+  ()
+
+let build_papp_apply = ()
+
+let build_papp_apply_value = ()
