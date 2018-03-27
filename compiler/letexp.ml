@@ -116,9 +116,10 @@ let build_ret_call_switch env fn_params raw_closure then_bd left_args
   Array.iteri cases ((fun i -> Const.i8 (i + 1)) %> add_case switch)
 
 let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if = 
-  let arg_names, arg_ts = Array.of_list args |> Array.unzip in
-  let arg_ts            = 
-   Array.map arg_ts ~f:(annot_to_lltype env.ctx ~func_as_ptr:true) in
+  let arg_names, arg_lang_ts = Array.of_list args |> Array.unzip in
+
+  let arg_ts = Array.map arg_lang_ts
+                         ~f:(annot_to_lltype env.ctx ~func_as_ptr:true) in
  
   (** function arguments extended with helper arg types *)
   let ext_arg_ts  = Array.append [| byte_t; byte_t; ptr_t byte_t |] arg_ts in
@@ -149,22 +150,40 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   let left_args = build_struct_gep raw_closure 2 "lang.left_args" builder in
 
   let if_env = { env with opened_vals = 
-                            [ "lang.cnt", bv fn_params.(1)
-                            ; "lang.env_args", bv fn_params.(0) 
+                            [ "lang.cnt"      , bv fn_params.(1)
+                            ; "lang.env_args" , bv fn_params.(0) 
                             ; "lang.left_args", bv left_args 
                             ] |> StrMap.of_alist_exn 
 
                         ; builder = builder } in 
   
   let then_bb, else_bb, if_cont_bb, _ = gen_raw_if if_env condExp u (Some u) in
+
+  let else_bb = Option.value_exn else_bb in
   let then_bd = builder_at env.ctx (instr_begin then_bb) in 
   
   build_ret_call_switch env fn_params raw_closure then_bd left_args raw_arg_cnt 
                         then_bb arg_ts if_cont_bb;
 
   let args_struct_t = packed_struct_type env.ctx raw_arg_ts in
-  let else_bd = builder_at env.ctx (instr_begin else_bb) in 
-   const_packed_struct env.ctx raw_params
-  build_alloca args_struct_t "data" else_bd 
+  let else_bd       = builder_at env.ctx (instr_begin else_bb) in 
+  let params_struct = const_packed_struct env.ctx raw_params in
+
+  let params_ptr =
+    let ptr = build_alloca args_struct_t "data" else_bd in
+    build_store params_struct ptr else_bd in
+
+  let from_b_arr = 
+    let pref_sum arr = 
+      let n   = Array.length arr in
+      let res = Array.init n (const 0) in
+      for i = 1 to n - 1 do res.(i) <- res.(i - 1) + arr.(i - 1) done;
+      res in
+
+    let from_ixs = Array.map arg_lang_ts size_of_lang |> pref_sum 
+                   |> Array.map ~f:Const.i32 in
+    let arr      = const_array (i32_type env.ctx) from_ixs in 
+
+    define_global "from_b" arr env.llmod in
 
   ()
