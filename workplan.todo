@@ -1,0 +1,20 @@
+❑ 1. Finish partial application (currying)
+
+❑ 2. Fix nested functions (lambda lifting + closure conversion)
+
+❑ 3a. Improve parsing (as in F# 4.0)
+❑ 3b. Records
+❑ 3c. Mutually recursive functions
+
+❑ 5a. Type checking / simple type inference 
+❑ 5b. Let-polymorphism
+
+❑ 6a. Type classes 
+❑ 6b. Type inference with type classes
+
+Maybe:
+    ❑ Reference type, var
+    ❑ Lambda-exprs
+    ❑ Pattern matching, Union type
+
+
