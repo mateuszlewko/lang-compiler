@@ -7,6 +7,8 @@ open CodegenUtils
 let ptr_t   = pointer_type
 let fn_t    = function_type
 let byte_t  = i8_type (global_context ())
+let i32_t  = i32_type (global_context ())
+let i8_t = byte_t
 let def_fun = define_function
 
 let closure_t = 
@@ -209,14 +211,19 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   let from_ix    = ll_sub (Const.g_i8 else_bd env.llmod raw_arg_cnt)
                           fn_params.(0) in 
   let from       = build_in_bounds_gep from_b_arr [|Const.i32 0; from_ix|]
-                                       "from" else_bd 
-                   in
+                                       "from_ptr" else_bd 
+                   |> fun v -> build_load v "from_val" else_bd
+                   (* |> fun v -> build_bitcast v (ptr_t i8_t) "to_i8*" else_bd *)
+                   in 
 
                    (* |> fun v -> build_load v "" else_bd in *)
   (* from_pos = (( byte* )data) + from *)
   
-  let from_pos  = ll_add params_ptr from in
-  let dest      = ll_add args used_bytes in
+  let to_int ptr = build_ptrtoint ptr i32_t "p->i" else_bd in
+  let to_ptr p = build_inttoptr p (ptr_t byte_t) "i->p" else_bd in
+
+  let from_pos  = ll_add (to_int params_ptr) from |> to_ptr in
+  let dest      = ll_add (to_int args) used_bytes |> to_ptr in
   let bytes_cnt = build_gep to_b_arr [|Const.i32 0; passed_cnt|] "b_cnt_pre_ptr" 
                             else_bd
                   |> fun p -> build_load p "b_cnt_pre" else_bd 
@@ -225,24 +232,24 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   build_memcpy dest from_pos bytes_cnt else_bd env.llmod;
 
   let left_args = ll_add left_args env_args_cnt 
-                  |> fun lhs -> ll_sub lhs (Const.i32 raw_arg_cnt)
+                  |> fun lhs -> ll_sub lhs (Const.i8 raw_arg_cnt)
                   |> ll_sub left_args in
 
-  let res = 
-    build_insertvalue raw_closure left_args 2 "t1" else_bd 
-    |> fun t -> build_insertvalue t (ll_add used_bytes bytes_cnt) 4
-                                  "t" else_bd in 
+  let gep_store bd ll_val ix str = 
+    build_struct_gep str ix "gep" bd
+    |> fun ptr -> build_store ll_val ptr bd |> ignore in
+
+  let res =
+    gep_store else_bd left_args 2 raw_closure;
+    gep_store else_bd  (ll_add used_bytes bytes_cnt) 4 raw_closure in
+     
+    (* |> fun t -> build_insertvalue t (ll_add used_bytes bytes_cnt) 4
+                                  "t" else_bd in  *)
   
   let last_bd = builder_at_end env.ctx if_cont_bb in
-  build_ret res last_bd |> ignore;  
+  build_load raw_closure "res" last_bd
+  |> fun res -> build_ret res last_bd |> ignore;  
 
-  (* dest = t.args + t.used_bytes *)
-  (* to_b_pos = to_b[cnt] *)
-  (* b_cnt = to_b[cnt] - from *)
-  (* build_memcpy dest from_pos b_cnt *)
-  (* insertelement: t.left_args = t.left_args - env_args + cnt - 3 *)
-  (* insertelement: t.used_bytes = t.used_bytes + b_cnt; *)
-  (* ret closure *)
   ()
 
 let build_pre_fn_value = 
