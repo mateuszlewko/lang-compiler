@@ -5,7 +5,6 @@
   (libraries (core batteries lang_compiler llvm.analysis))
 ))
 
-
 (library
  ((name    langc_lib)
   (wrapped true)

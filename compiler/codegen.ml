@@ -22,7 +22,8 @@ let rec gen_literal env =
   in
 
   function
-  | Int i    -> const_int (i32_type env.ctx) i
+  | Int i    -> Const.g_i32 env.builder env.llmod i
+  | Int8 i   -> Const.g_i8 env.builder env.llmod i
   | Bool b   -> const_int (i1_type env.ctx) (BatBool.to_int b)
   | Array xs -> array_lit xs
   | Unit     -> undef_val

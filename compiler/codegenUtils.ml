@@ -30,6 +30,8 @@ type environment = {
   ; mod_prefix  : string
   }
 
+let (>>*) v f = f v; v
+
 module Env =
 struct
 
@@ -79,9 +81,14 @@ let array_ptr = array_type (global_context () |> i32_type) 0 |> pointer_type
 
 let size_of_lang =
   function
-  | None | Some [["int"]] -> 4
-  | Some [["bool"]]       -> 1
-  | _                     -> failwith "Unknown type"
+  | None | Some [["int"]]   -> 4
+  | Some [["bool"]]         -> 1
+  | Some [["int"; "array"]] -> 8
+  | Some (_::_::_)          -> 8
+  | Some other              ->
+    List.map other (String.concat ?sep:(Some " "))
+    |> String.concat ?sep:(Some " -> " ) 
+    |> sprintf "Unknown type: %s" |> failwith
 
 (* Converts type annotation to lltype *)
 let annot_to_lltype ctx ?(func_as_ptr=false) =
@@ -145,18 +152,43 @@ let gen_open env path =
 
   in undef_val, { env with opened_vals = opened }
 
-  module Const = struct 
-    let i32 = const_int (i32_type (global_context ()))
-    let i8 = const_int (i8_type (global_context ()))
-  end
+let global_const llmod ll_val = 
+  let g = define_global "literal" ll_val llmod in
+  g |> set_global_constant true;
+  g
+
+module Const = struct 
+  let i32 = const_int (i32_type (global_context ()))
+  let i8 = const_int (i8_type (global_context ()))
+
+  let g_i32 bd ll_mod = i32 %> global_const ll_mod
+                     %> fun v -> build_load v "g_load" bd
+  let g_i8 bd ll_mod = i8 %> global_const ll_mod
+                     %> fun v -> build_load v "g_load" bd
+end
 
 (** declare void @llvm.memcpy.p0i8.p0i8.i32(i8* <dest>, i8* <src>,
                                             i32 <len>, i1 <isvolatile>)
 *)
+
+(** declares: 
+      declare void @llvm.memcpy.p0i8.p0i8.i32(i8* <dest>, i8* <src>,
+                                              i32 <len>, i1 <isvolatile>)
+  and builds call to memcpy
+*)
 let build_memcpy ?(is_volatile=false) dest src len builder llmod =
   let ctx      = global_context () in
-  let memcpy_t = i32_type ctx in
-  let memcpy   = declare_global memcpy_t "llvm.memcpy.p0i8.p0i8.i32" llmod in
-  
-  
-  ()
+  let i8_ptr   = i8_type %> pointer_type in
+  let memcpy_t = [|i8_ptr; i8_ptr; i32_type; i1_type|]
+                 |> Array.map ~f:((|>) ctx) 
+                 |> function_type (void_type ctx) in
+
+  let memcpy      = declare_function "llvm.memcpy.p0i8.p0i8.i32" memcpy_t 
+                                     llmod in
+  let is_volatile = const_int (i1_type ctx) (if is_volatile then 1 else 0) in
+
+  build_call memcpy [|dest; src; len; is_volatile|] "" builder |> ignore
+
+let struct_gep_load ll_val ix name bd = 
+  build_struct_gep ll_val ix (name ^ "_ptr") bd
+  |> fun v -> build_load v name bd

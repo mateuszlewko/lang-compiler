@@ -74,6 +74,10 @@ struct thunk wrapped_adder(int a, int b, int c) {
     return t;
 }
 
+struct data1 {
+    int a, b, c, d, e;
+};
+
 struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
                                int a, int b, int c, int d, int e) {
     struct thunk t;
@@ -129,10 +133,10 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
         int to_b[] = {0, 4, 8, 12, 16, 20};
 
         // memcpy to res.args
-        int data[] = {a, b, c, d, e}; 
+        struct data1 data = {a, b, c, d, e}; 
         int from = from_b[3 - env_args];
         int b_cnt = to_b[cnt] - from;
-        memcpy(t.args + t.used_bytes, ((byte*)data) + from, 
+        memcpy(t.args + t.used_bytes, ((byte*)&data) + from, 
                b_cnt);
         t.left_args -= env_args + cnt - 3;
         t.used_bytes += b_cnt;

@@ -28,6 +28,7 @@ type expr =
 
 and literal =
   | Int of int
+  | Int8 of int
   | String of string
   | Bool of bool
   | Array of expr list

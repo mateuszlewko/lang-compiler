@@ -43,13 +43,3 @@
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))
  )
 )
-
-;;; (executable
-;;;  ((name            compiler)
-;;;   (libraries (core lang_compiler batteries))
-;;; ))
-
-;;; (alias
-;;;   ((name runcompiler)
-;;;    (deps ((file compiler.exe)))
-;;; ))
