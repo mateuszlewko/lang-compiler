@@ -37,6 +37,7 @@
      batteries
      ppx_deriving
      ppx_enumerate
+     high_ollvm
      llvm)
   )
   (virtual_deps (cppo menhir))

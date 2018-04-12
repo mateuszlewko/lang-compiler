@@ -3,6 +3,7 @@ open Llvm
 open Core
 open BatPervasives
 open CodegenUtils 
+open High_ollvm
 
 let ptr_t   = pointer_type
 let fn_t    = function_type
@@ -262,3 +263,44 @@ let build_papp fn args =
 let build_papp_apply = ()
 
 let build_papp_apply_value = ()
+
+(* open High_ollvm.LlvmGateway
+open High_ollvm.Ez.Instr
+open High_ollvm.Ez.Block
+module M = High_ollvm.Ez.Module
+module T = High_ollvm.Ez.Type
+
+open High_ollvm.Ez.Value
+open High_ollvm.Ez.Instr
+open High_ollvm.Ez.Block
+
+let f = 
+  let m = M.init
+            "name"
+            ("x86_64", "pc", "linux-gnu")
+            "e-m:e-i64:64-f80:128-n8:16:32:64-S128" in
+
+  (* variables declaration *)
+  let (m, x0) =
+    M.local m T.i1 "" in
+  let (m, [x1; x2; x3; x4]) =
+    M.locals m T.i32 [""; ""; ""; ""] in
+  let (m, [entry_b; then_b; else_b]) =
+    M.locals m T.label ["entry"; "then"; "else" ] in
+
+  let (m, fact) = M.global m T.i32 "fact" in
+  let f =
+    define fact [x4]
+      [ block entry_b [
+                x0 <-- eq x4 (i32 0) ;
+                br x0 then_b else_b ; ] ;
+        block then_b [
+                ret (i32 1) ; ] ;
+        block else_b [
+                x1 <-- sub x4 (i32 1) ;
+                x2 <-- call fact [x1] ;
+                x3 <-- mul x4  x2 ;
+                ret x3 ; ] ] in
+
+  let m = M.definition m f in 0 
+  LLGate.definition  *)
