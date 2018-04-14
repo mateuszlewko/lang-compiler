@@ -51,7 +51,7 @@ Codegen:
     ✔ improved error handling @medium @done(18-01-22 00:54)
 
     ❑ partial application @high @today
-        ❑ pre-* function which returns closure
+        ✔ pre-* function which returns closure @done(18-04-13 00:55)
         ❑ pre-* function which returns value
         ❑ call-site 
         ❑ return PAPP

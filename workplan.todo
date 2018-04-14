@@ -1,20 +1,33 @@
-❑ 1. Finish partial application (currying)
+// 1 week
+❑ 1. Finish partial application (currying, Push-enter)
 
+// 1-2 weeks
 ❑ 2. Fix nested functions (lambda lifting + closure conversion)
 
-❑ 3a. Improve parsing (as in F# 4.0)
+// 2 weeks
+❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
 ❑ 3b. Records
 ❑ 3c. Mutually recursive functions
 
+// 2-3 weeks
 ❑ 5a. Type checking / simple type inference 
 ❑ 5b. Let-polymorphism
 
-❑ 6a. Type classes 
+// 2-3 weeks
+❑ 6a. Type classes (Implementing Type Classes.pdf)
 ❑ 6b. Type inference with type classes
 
-Maybe:
+// 2-4 weeks
+❑ Thesis
+❑ Documentation
+
+Optional:
+    // 2-4 weeks
     ❑ Reference type, var
     ❑ Lambda-exprs
     ❑ Pattern matching, Union type
+    ❑ Additional types: float, char, string
+    ❑ Tuples, pattern matching for tuples
+    ❑ Function keyword, case ... of ...
 
 

@@ -254,6 +254,7 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
   ()
 
 let build_pre_fn_value = 
+  
   (* TODO: First switch from gen_pre_fn *)
   ()
 
@@ -264,19 +265,16 @@ let build_papp_apply = ()
 
 let build_papp_apply_value = ()
 
-(* open High_ollvm.LlvmGateway
+open High_ollvm.Ez.Value
 open High_ollvm.Ez.Instr
 open High_ollvm.Ez.Block
 module M = High_ollvm.Ez.Module
 module T = High_ollvm.Ez.Type
-
-open High_ollvm.Ez.Value
-open High_ollvm.Ez.Instr
-open High_ollvm.Ez.Block
+open High_ollvm
 
 let f = 
   let m = M.init
-            "name"
+            "test"
             ("x86_64", "pc", "linux-gnu")
             "e-m:e-i64:64-f80:128-n8:16:32:64-S128" in
 
@@ -287,8 +285,8 @@ let f =
     M.locals m T.i32 [""; ""; ""; ""] in
   let (m, [entry_b; then_b; else_b]) =
     M.locals m T.label ["entry"; "then"; "else" ] in
-
-  let (m, fact) = M.global m T.i32 "fact" in
+  
+  let (m, fact) = M.global m T.i32 "main" in
   let f =
     define fact [x4]
       [ block entry_b [
@@ -302,5 +300,7 @@ let f =
                 x3 <-- mul x4  x2 ;
                 ret x3 ; ] ] in
 
-  let m = M.definition m f in 0 
-  LLGate.definition  *)
+  (* let m = M.definition m f in *)
+  let md = create_module (global_context ()) "test" in
+  let env = LLGate.definition (LLGate.env_of_mod md) f in
+  printf "\ntest out:\n%s\n" (string_of_llmodule env.m)
