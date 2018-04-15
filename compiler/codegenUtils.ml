@@ -90,6 +90,37 @@ let size_of_lang =
     |> String.concat ?sep:(Some " -> " ) 
     |> sprintf "Unknown type: %s" |> failwith
 
+module M = High_ollvm.Ez.Module
+module T = High_ollvm.Ez.Type
+
+(* Converts type annotation to high-ollvm type *)
+let annot_to_ho_type ?(fn_ptr=false) =
+  let open High_ollvm.Ez.Value in
+  let open High_ollvm.Ez.Instr in
+  let open High_ollvm.Ez.Block in
+  let open High_ollvm in
+  
+  let is_unit t = t = ["()"] || t = ["unit"] in
+
+  let single =
+    function
+    | ["int"]           -> T.i32
+    | ["bool"]          -> T.i1
+    | ["int"; "array"]  -> T.array 0 T.i32 |> T.ptr
+    | ["()"] | ["unit"] -> T.void
+    | other             -> BatString.concat " " other
+                           |> sprintf "Unsupported type: %s" |> failwith 
+  in
+  function
+  | None     -> T.i32 (* Temporary while there is no type inference *)
+  | Some []  -> failwith "Empty type (??)"
+  | Some [t] -> single t
+  | Some ts  -> let ts, last_t = List.split_n ts (List.length ts - 1) in
+                let ts  = List.filter ts is_unit in
+                let ret = single (List.hd_exn last_t) in
+                let ptr = if fn_ptr then T.ptr else identity in
+                List.map ts single |> T.fn ret |> ptr
+
 (* Converts type annotation to lltype *)
 let annot_to_lltype ctx ?(func_as_ptr=false) =
   let single_type =

@@ -203,7 +203,7 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
 
   let from_b_arr = make_ixs raw_arg_cnt "from_b" in 
   let to_b_arr   = make_ixs (raw_arg_cnt + 1) "to_b" in 
-
+  
   let ll_sub lhs rhs = build_sub lhs rhs "ll_sub" else_bd in 
   let ll_add lhs rhs = build_add lhs rhs "ll_add" else_bd in 
 
@@ -253,10 +253,137 @@ let gen_pre_fun env is_rec (name, ret_type) args exprs raw_fn gen_raw_if =
 
   ()
 
-let build_pre_fn_value = 
+open High_ollvm.Ez.Value
+open High_ollvm.Ez.Instr
+open High_ollvm.Ez.Block
+open High_ollvm
+module M = High_ollvm.Ez.Module
+module T = High_ollvm.Ez.Type
+
+type entry_fn_info = 
+  { env_args_cnt  : Ez.Value.t 
+  ; pass_args_cnt : Ez.Value.t
+  ; data_ptr      : Ez.Value.t 
+  ; args          : Ez.Value.t list
+  ; definition    : Ez.Block.block list -> Ast.definition
+  }
+
+let define_entry_fn m args name ret_type kind = 
+  let arg_names, arg_lang_ts = List.unzip args in
+  let arg_ts = List.map arg_lang_ts
+                         ~f:(annot_to_ho_type ~fn_ptr:true) in
+ 
+  let m, env_args_cnt  = M.local m T.i8 "env_args_cnt" in 
+  let m, pass_args_cnt = M.local m T.i8 "pass_args_cnt" in 
+  let m, data_ptr      = M.local m (T.ptr T.i8) "data_ptr" in 
+  let m, args          = List.zip_exn arg_ts arg_names |> M.batch_locals m in
+
+  let name       =
+    (match kind with 
+     | `ReturnsValue -> "lang.entry.value."
+     | `ReturnsFn    -> "lang.entry.fn."
+    ) ^ name in 
   
-  (* TODO: First switch from gen_pre_fn *)
-  ()
+  let m, fn = M.global m ret_type name in 
+  
+  let def      = define fn (env_args_cnt::pass_args_cnt::data_ptr::args) in
+  let info     = 
+    { env_args_cnt  = env_args_cnt
+    ; pass_args_cnt = pass_args_cnt
+    ; data_ptr      = data_ptr
+    ; args          = args 
+    ; definition    = def
+    } in m, info  
+
+type value_entry_info = 
+  { definition : Ez.Block.block list -> Ast.definition
+  ; data_ptr   : Ez.Value.t 
+  ; args       : Ez.Value.t list 
+  }
+
+let extract_fields_from_struct m struct_ptr fields_idx = 
+  let rec extract m args instructions =
+    function 
+    | []      -> m, instructions, List.rev args
+    | ix::ixs -> 
+      let m, ptr = M.local m (T.ptr T.opaque) "ptr" in
+      let ptr_i  = ptr <-- struct_gep struct_ptr ix in
+      let m, arg = M.local m T.opaque "arg" in
+      let arg_i  = arg <-- load ptr in 
+      extract m (arg::args) (ptr_i::arg_i::instructions) ixs in
+
+  extract m [] [] fields_idx 
+
+let define_value_entry m args name ret_type =
+  let m, fn       = M.global m ret_type name in 
+  let m, args     = M.batch_locals m args in
+  let m, data_ptr = M.local m (T.ptr T.i8) "data_ptr" in 
+
+  let def = define fn (args @ [data_ptr])
+  in m, { definition = def; data_ptr = data_ptr; args = args }
+
+let value_entry_body m pref_args raw_fn info = 
+  let data_t      = T.structure ~packed:true pref_args |> T.ptr in
+  let m, data_ptr = M.local m data_t "data_ptr" in 
+  
+  let data_i = data_ptr <-- bitcast info.data_ptr data_t in
+  let m, instrs, args = BatList.range 0 `To (List.length pref_args - 1)  
+                        |> extract_fields_from_struct m data_ptr in 
+
+  let instrs = data_i::instrs @ [ call raw_fn (args @ info.args) |> snd ] in
+  let m, entry_b = M.local m T.label "entry" in
+  m, info.definition [ block entry_b instrs ]
+
+let value_entry_fns m env name ret_type args raw_fn = 
+  let args_cnt = List.length args in 
+  let arg_names, arg_lang_ts = List.unzip args in
+  let arg_ts = List.map arg_lang_ts
+                         ~f:(annot_to_ho_type ~fn_ptr:true) in
+  let args = List.zip_exn arg_ts arg_names in 
+
+  let rec fold_args ix m =
+    if ix > args_cnt
+    then m 
+    else begin 
+      let pref_args, args = List.split_n args ix in 
+      let name    = sprintf "lang.entry.value.%s-%d" name ix in
+      let m, info = define_value_entry m args name ret_type in
+      let m, def  = value_entry_body m (List.map pref_args fst) raw_fn info in 
+      M.definition m def |> fold_args (ix + 1) 
+    end
+    in
+
+  let m = fold_args 1 m in
+  LLGate.ll_module_in env.llmod m.m_module |> ignore
+
+(* let build_pre_fn_value m name ret_type args raw_fn = 
+  let m, info = define_entry_fn m args name ret_type `ReturnsValue in
+
+  let case m env_cnt = 
+    let m, b   = M.local m T.label (sprintf "case-%d" env_cnt) in
+    let data_t = T.structure (List.map info.args fst) |> T.ptr in
+
+    let m, data_ptr = M.local m data_t "" in
+    let data_instr = data_ptr <-- bitcast info.data_ptr data_t in
+
+    let rec extract m args instructions =
+      function 
+      | 0   -> m, List.rev instructions, args
+      | cnt -> 
+        let m, ptr = M.local m data_t "" in
+        let ptr_i  = ptr <-- struct_gep ptr cnt in
+        let m, arg = M.local m data_t "" in
+        let arg_i  = arg <-- load ptr in 
+        extract m (arg::args) (ptr_i::arg_i::instructions) (cnt - 1) in
+
+    let m, args, instructions = extract m [] [] env_cnt in
+
+    let b = block b [
+        call raw_fn (env_args @ List.drop info.args env_cnt) |> snd
+      ] in m, b in
+
+  switch info.env_args_cnt   *)
+  (* () *)
 
 let build_papp fn args = 
   ()
@@ -265,13 +392,7 @@ let build_papp_apply = ()
 
 let build_papp_apply_value = ()
 
-open High_ollvm.Ez.Value
-open High_ollvm.Ez.Instr
-open High_ollvm.Ez.Block
-module M = High_ollvm.Ez.Module
-module T = High_ollvm.Ez.Type
-open High_ollvm
-
+(* 
 let f = 
   let m = M.init
             "test"
@@ -285,7 +406,7 @@ let f =
     M.locals m T.i32 [""; ""; ""; ""] in
   let (m, [entry_b; then_b; else_b]) =
     M.locals m T.label ["entry"; "then"; "else" ] in
-  
+
   let (m, fact) = M.global m T.i32 "main" in
   let f =
     define fact [x4]
@@ -303,4 +424,5 @@ let f =
   (* let m = M.definition m f in *)
   let md = create_module (global_context ()) "test" in
   let env = LLGate.definition (LLGate.env_of_mod md) f in
-  printf "\ntest out:\n%s\n" (string_of_llmodule env.m)
+  LLGate.
+  printf "\ntest out:\n%s\n" (string_of_llmodule env.m) *)

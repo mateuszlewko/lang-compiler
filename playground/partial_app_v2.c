@@ -32,6 +32,10 @@ let apply1
 
 int adder5(int a, int b, int c, int d, int e) {
     return a + b + c + d + e;
+} 
+
+int lang_entry_value_1adder(int b, int c, int d, int e, byte *data) {
+    return adder5(((int*)data)[0], b, c, d, e);
 }
 
 int pre_adder5(byte env_args, byte cnt, byte* data,
@@ -59,6 +63,12 @@ int pre_adder5(byte env_args, byte cnt, byte* data,
             break;
     }
 }
+
+void* arr[] = { &pre_adder5, &adder5 };
+
+
+// int pre_adder5(byte env_args, byte cnt, byte* data,
+//                int a, int b, int c, int d, int e)
 
 struct thunk wrapped_adder(int a, int b, int c) {
     struct thunk t;
@@ -93,27 +103,14 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
             break;
     }
 
-    /*
-        IfExp (InfixOp("<", Some VarExp(left_args), 
-                            Some( InfixOp("+", Some VarExp(env_args)
-                                             , Some LitExp Int cnt
-                                         ) 
-                                )
-                      )
-                <then>,
-                []
-                Some <else>
-              )
-    */
-
     if ((short)t.left_args < (short)env_args + cnt - 3) {
         byte pass_env_args = t.arity - t.left_args;
         struct thunk (*fn)() = t.fn;
 
         switch (env_args + cnt - 3) {
-            case 1:
-                return fn(pass_env_args, 1, t.args, e);
-                break;
+            // case 1:
+            //     return fn(pass_env_args, 1, t.args, e);
+            //     break;
             case 2:
                 return fn(pass_env_args, 2, t.args, d, e);
                 break;

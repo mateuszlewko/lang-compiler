@@ -130,7 +130,7 @@ and gen_raw_if env cond then_exp else_exp =
 and gen_simple_if env cond then_exp else_exp =
   let _, _, _, res = gen_raw_if env cond then_exp else_exp in res
 
-and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
+and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
   let args = Array.of_list args_raw in
   let is_val = Array.is_empty args in
   if is_rec && is_val
@@ -138,7 +138,7 @@ and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
                  or add at least one argument.";
 
   (* return type *)
-  let ret_type = annot_to_lltype env.ctx ~func_as_ptr:true ret_type in
+  let ret_type = annot_to_lltype env.ctx ~func_as_ptr:true ret_type_raw in
   (* printf "ret type of %s is %s\n" name (string_of_lltype ret_type); *)
   (* skip args of type unit *)
   let args = Array.filter args ~f:(snd %> (<>) (Some [["()"]])) in
@@ -147,7 +147,8 @@ and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
   let ftype = function_type ret_type arg_types in
-  let fn    = define_function (Env.name_of env name) ftype env.llmod in
+  let fn_name = Env.name_of env name in
+  let fn    = define_function fn_name ftype env.llmod in
   let bb    = entry_block fn in
 
   (* create new builder for body *)
@@ -211,8 +212,21 @@ and gen_letexp env is_rec (name, ret_type) args_raw fst_line body_lines =
           else build_ret ret_val body_env.builder in
 
   if Array.length args > 1
-  then Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs fn
-                          gen_raw_if;
+  then  
+    Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs fn
+                       gen_raw_if; 
+    let open High_ollvm.Ez in 
+    let open High_ollvm.Ez.Block in 
+    let m = Module.empty in
+    let ret_t : High_ollvm.Ast.raw_type = annot_to_ho_type ret_type_raw in
+    let args_t = 
+                 Array.map args (snd %> annot_to_ho_type ~fn_ptr:(true)) 
+                 |> Array.to_list in
+    let m, raw_fn = Module.global m ret_t fn_name in
+    let decl = declare raw_fn args_t in
+    let m = M.declaration m decl in
+    let args = Array.to_list args in
+    Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn;
 
   expr_result, env_with_let
 
