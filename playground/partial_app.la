@@ -1,8 +1,33 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () : () = ll_print_line ()
+
+  let printi x : () = ll_putint x
+
+  let printin x : () = ll_putint x
+                       ln () 
+
+  let putbool (b : bool) : () =
+    ll_print_bool b
+    ln ()
 
 let adder5 a b c d e = a + b + c + d + e 
 
-let adder3 a b c : int -> int -> int = adder5 a b c
+let adder3 a b c : int -> int -> int = 
+    let fn d e = adder5 a b c d e
+    fn
+
+(* let apply4 (fn : int -> int -> int -> int -> int) : int -> int =
+    apply4 1 2 -3 4  *)
+
+open Prelude
 
 let main () : int =
-    
+    printin ((adder3 1 2 -3) -2 4)
     0

@@ -4,7 +4,7 @@
 // 1-2 weeks
 ❑ 2. Fix nested functions (lambda lifting + closure conversion)
 
-// 2 weeks
+// 1-2 weeks
 ❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
 ❑ 3b. Records
 ❑ 3c. Mutually recursive functions

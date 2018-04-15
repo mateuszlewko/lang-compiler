@@ -146,10 +146,10 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
   let arg_types =
     Array.map args ~f:(snd %> annot_to_lltype env.ctx ~func_as_ptr:true) in
 
-  let ftype = function_type ret_type arg_types in
+  let ftype   = function_type ret_type arg_types in
   let fn_name = Env.name_of env name in
-  let fn    = define_function fn_name ftype env.llmod in
-  let bb    = entry_block fn in
+  let fn      = define_function fn_name ftype env.llmod in
+  let bb      = entry_block fn in
 
   (* create new builder for body *)
   let body_env = { env with builder  = Llvm.builder_at_end env.ctx bb
@@ -211,10 +211,10 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
           then build_ret_void body_env.builder
           else build_ret ret_val body_env.builder in
 
-  if Array.length args > 1
-  then  
-    Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs fn
-                       gen_raw_if; 
+  if Array.length args > 1 && kind_of ret_val <> TypeKind.Pointer
+  then begin 
+    (* Letexp.gen_pre_fun env is_rec (name, ret_type) args_raw body_exprs fn
+                       gen_raw_if;  *)
     let open High_ollvm.Ez in 
     let open High_ollvm.Ez.Block in 
     let m = Module.empty in
@@ -226,7 +226,8 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
     let decl = declare raw_fn args_t in
     let m = M.declaration m decl in
     let args = Array.to_list args in
-    Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn;
+    Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn
+  end;
 
   expr_result, env_with_let
 
