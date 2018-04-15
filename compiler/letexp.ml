@@ -330,7 +330,9 @@ let value_entry_body m pref_args raw_fn info =
   let m, instrs, args = BatList.range 0 `To (List.length pref_args - 1)  
                         |> extract_fields_from_struct m data_ptr in 
 
-  let instrs = data_i::instrs @ [ call raw_fn (args @ info.args) |> snd ] in
+  let m, res = M.local m T.opaque "ret" in
+  let instrs = data_i::instrs @ [ res <-- call raw_fn (args @ info.args)
+                                ; ret res ] in
   let m, entry_b = M.local m T.label "entry" in
   m, info.definition [ block entry_b instrs ]
 
