@@ -2,7 +2,8 @@
 ❑ 1. Finish partial application (currying, Push-enter)
 
 // 1-2 weeks
-❑ 2. Fix nested functions (lambda lifting + closure conversion)
+❑ 2a. Fix nested functions (lambda lifting + closure conversion)
+❑ 2b. Rewrite existing codegen to use high-ollvm @optional 
 
 // 1-2 weeks
 ❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
