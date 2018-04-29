@@ -34,3 +34,4 @@ a.out
 **/*.e
 **/*.dSYM
 playground/out
+playground/apply_test
