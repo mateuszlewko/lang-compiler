@@ -103,6 +103,7 @@ struct thunk pre_wrapped_adder(byte env_args, byte cnt, byte* data,
             break;
     }
 
+    // need to apply again
     if ((short)t.left_args < (short)env_args + cnt - 3) {
         byte pass_env_args = t.arity - t.left_args;
         struct thunk (*fn)() = t.fn;

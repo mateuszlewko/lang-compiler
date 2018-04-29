@@ -300,7 +300,7 @@ type value_entry_info =
   ; args       : Ez.Value.t list 
   }
 
-let extract_fields_from_struct m struct_ptr fields_idx = 
+let struct_fields m struct_ptr fields_idx = 
   let rec extract m args instructions =
     function 
     | []      -> m, instructions, List.rev args
@@ -323,6 +323,7 @@ let define_common m args name ret_type =
 
 let define_value_entry m args name ret_type =
   let m, fn, args, data_ptr = define_common m args name ret_type in
+ 
   let def = define fn (args @ [data_ptr])
   in m, { definition = def; data_ptr; args }
 
@@ -332,7 +333,7 @@ let entry_body_common m pref_args raw_fn data_ptr pass_args =
   
   let data_i          = data_ptr <-- bitcast data_ptr data_t in
   let m, instrs, args = BatList.range 0 `To (List.length pref_args - 1)  
-                        |> extract_fields_from_struct m data_ptr in 
+                        |> struct_fields m data_ptr in 
 
   let m, res = M.local m T.opaque "ret" in
   let args   = args @ pass_args in 
@@ -350,8 +351,7 @@ let value_entry_body m pref_args raw_fn info =
 let value_entry_fns m env name ret_type args raw_fn = 
   let args_cnt = List.length args in 
   let arg_names, arg_lang_ts = List.unzip args in
-  let arg_ts = List.map arg_lang_ts
-                         ~f:(annot_to_ho_type ~fn_ptr:true) in
+  let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
   let args   = List.zip_exn arg_ts arg_names in 
 
   let rec fold_args ix m =
@@ -371,12 +371,13 @@ let value_entry_fns m env name ret_type args raw_fn =
 
 type closure_entry_info = 
   { v   : value_entry_info
+  (** function argument representing number of passed arguments  *)
   ; cnt : Ez.Value.t
   }
+let closure_t = T.structure ~packed:(true) [ T.ptr T.void; T.ptr T.i8; T.i8
+                                            ; T.i8; T.i32]
 
 let define_closure_entry m args name =
-  let closure_t = T.structure ~packed:(true) [ T.ptr T.void; T.ptr T.i8; T.i8
-                                             ; T.i8; T.i32] in 
   let m, fn, args, data_ptr = define_common m args name closure_t in
 
   let m, cnt = M.local m T.i8 "cnt" in 
@@ -384,17 +385,17 @@ let define_closure_entry m args name =
   
   m, { v = { definition = def; data_ptr; args } ; cnt }                  
 
+[@@@warning "-8"]
 let closure_entry_body m arity pref_args raw_fn info = 
   let m, entry_b, res, instrs = 
     entry_body_common m pref_args raw_fn info.v.data_ptr info.v.args in
 
-  (* let entry_b    = block entry_b instrs in *)
   let env_args   = List.length pref_args in
   let env_args_c = i8 env_args in 
   let arity_c    = i8 arity in 
 
-  let m, instrs, [res_left_args; res_arity] = 
-    extract_fields_from_struct m res [2; 3] in
+  let m, entry_instrs, [res_left_args; res_arity; res_fn; res_args] = 
+    struct_fields m res [2; 3; 0; 1] in
   
   let m, [x1; left_pass_args] = M.locals m T.i8 [""; "left_pass_args"] in 
   let m, x3 = M.local m T.i1 "" in 
@@ -402,7 +403,7 @@ let closure_entry_body m arity pref_args raw_fn info =
   let m, then_b = M.local m T.label "then_b" in 
   let m, else_b = M.local m T.label "else_b" in 
 
-  let instrs = instrs @
+  let entry_instrs = entry_instrs @
     [ x1             <-- add env_args_c info.cnt
     ; left_pass_args <-- sub x1 arity_c
     ; x3             <-- slt res_left_args left_pass_args
@@ -411,18 +412,26 @@ let closure_entry_body m arity pref_args raw_fn info =
 
   (* then branch *)
   let m, pass_env_args = M.local m T.i8 "pass_env_args" in
-  let m, unreach_l     = M.local m T.label "unreach_b" in 
-  let unreach_b        = block unreach_l [unreachable] in 
-
-  let instrs = instrs @ 
-    [ pass_env_args <-- sub res_arity res_left_args
-    ; switch left_pass_args unreach_l 
-        [ 
-
-        ]
+  (* let m, unreach_l     = M.local m T.label "unreach_b" in  *)
+  let m, res           = M.local m closure_t "ret_res" in 
+  (* let unreach_b        = block unreach_l [unreachable] in  *)
+  let used_args_cnt = arity - env_args in
+  let unused_args   = List.drop info.v.args used_args_cnt in
+  
+  let then_instrs = 
+    [ (* pass_env_args <-- sub res_arity res_left_args *)
+      res           <-- call res_fn (res_args::left_pass_args::unused_args)
+    ; ret res
     ] 
+
+  (* TODO: else branch *)
     
-  in 0
+  in m, info.v.definition [ block entry_b entry_instrs 
+                          ; block then_b then_instrs ]
+
+
+[@@@warning "+8"]
+
 
   (* else branch *)
   
