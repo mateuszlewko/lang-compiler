@@ -419,15 +419,25 @@ let closure_entry_body m arity pref_args raw_fn info =
   let unused_args   = List.drop info.v.args used_args_cnt in
   
   let then_instrs = 
-    [ (* pass_env_args <-- sub res_arity res_left_args *)
-      ret_res          <-- call res_fn (res_args::left_pass_args::unused_args)
+    let args = res_args::left_pass_args::unused_args in 
+    [ ret_res <-- call res_fn args
     ; ret ret_res
-    ] 
+    ] in
 
-  (* TODO: else branch *)
-    
-  in m, info.v.definition [ block entry_b entry_instrs 
-                          ; block then_b then_instrs ]
+  (* else branch *)
+
+  let size_pref_sums = 
+    List.map unused_args bs_size 
+    |> List.fold ~init:([], 0) ~f:(fun (sums, last) s -> let s = last + s
+                                                         in (s::sums, s))
+    |> fst |> List.rev in
+
+  let m, size_pref_sums_g = 
+    let arr = array (List.map size_pref_sums i32) in
+    M.global_val m arr ~const:(true) "size_pref_sums" in
+
+  m, info.v.definition [ block entry_b entry_instrs 
+                       ; block then_b then_instrs ]
 
 
 [@@@warning "+8"]
