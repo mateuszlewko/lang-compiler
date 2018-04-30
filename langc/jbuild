@@ -2,6 +2,7 @@
 
 (executable
  ((name langc)
+  ;;; (modes (byte))
   (libraries (core batteries lang_compiler llvm.analysis))
 ))
 

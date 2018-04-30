@@ -318,7 +318,7 @@ let extract_from_struct m struct_ptr idx = failwith "TODO: extract_from_struct"
 let define_common m args name ret_type =
   let m, fn       = M.global m ret_type name in 
   let m, args     = M.batch_locals m args in
-  let m, data_ptr = M.local m (T.ptr T.i8) "data_ptr" in 
+  let m, data_ptr = M.local m (T.ptr T.i8) "env_ptr" in 
   m, fn, args, data_ptr
 
 let define_value_entry m args name ret_type =
@@ -328,14 +328,14 @@ let define_value_entry m args name ret_type =
   in m, { definition = def; data_ptr; args }
 
 let entry_body_common m pref_args raw_fn data_ptr pass_args = 
-  let data_t      = T.structure ~packed:true pref_args |> T.ptr in
-  let m, data_ptr = M.local m data_t "data_ptr" in 
+  let data_t           = T.structure ~packed:true pref_args |> T.ptr in
+  let m, data_ptr_cast = M.local m data_t "data_ptr_cast" in 
   
-  let data_i          = data_ptr <-- bitcast data_ptr data_t in
+  let data_i          = data_ptr_cast <-- bitcast data_ptr data_t in
   let m, instrs, args = BatList.range 0 `To (List.length pref_args - 1)  
-                        |> struct_fields m data_ptr in 
+                        |> struct_fields m data_ptr_cast in 
 
-  let m, res = M.local m T.opaque "ret" in
+  let m, res = M.local m T.opaque "ret__" in
   let args   = args @ pass_args in 
   let instrs = data_i::instrs @ [ res <-- call ~tail:true raw_fn args ] in 
   
@@ -403,7 +403,7 @@ let closure_entry_body m arity pref_args raw_fn info =
   let m, then_b = M.local m T.label "then_b" in 
   let m, else_b = M.local m T.label "else_b" in 
 
-  let entry_instrs = entry_instrs @
+  let entry_instrs = instrs @ entry_instrs @
     [ x1             <-- add env_args_c info.cnt
     ; left_pass_args <-- sub x1 arity_c
     ; x3             <-- slt res_left_args left_pass_args
@@ -413,15 +413,15 @@ let closure_entry_body m arity pref_args raw_fn info =
   (* then branch *)
   let m, pass_env_args = M.local m T.i8 "pass_env_args" in
   (* let m, unreach_l     = M.local m T.label "unreach_b" in  *)
-  let m, res           = M.local m closure_t "ret_res" in 
+  let m, ret_res       = M.local m closure_t "ret_res" in 
   (* let unreach_b        = block unreach_l [unreachable] in  *)
   let used_args_cnt = arity - env_args in
   let unused_args   = List.drop info.v.args used_args_cnt in
   
   let then_instrs = 
     [ (* pass_env_args <-- sub res_arity res_left_args *)
-      res           <-- call res_fn (res_args::left_pass_args::unused_args)
-    ; ret res
+      ret_res          <-- call res_fn (res_args::left_pass_args::unused_args)
+    ; ret ret_res
     ] 
 
   (* TODO: else branch *)
@@ -432,77 +432,24 @@ let closure_entry_body m arity pref_args raw_fn info =
 
 [@@@warning "+8"]
 
+let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn = 
+  (* let args_cnt = List.length full_args in  *)
+  let arg_names, arg_lang_ts = List.unzip full_args in
+  let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
+  let args   = List.zip_exn arg_ts arg_names in 
 
-  (* else branch *)
-  
-(* let closure_entry_fns = *)
-(* let build_pre_fn_value m name ret_type args raw_fn = 
-  let m, info = define_entry_fn m args name ret_type `ReturnsValue in
+  let rec fold_args ix m =
+    if ix >= arity
+    then m 
+    else begin 
+      let pref_args, args = List.split_n args ix in 
+      let name    = sprintf "lang.entry.closure.%s-%d" name ix in
+      let m, info = define_closure_entry m args name in
+      let m, def  = 
+        closure_entry_body m arity (List.map pref_args fst) raw_fn info in 
+      M.definition m def |> fold_args (ix + 1) 
+    end
+    in
 
-  let case m env_cnt = 
-    let m, b   = M.local m T.label (sprintf "case-%d" env_cnt) in
-    let data_t = T.structure (List.map info.args fst) |> T.ptr in
-
-    let m, data_ptr = M.local m data_t "" in
-    let data_instr = data_ptr <-- bitcast info.data_ptr data_t in
-
-    let rec extract m args instructions =
-      function 
-      | 0   -> m, List.rev instructions, args
-      | cnt -> 
-        let m, ptr = M.local m data_t "" in
-        let ptr_i  = ptr <-- struct_gep ptr cnt in
-        let m, arg = M.local m data_t "" in
-        let arg_i  = arg <-- load ptr in 
-        extract m (arg::args) (ptr_i::arg_i::instructions) (cnt - 1) in
-
-    let m, args, instructions = extract m [] [] env_cnt in
-
-    let b = block b [
-        call raw_fn (env_args @ List.drop info.args env_cnt) |> snd
-      ] in m, b in
-
-  switch info.env_args_cnt   *)
-  (* () *)
-
-let build_papp fn args = 
-  ()
-
-let build_papp_apply = ()
-
-let build_papp_apply_value = ()
-
-(* 
-let f = 
-  let m = M.init
-            "test"
-            ("x86_64", "pc", "linux-gnu")
-            "e-m:e-i64:64-f80:128-n8:16:32:64-S128" in
-
-  (* variables declaration *)
-  let (m, x0) =
-    M.local m T.i1 "" in
-  let (m, [x1; x2; x3; x4]) =
-    M.locals m T.i32 [""; ""; ""; ""] in
-  let (m, [entry_b; then_b; else_b]) =
-    M.locals m T.label ["entry"; "then"; "else" ] in
-
-  let (m, fact) = M.global m T.i32 "main" in
-  let f =
-    define fact [x4]
-      [ block entry_b [
-                x0 <-- eq x4 (i32 0) ;
-                br x0 then_b else_b ; ] ;
-        block then_b [
-                ret (i32 1) ; ] ;
-        block else_b [
-                x1 <-- sub x4 (i32 1) ;
-                x2 <-- call fact [x1] ;
-                x3 <-- mul x4  x2 ;
-                ret x3 ; ] ] in
-
-  (* let m = M.definition m f in *)
-  let md = create_module (global_context ()) "test" in
-  let env = LLGate.definition (LLGate.env_of_mod md) f in
-  LLGate.
-  printf "\ntest out:\n%s\n" (string_of_llmodule env.m) *)
+  let m = fold_args 1 m in
+  LLGate.ll_module_in env.llmod m.m_module |> ignore

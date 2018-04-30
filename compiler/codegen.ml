@@ -11,7 +11,7 @@ let rec gen_literal env =
   let array_lit xs =
     if List.exists xs ~f:(function LitExp (Int _) -> false | _ -> true)
     then failwith "Only arrays of integers are currently supported";
-
+    
     let elems =
       Array.of_list_map xs ~f:(function LitExp x -> x | _ -> assert false)
       |> Array.map ~f:(gen_literal env) in
@@ -224,9 +224,12 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
                  |> Array.to_list in
     let m, raw_fn = Module.global m ret_t fn_name in
     let decl = declare raw_fn args_t in
-    let m = M.declaration m decl in
+    (* let m = M.declaration m decl in *)
     let args = Array.to_list args in
-    Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn
+    (* Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn; *)
+    let m = M.declaration m decl in
+    let arity = List.length args - 1 in
+    Letexp.closure_entry_fns m env_with_let fn_name args arity raw_fn 
   end;
 
   expr_result, env_with_let
