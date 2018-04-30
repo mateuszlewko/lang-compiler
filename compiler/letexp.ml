@@ -394,8 +394,9 @@ let closure_entry_body m arity pref_args raw_fn info =
   let env_args_c = i8 env_args in 
   let arity_c    = i8 arity in 
 
-  let m, entry_instrs, [res_left_args; res_arity; res_fn; res_args] = 
-    struct_fields m res [2; 3; 0; 1] in
+  let m, entry_instrs, [ res_left_args; res_arity; res_fn; res_args
+                       ; res_used_bytes ] = 
+    struct_fields m res [2; 3; 0; 1; 4] in
   
   let m, [x1; left_pass_args] = M.locals m T.i8 [""; "left_pass_args"] in 
   let m, x3 = M.local m T.i1 "" in 
@@ -415,8 +416,9 @@ let closure_entry_body m arity pref_args raw_fn info =
   (* let m, unreach_l     = M.local m T.label "unreach_b" in  *)
   let m, ret_res       = M.local m closure_t "ret_res" in 
   (* let unreach_b        = block unreach_l [unreachable] in  *)
-  let used_args_cnt = arity - env_args in
-  let unused_args   = List.drop info.v.args used_args_cnt in
+  let used_args_cnt   = arity - env_args in
+  let unused_args     = List.drop info.v.args used_args_cnt in
+  let unused_args_cnt = List.length unused_args in
   
   let then_instrs = 
     let args = res_args::left_pass_args::unused_args in 
@@ -428,7 +430,7 @@ let closure_entry_body m arity pref_args raw_fn info =
 
   let size_pref_sums = 
     List.map unused_args bs_size 
-    |> List.fold ~init:([], 0) ~f:(fun (sums, last) s -> let s = last + s
+    |> List.fold ~init:([0], 0) ~f:(fun (sums, last) s -> let s = last + s
                                                          in (s::sums, s))
     |> fst |> List.rev in
 
@@ -436,8 +438,59 @@ let closure_entry_body m arity pref_args raw_fn info =
     let arr = array (List.map size_pref_sums i32) in
     M.global_val m arr ~const:(true) "size_pref_sums" in
 
+  let data_t = T.structure ~packed:(true) (List.map unused_args fst) in
+
+  let m, b_cnt_ptr = M.local m (T.ptr T.i32) "b_cnt_ptr" in
+  let m, b_cnt     = M.local m T.i32 "b_cnt" in
+  let m, data_ptr  = M.local m (T.ptr data_t) "data_ptr" in
+
+  let else_instrs = 
+    [ b_cnt_ptr <-- get_elem_ptr_raw size_pref_sums_g [left_pass_args] 
+    ; b_cnt     <-- load b_cnt_ptr
+    ; data_ptr  <-- alloca data_t ] in
+
+  let set_field m ptr ix value =
+    let m, elem_ptr = M.local m (T.ptr T.opaque) "elem_ptr" in
+    let is = [ elem_ptr <-- struct_gep ptr ix
+             ; store value elem_ptr |> snd ] in
+    m, is in
+
+  let set_fields m ptr fields values = 
+    let rec set instrs = 
+      function
+      | [], _ | _, []        -> m, instrs
+      | f::fields, v::values -> 
+        let m, is = set_field m ptr f v in 
+        set (is @ instrs) (fields, values) in 
+    set [] (fields, values) in 
+
+  let m, instrs = 
+    set_fields m data_ptr (List.init unused_args_cnt identity) unused_args in
+
+  let m, dest_ptr       = M.local m (T.ptr T.opaque) "dest_ptr" in
+  let m, left_args_ptr  = M.local m T.opaque "" in 
+  let m, new_left_args  = M.local m T.opaque "" in
+  let m, used_bytes_ptr = M.local m T.opaque "" in 
+  let m, new_used_bytes = M.local m T.opaque "" in
+
+  let else_instrs = else_instrs @ instrs @ 
+    [ dest_ptr <-- get_elem_ptr_raw res_args [res_used_bytes]
+    (* memcpy(res_args + res_used_bytes, data_ptr, b_cnt) *)
+    ; memcpy dest_ptr data_ptr b_cnt |> snd
+    
+    (* res.left_args -= left_pass_args *)
+    ; left_args_ptr <-- struct_gep res 2
+    ; new_left_args <-- sub res_left_args left_pass_args
+    ; store new_left_args left_args_ptr |> snd
+    
+    (* res.used_bytes += b_cnt *)
+    ; used_bytes_ptr <-- struct_gep res 4 
+    ; new_used_bytes <-- add res_used_bytes b_cnt
+    ; store new_used_bytes used_bytes_ptr |> snd ] in
+
   m, info.v.definition [ block entry_b entry_instrs 
-                       ; block then_b then_instrs ]
+                       ; block then_b then_instrs
+                       ; block else_b else_instrs ]
 
 
 [@@@warning "+8"]
