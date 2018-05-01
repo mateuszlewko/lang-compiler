@@ -5,7 +5,7 @@
 #include <gc.h>
 #include <assert.h>
 
-#define malloc(x) GC_MALLOC((x))
+// #define malloc(x) GC_MALLOC((x))
 
 typedef unsigned char uchar;
 typedef unsigned char byte;
@@ -162,7 +162,7 @@ int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */,
 
     if (t.left_args == 5) {
         int (*fn2)() = fn;
-        fn2(t.arity - t.left_args, 5, t.args, a, b, c, d, e);
+        return fn2(t.arity - t.left_args, 5, t.args, a, b, c, d, e);
     }
     else {
         struct thunk (*fn2)(byte, byte, byte*, int, int, int, int, int) = fn;
@@ -175,21 +175,21 @@ int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */,
             case 0:
                 return ((int(*)(byte, byte, byte*))(*res.fn))
                         (env_cnt, 0, res.args);
-            case 1:
-                return ((int(*)(byte, byte, byte*, int))(*res.fn))
-                        (env_cnt, 1, res.args, e);
-            case 2:
-                return ((int(*)(byte, byte, byte*, int, int))(*res.fn)) 
-                        (env_cnt, 2, res.args, d, e);
-            case 3:
-                return ((int(*)(byte, byte, byte*, int, int, int))(*res.fn))
-                        (env_cnt, 3, res.args, c, d, e);
-            case 4:
-                return ((int(*)(byte, byte, byte*, int, int, int, int))(*res.fn))
-                        (env_cnt, 4, res.args, b, c, d, e);
-            case 5:
-                return ((int(*)(byte, byte, byte*, int, int, int, int, int))(*res.fn))
-                        (env_cnt, 5, res.args, a, b, c, d, e);
+            // case 1:
+            //     return ((int(*)(byte, byte, byte*, int))(*res.fn))
+            //             (env_cnt, 1, res.args, e);
+            // case 2:
+            //     return ((int(*)(byte, byte, byte*, int, int))(*res.fn)) 
+            //             (env_cnt, 2, res.args, d, e);
+            // case 3:
+            //     return ((int(*)(byte, byte, byte*, int, int, int))(*res.fn))
+            //             (env_cnt, 3, res.args, c, d, e);
+            // case 4:
+            //     return ((int(*)(byte, byte, byte*, int, int, int, int))(*res.fn))
+            //             (env_cnt, 4, res.args, b, c, d, e);
+            // case 5:
+            //     return ((int(*)(byte, byte, byte*, int, int, int, int, int))(*res.fn))
+            //             (env_cnt, 5, res.args, a, b, c, d, e);
         }
     }
     // apply a b c d e get int

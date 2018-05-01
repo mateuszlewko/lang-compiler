@@ -385,6 +385,21 @@ let define_closure_entry m args name =
   
   m, { v = { definition = def; data_ptr; args } ; cnt }                  
 
+let set_field m ptr ix value =
+    let m, elem_ptr = M.local m (T.ptr T.opaque) "elem_ptr" in
+    let is = [ elem_ptr <-- struct_gep ptr ix
+             ; store value elem_ptr |> snd ] in
+    m, is
+
+let set_fields m ptr fields values = 
+  let rec set instrs = 
+    function
+    | [], _ | _, []        -> m, instrs
+    | f::fields, v::values -> 
+      let m, is = set_field m ptr f v in 
+      set (is @ instrs) (fields, values) in 
+  set [] (fields, values)
+
 [@@@warning "-8"]
 let closure_entry_body m arity pref_args raw_fn info = 
   let m, entry_b, res, instrs = 
@@ -449,21 +464,6 @@ let closure_entry_body m arity pref_args raw_fn info =
     ; b_cnt     <-- load b_cnt_ptr
     ; data_ptr  <-- alloca data_t ] in
 
-  let set_field m ptr ix value =
-    let m, elem_ptr = M.local m (T.ptr T.opaque) "elem_ptr" in
-    let is = [ elem_ptr <-- struct_gep ptr ix
-             ; store value elem_ptr |> snd ] in
-    m, is in
-
-  let set_fields m ptr fields values = 
-    let rec set instrs = 
-      function
-      | [], _ | _, []        -> m, instrs
-      | f::fields, v::values -> 
-        let m, is = set_field m ptr f v in 
-        set (is @ instrs) (fields, values) in 
-    set [] (fields, values) in 
-
   let m, instrs = 
     set_fields m data_ptr (List.init unused_args_cnt identity) unused_args in
 
@@ -491,8 +491,6 @@ let closure_entry_body m arity pref_args raw_fn info =
   m, info.v.definition [ block entry_b entry_instrs 
                        ; block then_b then_instrs
                        ; block else_b else_instrs ]
-
-
 [@@@warning "+8"]
 
 let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn = 
@@ -516,3 +514,56 @@ let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn =
 
   let m = fold_args 1 m in
   LLGate.ll_module_in env.llmod m.m_module |> ignore
+
+
+(** apply arguments to function which returns closure *)
+let closure_apply m env closure args = ()
+
+(** apply arguments to function which returns value *)
+let value_apply m env closure args = ()
+
+(** create closure *)
+[@@@warning "-8"]
+let known_apply m env closure args raw_arity full_args raw_fn =
+  let args_cnt = List.length args in 
+
+  if args_cnt = raw_arity 
+  then 
+    let open High_ollvm.Ast in
+    let m, call_res = M.local m T.opaque "call_res" in
+   
+    match fst raw_fn with 
+    | TYPE_Function (TYPE_Void, _) ->
+      m, [call raw_fn args |> snd], call_res
+    | TYPE_Function (other, _) ->
+      m, [call_res <-- call raw_fn args], call_res
+    | other -> failwith "expected raw_fn to be function type"
+  else  
+    let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
+    let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 
+    let data_t           = T.structure ~packed:true full_args in
+    let m, args_ptr_cast = M.local m data_t "data_ptr_cast" in 
+    let m, heap_bytes    = M.local m (T.ptr data_t) "malloc_data_ptr" in 
+
+    let else_instrs = 
+      [ closure_ptr   <-- alloca closure_t
+      ; args_ptr      <-- struct_gep closure_ptr 1
+      ; args_ptr_cast <-- bitcast args_ptr (T.ptr data_t)
+      ; heap_bytes    <-- malloc data_t
+      ; store heap_bytes args_ptr |> snd
+      ] in 
+
+    let m, instrs1 = set_fields m args_ptr_cast (List.range 0 args_cnt) args in 
+    let m, instrs2, [cl_arity; cl_left_args; cl_used_bytes] = 
+      struct_fields m closure_ptr [3; 2; 4] in
+
+    let else_instrs = else_instrs @ instrs1 @ instrs2 @
+      [ store (i32 raw_arity) cl_arity |> snd
+      ; store (i32 (raw_arity - args_cnt)) cl_left_args |> snd 
+      ; store (List.fold args ~init:0 ~f:(fun s x -> s + bs_size x) |> i32) 
+              cl_used_bytes |> snd
+      ] in
+
+  m, else_instrs, closure_ptr
+
+[@@@warning "+8"]
