@@ -493,6 +493,9 @@ let closure_entry_body m arity pref_args raw_fn info =
                        ; block else_b else_instrs ]
 [@@@warning "+8"]
 
+let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
+let size_of_args args = sum_by args bs_size 
+
 let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn = 
   (* let args_cnt = List.length full_args in  *)
   let arg_names, arg_lang_ts = List.unzip full_args in
@@ -515,12 +518,63 @@ let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn =
   let m = fold_args 1 m in
   LLGate.ll_module_in env.llmod m.m_module |> ignore
 
-
 (** apply arguments to function which returns closure *)
-let closure_apply m env closure args = ()
+let value_apply m env closure args = ()
 
 (** apply arguments to function which returns value *)
-let value_apply m env closure args = ()
+let closure_apply m env closure_ptr args = 
+  let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
+                       ; cl_used_bytes ] = 
+    struct_fields m closure_ptr [2; 3; 0; 1; 4] in
+
+  let m, x1     = M.local m T.i8 "cmp" in 
+  let m, then_b = M.local m T.label "then_b" in 
+  let m, else_b = M.local m T.label "else_b" in 
+  
+  let entry_instrs = entry_instrs @  
+    [ x1 <-- sgt cl_left_args (List.length args |> i8)
+    ; br x1 then_b else_b
+    ] in 
+
+  let m, res      = M.local m closure_t "res" in 
+  (* then branch *)
+  let m, res_args_ptr = M.local m (T.ptr T.i8) "res_args" in 
+  let m, total_bytes  = M.local m T.i8 "total_bytes" in 
+  let m, heap_bytes   = M.local m (T.ptr T.i8) "bytes_ptr" in
+  let m, cl_args_ptr  = M.local m (T.ptr T.i8) "args_ptr" in 
+  let m, last         = M.local m T.opaque "__any_last" in 
+  let data_t = T.structure ~packed:true (List.map args fst) in
+  let args_size = size_of_args args |> i8 in 
+
+  let then_instrs = 
+    [ res          <-- alloca closure_t 
+    ; res_args_ptr <-- struct_gep res 1 
+    ; total_bytes  <-- add cl_used_bytes args_size
+    ; heap_bytes   <-- malloc_raw total_bytes
+    ; store heap_bytes res_args_ptr |> snd
+    ; memcpy res_args_ptr cl_args_ptr cl_used_bytes |> snd
+    ; last <-- ptr2i res_args_ptr T.i8
+    ; last <-- add last cl_used_bytes
+    ; last <-- bitcast last data_t
+    ] in 
+
+  let cnt         = List.length args in
+  let m, instrs   = set_fields m last (List.range 0 cnt) args in
+  let m, left_args_ptr = M.local m T.opaque "left_args_ptr" in 
+  let m, used_bytes_ptr = M.local m T.opaque "left_args_ptr" in 
+  let then_instrs = then_instrs @ instrs @ 
+    [ left_args_ptr  <-- struct_gep res 2 
+    ; last           <-- sub cl_left_args (i8 cnt)
+    ; store last left_args_ptr |> snd
+    ; used_bytes_ptr <-- struct_gep res 4 
+    ; last           <-- add cl_used_bytes args_size 
+    ; store last used_bytes_ptr |> snd
+    ; last           <-- load res
+    ; ret last
+    ] in
+  (*  *)
+
+  0
 
 (** create closure *)
 [@@@warning "-8"]
@@ -560,7 +614,7 @@ let known_apply m env closure args raw_arity full_args raw_fn =
     let else_instrs = else_instrs @ instrs1 @ instrs2 @
       [ store (i32 raw_arity) cl_arity |> snd
       ; store (i32 (raw_arity - args_cnt)) cl_left_args |> snd 
-      ; store (List.fold args ~init:0 ~f:(fun s x -> s + bs_size x) |> i32) 
+      ; store (size_of_args args |> i32) 
               cl_used_bytes |> snd
       ] in
 
