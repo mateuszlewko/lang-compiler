@@ -3,7 +3,7 @@ open Llvm
 open Core
 open BatPervasives
 open BatString
-open CodegenUtils
+open Codegen_utils
 
 let (>>*) x f = f x; x
 

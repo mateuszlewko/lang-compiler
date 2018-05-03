@@ -10,9 +10,9 @@
   [@@deriving show]
 
 (* use custom lexbuffer to keep track of source location *)
-module Sedlexing = LexBuffer
+module Sedlexing = Lex_buffer
 module StdChar = Char
-open LexBuffer
+open Lex_buffer
 open Core
 open BatPervasives
 
@@ -228,7 +228,7 @@ let parse buf p =
   | _                 -> raise (ParseError (!last_token))
 
 let parse_string ?pos ?(file_name="<n/a>") s p =
-  parse (LexBuffer.of_ascii_string ?pos s file_name) p
+  parse (Lex_buffer.of_ascii_string ?pos s file_name) p
 
 let parse_file ~file p =
-  parse (LexBuffer.of_ascii_file file) p
+  parse (Lex_buffer.of_ascii_file file) p

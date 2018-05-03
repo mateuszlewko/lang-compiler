@@ -2,7 +2,7 @@ open Lang_parsing.Ast
 open Llvm
 open Core
 open BatPervasives
-open CodegenUtils 
+open Codegen_utils 
 open High_ollvm
 
 let ptr_t   = pointer_type
