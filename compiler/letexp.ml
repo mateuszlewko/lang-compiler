@@ -519,7 +519,51 @@ let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn =
   LLGate.ll_module_in env.llmod m.m_module |> ignore
 
 (** apply arguments to function which returns closure *)
-let value_apply m env closure args = ()
+let value_apply m env closure_ptr ret_t args =  
+  (* let m,  = M.local m T.label "after_b" in  *)
+  (* let m, res_fn = M.local m (T.fn ret_t ) *)
+  (* let after_instrs =  *)
+
+  let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
+                       ; cl_used_bytes ] = 
+    struct_fields m closure_ptr [2; 3; 0; 1; 4] in
+
+  let m, then_b = M.local m T.label "then_b" in 
+  let m, else_b = M.local m T.label "else_b" in 
+  let m, last   = M.local m T.opaque "__tmp_last" in 
+  let args_cnt_c = List.length args |> i8 in 
+  
+
+  let call_args   = cl_args::args_cnt_c::args in 
+  let call_args_t = List.map call_args fst in 
+
+  let entry_instrs = entry_instrs @ 
+    [ last <-- eq cl_left_args args_cnt_c
+    ; br last then_b else_b
+    ] in
+
+  let then_instrs = 
+    [ last <-- bitcast cl_fn (T.fn ret_t call_args_t)
+    ; last <-- call last call_args 
+    ] in
+
+  let m, tmp = M.local m T.opaque "tmp_res" in 
+
+  let else_instrs = 
+    [ last <-- bitcast cl_fn (T.fn closure_t call_args_t)
+    ; tmp  <-- call last call_args] in
+
+  let m, instrs, [tmp_fn; tmp_env] = struct_fields m tmp [0; 1] in
+
+  let call_args_empty   = [tmp_env; i8 0] in 
+  let call_args_empty_t = List.map call_args fst in 
+
+  let else_instrs = else_instrs @ instrs @ 
+    [ tmp_fn <-- bitcast tmp_fn (T.fn ret_t call_args_empty_t)
+    ; last   <-- call tmp_fn call_args_empty
+    ] in
+
+  entry_instrs, [block then_b then_instrs; block else_b else_instrs], last
 
 (** apply arguments to function which returns value *)
 let closure_apply m closure_ptr args = 
