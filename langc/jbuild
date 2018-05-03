@@ -2,20 +2,14 @@
 
 (executable
  ((name langc)
-  ;;; (modes (byte))
-  (libraries (core batteries lang_compiler lang_parsing llvm.analysis))
-))
+  (libraries (core batteries lang_compiler llvm.analysis))))
 
 (library
  ((name    langc_lib)
   (wrapped true)
-  (libraries (core batteries lang_compiler lang_parsing llvm.analysis))
-  ;;; (virtual_deps (cppo menhir))
-  (preprocess (pps (ppx_deriving.std ppx_enumerate)))
- )
-)
+  (libraries (core batteries lang_compiler llvm.analysis))
+  (preprocess (pps (ppx_deriving.std ppx_enumerate)))))
 
 (alias
   ((name runlangc)
-   (deps ((file langc.exe)))
-))
+   (deps ((file langc.exe)))))

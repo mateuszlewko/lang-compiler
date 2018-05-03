@@ -22,19 +22,12 @@
   (deps    (lexer.sedlex.ml))
   (action  (run ${lib:sedlex:ppx_sedlex} ${<} -o ${@}))))
 
-;;; (rule
-;;;  ((targets (lexer.ml))
-;;;   (deps    (lexer.sedlex.ml))
-;;;   (action  (run ${ocaml_where}/../sedlex/ppx_sedlex ${<} -o ${@}))))
-
 ;; generate parser
 (menhir
  ((modules (grammar))
-
+  (flags (--external-tokens Lexer))))
 ;; use for debugging: --dump --trace --log-automaton 5 
 ;;                    --explain --log-grammar 5
-
-  (flags (--external-tokens Lexer))))
 
 (library
  ((name lang_parsing)
