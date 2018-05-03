@@ -246,18 +246,20 @@ and gen_application env callee line_args rest_of_args =
                  >>* Array.rev_inplace |> skip_void_vals in
 
   let callee_val = gen_expr env callee |> fst in
-  (* string_of_llvalue callee_val |> printf "callee val: %s\n";
-  string_of_lltype (type_of callee_val) |> printf "callee type: %s\n";
-  (* printf "module:\n %s\n" (string_of_llmodule env.llmod); *)
-  flush_all (); *)
+  
   let ret_type_kind = callee_val |> type_of |> return_type |> return_type
                       |> classify_type in
   let name = if ret_type_kind = TypeKind.Void
              then "" else "call_tmp" in
-  (* if kind_of callee_val = TypeKind.Pointer
-  then printf "is ptr\n"; *)
-  build_call callee_val args_val name env.builder
-  |> fun x -> set_tail_call true x; x
+  let open High_ollvm.Ez in 
+  let open High_ollvm.Ez.Block in 
+  let m = Module.empty in
+
+  (* TODO: args, raw_arity, full_args *)
+  let known_apply m 
+
+  (* build_call callee_val args_val name env.builder *)
+  (* |> fun x -> set_tail_call true x; x *)
 
 and gen_expr env =
   function
