@@ -7,11 +7,11 @@ type type_declaration =
   | RecordType of record_declaration
   [@@deriving show]
 
-(* type a1 t1 -> a2 t2 -> ... -> tn is represented as a list [[a1; t1];
+(** type a1 t1 -> a2 t2 -> ... -> tn is represented as a list [[a1; t1];
                                                   [[a2; t2]; ...; [tn]] *)
 type type_annot = string list list
 [@@deriving show]
-(* Type is either Some type, or none which means it's integer *)
+(** Type is either Some type, or none which means it's integer *)
 type typed_var = string * type_annot option
 [@@deriving show]
 

@@ -3,7 +3,8 @@ open Core
 open Llvm
 open Core
 open BatPervasives
-open Ast
+open Lang_parsing.Ast
+open Lang_parsing
 open Codegen
 
 let gen_llvm_exn prog =

@@ -1,5 +1,6 @@
 open Core
 open Lang_compiler
+open Lang_parsing
 open Compilation
 
 let _ =
