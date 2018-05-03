@@ -522,7 +522,7 @@ let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn =
 let value_apply m env closure args = ()
 
 (** apply arguments to function which returns value *)
-let closure_apply m env closure_ptr args = 
+let closure_apply m closure_ptr args = 
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
     struct_fields m closure_ptr [2; 3; 0; 1; 4] in
@@ -537,6 +537,7 @@ let closure_apply m env closure_ptr args =
     ] in 
 
   let m, res      = M.local m closure_t "res" in 
+
   (* then branch *)
   let m, res_args_ptr = M.local m (T.ptr T.i8) "res_args" in 
   let m, total_bytes  = M.local m T.i8 "total_bytes" in 
@@ -558,10 +559,11 @@ let closure_apply m env closure_ptr args =
     ; last <-- bitcast last data_t
     ] in 
 
-  let cnt         = List.length args in
-  let m, instrs   = set_fields m last (List.range 0 cnt) args in
-  let m, left_args_ptr = M.local m T.opaque "left_args_ptr" in 
+  let cnt               = List.length args in
+  let m, instrs         = set_fields m last (List.range 0 cnt) args in
+  let m, left_args_ptr  = M.local m T.opaque "left_args_ptr" in 
   let m, used_bytes_ptr = M.local m T.opaque "left_args_ptr" in 
+
   let then_instrs = then_instrs @ instrs @ 
     [ left_args_ptr  <-- struct_gep res 2 
     ; last           <-- sub cl_left_args (i8 cnt)
@@ -570,11 +572,20 @@ let closure_apply m env closure_ptr args =
     ; last           <-- add cl_used_bytes args_size 
     ; store last used_bytes_ptr |> snd
     ; last           <-- load res
-    ; ret last
+    (* ; ret last *)
     ] in
-  (*  *)
 
-  0
+  let call_args   = cl_args_ptr::(i8 cnt)::args in 
+  let call_args_t = List.map call_args fst in 
+
+  (* else branch *)
+  let else_instrs = 
+    [ cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
+    ; last  <-- call cl_fn call_args
+    (* ; ret last  *)
+    ] in 
+
+  entry_instrs, [ block then_b then_instrs; block else_b else_instrs ], last
 
 (** create closure *)
 [@@@warning "-8"]
