@@ -251,15 +251,15 @@ and gen_application env callee line_args rest_of_args =
                       |> classify_type in
   let name = if ret_type_kind = TypeKind.Void
              then "" else "call_tmp" in
-  let open High_ollvm.Ez in 
+  (* let open High_ollvm.Ez in 
   let open High_ollvm.Ez.Block in 
-  let m = Module.empty in
+  let m = Module.empty in *)
 
   (* TODO: args, raw_arity, full_args *)
-  let known_apply m 
+  (* let known_apply m  *)
 
-  (* build_call callee_val args_val name env.builder *)
-  (* |> fun x -> set_tail_call true x; x *)
+  build_call callee_val args_val name env.builder
+  |> fun x -> set_tail_call true x; x
 
 and gen_expr env =
   function
