@@ -5,13 +5,43 @@ open BatPervasives
 open BatString
 open Codegen_utils
 
-let (>>*) x f = f x; x
+(* module Codegen = struct 
+  open High_ollvm.Ez.Value
+  open High_ollvm.Ez.Instr
+  open High_ollvm.Ez.Block
+  open High_ollvm
+  module M = High_ollvm.Ez.Module
+  module T = High_ollvm.Ez.Type
+  
+  let gen_literal m = 
+    function 
+    | Int i -> i32 i 
+    | Int8 i -> i8 i
+    | Bool b -> i1 (BatBool.to_int b)
+    | 
+
+  let gen_op m expr ... = 
+
+  let gen_let m expr ... = 
+
+  let gen_apply m expr 
+
+  let gen_expr m = 
+
+  let gen_module
+
+  (* later:
+      - gen_extern
+      - gen_mod_open
+      - gen_mod_decl
+      - gen_top_value *)
+end *)
 
 let rec gen_literal env =
   let array_lit xs =
     if List.exists xs ~f:(function LitExp (Int _) -> false | _ -> true)
     then failwith "Only arrays of integers are currently supported";
-    
+   
     let elems =
       Array.of_list_map xs ~f:(function LitExp x -> x | _ -> assert false)
       |> Array.map ~f:(gen_literal env) in
@@ -319,7 +349,7 @@ and insert_top_vals env =
   | None      -> failwith "Main function (main : () -> int) is not defined."
   | Some main -> insert_vals env main
 
-and gen_prog ?(module_name="interactive") top_lvl_exprs =
+and gen_prog ?(module_name="<stdin>") top_lvl_exprs =
   let env = Env.create module_name in
   let llval, env = gen_top_levels env top_lvl_exprs in
   insert_top_vals env;
