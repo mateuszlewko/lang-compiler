@@ -1,4 +1,4 @@
-let adder5 a b c d e = a + b + c + d + e 
+let Vadder5 a b c d e = a + b + c + d + e 
 
 (* let adder3 a b c : int -> int -> int = 
     let fn d e = adder5 a b c d e
@@ -9,8 +9,8 @@ let adder5 a b c d e = a + b + c + d + e
 
 (* open Prelude *)
 
-let test1 a b c : int -> int -> int = 
-    adder5 a b c 
+let Ctest1 a b c : int -> int -> int = 
+    Vadder5 a b c 
 
 let main () : int =
     

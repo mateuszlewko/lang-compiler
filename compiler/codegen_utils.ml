@@ -210,8 +210,8 @@ end
 let build_memcpy ?(is_volatile=false) dest src len builder llmod =
   let ctx      = global_context () in
   let i8_ptr   = i8_type %> pointer_type in
-  let memcpy_t = [|i8_ptr; i8_ptr; i32_type; i1_type|]
-                 |> Array.map ~f:((|>) ctx) 
+  let memcpy_t = [|i8_ptr ctx; i8_ptr ctx ; i32_type ctx; i1_type ctx|]
+                 (* |> Array.map ~f:((|>) ctx)  *)
                  |> function_type (void_type ctx) in
 
   let memcpy      = declare_function "llvm.memcpy.p0i8.p0i8.i32" memcpy_t 

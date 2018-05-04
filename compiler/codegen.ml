@@ -5,37 +5,80 @@ open BatPervasives
 open BatString
 open Codegen_utils
 
-(* module Codegen = struct 
+module Codegen = struct 
   open High_ollvm.Ez.Value
   open High_ollvm.Ez.Instr
   open High_ollvm.Ez.Block
   open High_ollvm
-  module M = High_ollvm.Ez.Module
-  module T = High_ollvm.Ez.Type
+  (* open Lang_types *)
+
+  module Env = Envn (* temporary *)
+  module M   = High_ollvm.Ez.Module
+  module T   = High_ollvm.Ez.Type
+  module LT  = Lang_types
+
+  let unsupp ?(name="") str = sprintf "Unsupported %s: %s" name str |> failwith
+
+  type result = 
+    { env   : Env.environment
+    ; value : Ez.Value.t
+    ; t     : LT.t
+    } [@@deriving fields]
+
   
-  let gen_literal m = 
-    function 
-    | Int i -> i32 i 
-    | Int8 i -> i8 i
-    | Bool b -> i1 (BatBool.to_int b)
-    | 
+  let gen_literal env expr = 
+    (function 
+     | Int   i  -> i32 i, LT.Int
+     | Int8  i  -> i8 i, LT.Int
+     | Bool  b  -> i1 (BatBool.to_int b), LT.Bool
+     | Array (x::xs) -> 
+        let x = expr env x in
+        x.value :: List.map xs (expr env %> value) |> array, LT.Array x.t
+     | Unit     -> null, LT.Unit
+     | other    -> unsupp ~name:"literal" (show_literal other))
+    %> fun (value, t) -> { env; value; t}
 
-  let gen_op m expr ... = 
+  let gen_op env expr lhs rhs = 
+    match lhs, rhs with
+    | Some lhs, Some rhs ->
+      let lhs = expr env lhs |> fst in
+      let rhs = expr env rhs |> fst in
+     
+      (function
+      (* operators returning int *)
+      | "+"   -> add  lhs rhs
+      | "-"   -> sub  lhs rhs
+      | "*"   -> mul  lhs rhs
+      | "/"   -> sdiv lhs rhs
+      (* operators returning bool *)
+      | "="   -> eq   lhs rhs
+      | "<"   -> slt  lhs rhs
+      | "<="  -> sle  lhs rhs
+      | ">"   -> sgt  lhs rhs
+      | ">="  -> sge  lhs rhs
+      | "<>"  -> ne   lhs rhs
+      | "&&"  -> and_ lhs rhs
+      | "||"  -> or_  lhs rhs
+      (* raise when operator is unknown *)
+      | other -> unsupp ~name:"operator" other)
+    | _, _ ->
+      failwith "Operator is missing operands"
 
-  let gen_let m expr ... = 
+  let gen_let env expr ?(is_rec=false) name args body = ()
 
-  let gen_apply m expr 
 
-  let gen_expr m = 
+  (* let gen_apply m expr  *)
 
-  let gen_module
+  (* let gen_expr m =  *)
+
+  (* let gen_module *)
 
   (* later:
       - gen_extern
       - gen_mod_open
       - gen_mod_decl
       - gen_top_value *)
-end *)
+end 
 
 let rec gen_literal env =
   let array_lit xs =
@@ -254,12 +297,14 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
                  |> Array.to_list in
     let m, raw_fn = Module.global m ret_t fn_name in
     let decl = declare raw_fn args_t in
-    (* let m = M.declaration m decl in *)
-    let args = Array.to_list args in
-    (* Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn; *)
     let m = M.declaration m decl in
-    let arity = List.length args - 1 in
-    Letexp.closure_entry_fns m env_with_let fn_name args arity raw_fn 
+    let args = Array.to_list args @ ["d", None; "e", None] in
+    if String.contains fn_name 'V'
+    then Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn;
+    let m = M.declaration m decl in
+    let arity = 3 in
+    if String.contains fn_name 'C' 
+    then Letexp.closure_entry_fns m env_with_let fn_name args arity raw_fn 
   end;
 
   expr_result, env_with_let
