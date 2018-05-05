@@ -15,29 +15,26 @@ module Codegen = struct
   module Env = Envn (* temporary *)
   module M   = High_ollvm.Ez.Module
   module T   = High_ollvm.Ez.Type
+  module TA  = Typed_ast
   module LT  = Lang_types
 
   let unsupp ?(name="") str = sprintf "Unsupported %s: %s" name str |> failwith
 
-  type result = 
+  (* type result = 
     { env   : Env.environment
     ; value : Ez.Value.t
     ; t     : LT.t
-    } [@@deriving fields]
+    } [@@deriving fields] *)
 
   
   let gen_literal env expr = 
-    begin
     function 
-    | Int   i       -> i32 i, LT.Int
-    | Int8  i       -> i8 i, LT.Int
-    | Bool  b       -> i1 (BatBool.to_int b), LT.Bool
-    | Array (x::xs) -> 
-        let x = expr env x in
-        x.value :: List.map xs (expr env %> value) |> array, LT.Array x.t
-    | Unit          -> null, LT.Unit
+    | Int   i       -> i32 i
+    | Int8  i       -> i8 i
+    | Bool  b       -> i1 (BatBool.to_int b)
+    | Array (x::xs) -> List.map xs (expr env %> snd) |> array
+    | Unit          -> i1 0
     | other         -> unsupp ~name:"literal" (show_literal other)
-    end %> fun (value, t) -> { env; value; t}
 
   let gen_op env expr lhs rhs = 
     match lhs, rhs with
@@ -65,7 +62,18 @@ module Codegen = struct
     | _, _ ->
       failwith "Operator is missing operands"
 
-  let gen_let env expr ?(is_rec=false) name args body = ()
+  let gen_let env expr (letexp : TA.letexp) ts = 
+    match ts with 
+    | LT.Fun ts -> 
+      let args_cnt = List.length letexp.args in 
+      let ret      = List.drop ts args_cnt in 
+      let is_fun = function Some LT.Fun _ -> true | _ -> false in
+      if List.length ret > 1 || is_fun (List.hd ret)
+      then (* returns closure *)
+        failwith "TODO rets closure"
+      else (* returns value *)
+        failwith "TODO rets value"
+    | other -> failwith "TODO let-value"
 
   (* let gen_apply m expr  *)
 
