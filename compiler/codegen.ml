@@ -62,14 +62,27 @@ module Codegen = struct
     | _, _ ->
       failwith "Operator is missing operands"
 
-  let gen_let env expr (letexp : TA.letexp) ts = 
+  let gen_let (env : Env.t) expr letexp ts = 
     match ts with 
     | LT.Fun ts -> 
+      let open TA in
+      let fn {args = args1; _} = letexp in 
+
       let args_cnt = List.length letexp.args in 
       let ret      = List.drop ts args_cnt in 
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
       if List.length ret > 1 || is_fun (List.hd ret)
       then (* returns closure *)
+        let m, fn = M.global env.m Letexp.closure_t letexp.name in
+        (* let m, args = M.batch_locals m letexps.args in *)
+
+        (* let env   = (if letexp.is_rec
+                     then let env = Env.add env letexp.name fn in 
+                          { env with m }
+                     else env) |> in  *)
+
+
+        (* define *)
         failwith "TODO rets closure"
       else (* returns value *)
         failwith "TODO rets value"

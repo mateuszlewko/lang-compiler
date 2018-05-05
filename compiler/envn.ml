@@ -20,6 +20,8 @@ type environment = {
   ; prefix   : string
   } 
 
+type t = environment
+
 open BatMap.Infix
 
 (** Creates top-level env *)

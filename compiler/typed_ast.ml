@@ -8,7 +8,8 @@ module A  = Lang_parsing.Ast
 type arg = string * LT.t
 
 type letexp = 
-  { is_rec : bool 
+  { name   : string
+  ; is_rec : bool 
   ; args   : arg list
   ; body   : expr_t list }
 
@@ -103,7 +104,7 @@ let rec expr env =
       Option.fold body1 ~init ~f:(flip List.cons)
       |> List.fold_map ~init:env ~f:expr in
 
-    add env name fn_t, (Let { is_rec; args; body }, fn_t)
+    add env name fn_t, (Let { name; is_rec; args; body }, fn_t)
   | AppExp (callee, args1, args2) -> 
     let args = args1 @ (Option.value args2 ~default:[]) 
                |> List.map ~f:(expr env %> snd) in 
