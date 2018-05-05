@@ -140,8 +140,13 @@ and lit env =
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
- (* of_top = 
-  | A.Expr -> *)
+ and top env =
+  function 
+  | A.Expr e          -> let env, e = expr env e in env, Expr e
+  | Extern (name, ta) -> let t = LT.of_annotation (Some ta) in 
+                         add env name t, Extern (name, t)
+  | _                 -> failwith "TODO2" 
 
-(* let of_prog (Prog tops) = 
-  List.map tops top *)
+let of_prog (Prog tops) = 
+  let env = empty |> add_builtin_ops in 
+  List.folding_map tops ~init:env

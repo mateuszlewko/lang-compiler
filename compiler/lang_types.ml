@@ -1,5 +1,7 @@
 open Core
 
+module A = Lang_parsing.Ast
+
 type lang_type = 
   | Unit
   | Int
@@ -17,7 +19,7 @@ exception WrongNumberOfApplyArguments
 exception WrongTypeOfApplyArgument
 exception ValueCannotBeApplied 
 
-let of_annotation =
+let of_annotation : A.type_annot option -> _ =
   let single =
     function
     | ["int"]           -> Int
