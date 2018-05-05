@@ -29,7 +29,7 @@ and expr =
   | Lit     of literal
   | Let     of letexp 
   | App     of expr_t * expr_t list 
-  | InfixOp of expr_t option * expr_t option 
+  | InfixOp of string * expr_t option * expr_t option 
   | If      of ifexp 
   | Exprs   of expr_t list
 
@@ -73,16 +73,59 @@ let find env name =
 
 exception ArrayElementsMustHaveSameType 
 
+let add_builtin_ops env = 
+  let ii2i  = LT.Fun ([LT.Int; LT.Int; LT.Int]) in 
+  let ii2b  = LT.Fun ([LT.Int; LT.Int; LT.Bool]) in 
+  let bb2b  = LT.Fun ([LT.Bool; LT.Bool; LT.Bool]) in 
+  let map t = List.map ~f:(fun x -> x, t) in 
+  let a     = ["+"; "-"; "*"; "/"]              |> map ii2i in
+  let b     = ["="; "<"; "<="; ">"; ">="; "<>"] |> map ii2b in
+  let c     = ["&&"; "||"]                      |> map bb2b in
+
+  List.fold (a @ b @ c) ~init:env ~f:(fun env (n, t) -> add env n t) 
+ 
 let rec expr env = 
   function 
-  | VarExp v -> Var v, find env v
-  | LitExp l -> lit env l 
-  | LetExp (is_rec, ret, args, body1, body) -> 
-      let body = 
-        let init = Option.value body ~default:[] in 
-        Option.fold body1 ~init ~f:(flip List.cons) in
-      assert false
-  | other -> assert false
+  | VarExp v -> env, (Var v, find env v)
+  | LitExp l -> env, lit env l 
+  | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
+    let args, arg_ts = List.unzip args in 
+
+    let arg_ts = List.map arg_ts LT.of_annotation in 
+    let args   = List.zip_exn args arg_ts in 
+    let ret_t  = LT.of_annotation ret_t in 
+    let fn_t   = LT.merge arg_ts ret_t in 
+    let env    = let env = if is_rec then add env name fn_t else env in 
+                 List.fold args ~init:env ~f:(fun env (a, t) -> add env a t) in 
+    
+    let env, body = 
+      let init = Option.value body ~default:[] in 
+      Option.fold body1 ~init ~f:(flip List.cons)
+      |> List.fold_map ~init:env ~f:expr in
+
+    add env name fn_t, (Let { is_rec; args; body }, fn_t)
+  | AppExp (callee, args1, args2) -> 
+    let args = args1 @ (Option.value args2 ~default:[]) 
+               |> List.map ~f:(expr env %> snd) in 
+
+    let callee = expr env callee |> snd in 
+    env, (App (callee, args), LT.apply (snd callee) (List.map args snd))
+  | Exprs es ->
+    let rec map env acc = 
+      function
+      | []      -> env, (Exprs [], LT.Unit)
+      | [last]  -> let env, last = expr env last in
+                   env, (Exprs (List.rev (last::acc)), snd last)
+      | x::xs   -> let env, x = expr env x in 
+                   map env (x::acc) xs
+    in map env [] es
+  | InfixOp (name, lhs, rhs)          -> 
+    let op_t   = find env name in 
+    let map    = Option.map ~f:(expr env %> snd) in 
+    let arg_ts = Option.to_list lhs @ Option.to_list rhs 
+               |> List.map ~f:(expr env %> snd %> snd) in 
+    env, (InfixOp (name, map lhs, map rhs), LT.apply op_t arg_ts)
+  | IfExp (cond, then_, elifs, else_) -> failwith "TODO IfExps"
 
 and lit env = 
   function
@@ -90,7 +133,7 @@ and lit env =
   | String s         -> Lit (String s), LT.String 
   | Bool b           -> Lit (Bool   b), LT.Bool   
   | Array (x::xs)    ->
-    let (x, t1), xs = expr env x, Core.List.map xs (expr env) in
+    let (x, t1), xs = expr env x |> snd, Core.List.map xs (expr env %> snd) in
     if List.exists xs (snd %> (<>) t1)
     then raise ArrayElementsMustHaveSameType 
     else Lit (Array ((x, t1)::xs)), LT.Array t1
