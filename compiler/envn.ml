@@ -20,6 +20,8 @@ type environment = {
   ; prefix   : string
   } 
 
+open BatMap.Infix
+
 (** Creates top-level env *)
 let empty = { prefixed = BatMap.empty
             ; opened   = BatMap.empty
@@ -34,5 +36,5 @@ let name_in env = (^) env.prefix
 let add env name value =
     let pref_name = name_in env name in
     
-    { env with prefixed = BatMap.add pref_name value env.prefixed 
-              ; opened  = BatMap.add name value env.opened }
+    { env with prefixed = env.prefixed <-- (pref_name, value) 
+              ; opened  = env.opened   <-- (name     , value) }

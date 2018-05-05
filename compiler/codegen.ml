@@ -27,16 +27,17 @@ module Codegen = struct
 
   
   let gen_literal env expr = 
-    (function 
-     | Int   i  -> i32 i, LT.Int
-     | Int8  i  -> i8 i, LT.Int
-     | Bool  b  -> i1 (BatBool.to_int b), LT.Bool
-     | Array (x::xs) -> 
+    begin
+    function 
+    | Int   i       -> i32 i, LT.Int
+    | Int8  i       -> i8 i, LT.Int
+    | Bool  b       -> i1 (BatBool.to_int b), LT.Bool
+    | Array (x::xs) -> 
         let x = expr env x in
         x.value :: List.map xs (expr env %> value) |> array, LT.Array x.t
-     | Unit     -> null, LT.Unit
-     | other    -> unsupp ~name:"literal" (show_literal other))
-    %> fun (value, t) -> { env; value; t}
+    | Unit          -> null, LT.Unit
+    | other         -> unsupp ~name:"literal" (show_literal other)
+    end %> fun (value, t) -> { env; value; t}
 
   let gen_op env expr lhs rhs = 
     match lhs, rhs with
@@ -65,7 +66,6 @@ module Codegen = struct
       failwith "Operator is missing operands"
 
   let gen_let env expr ?(is_rec=false) name args body = ()
-
 
   (* let gen_apply m expr  *)
 

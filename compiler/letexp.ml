@@ -496,7 +496,7 @@ let closure_entry_body m arity pref_args raw_fn info =
 let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
 let size_of_args args = sum_by args bs_size 
 
-let closure_entry_fns m env name (full_args : typed_var list) arity raw_fn = 
+let closure_entry_fns m env name (full_args : typed_arg list) arity raw_fn = 
   (* let args_cnt = List.length full_args in  *)
   let arg_names, arg_lang_ts = List.unzip full_args in
   let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
