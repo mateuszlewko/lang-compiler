@@ -26,23 +26,44 @@ module Codegen = struct
     ; t     : LT.t
     } [@@deriving fields] *)
 
+  type result_type = Instr of Ast.instr | Block of Ez.Block.block
+
+  let result_to_blocks m res = 
+    let rec merge m blocks = 
+      function 
+      | []    , [] -> m, List.rev blocks 
+      | instrs, [] -> 
+        let m, b = M.local m T.label "instrs" in 
+        m, (List.rev instrs |> block b)::blocks |> List.rev
+      | instrs, (Instr i)::xs -> merge m blocks (i::instrs, xs)
+      | []    , (Block b)::xs -> merge m (b::blocks) ([], xs)
+      | instrs, (Block b2)::xs -> 
+        let m, b1 = M.local m T.label "instrs" in 
+        merge m (b2::(List.rev instrs |> block b1)::blocks) ([], xs)
+      in 
+
+    merge m [] ([], res) 
   
   let gen_literal env expr = 
     function 
-    | Int   i       -> i32 i
-    | Int8  i       -> i8 i
-    | Bool  b       -> i1 (BatBool.to_int b)
-    | Array (x::xs) -> List.map xs (expr env %> snd) |> array
-    | Unit          -> i1 0
+    | Int   i       -> i32 i, []
+    | Int8  i       -> i8 i, []
+    | Bool  b       -> i1 (BatBool.to_int b), []
+    | Array xs -> failwith "TODO array"
+        (* let elems, res = List.fold_map xs 
+        List.map xs (expr env %> snd) |> array *)
+    | Unit          -> i1 0, []
     | other         -> unsupp ~name:"literal" (show_literal other)
 
-  let gen_op env expr lhs rhs = 
+  let gen_op (env : Envn.t) expr lhs rhs op = 
     match lhs, rhs with
     | Some lhs, Some rhs ->
-      let lhs = expr env lhs |> fst in
-      let rhs = expr env rhs |> fst in
-     
-      (function
+      let lhs, res1, _ = expr env lhs in
+      let rhs, res2, _ = expr env rhs in
+      let res          = res1 @ res2 in 
+      let m, v         = M.tmp env.m in
+      
+      (match op with
       (* operators returning int *)
       | "+"   -> add  lhs rhs
       | "-"   -> sub  lhs rhs
@@ -59,31 +80,38 @@ module Codegen = struct
       | "||"  -> or_  lhs rhs
       (* raise when operator is unknown *)
       | other -> unsupp ~name:"operator" other)
+      |> fun op_res -> res @ [Instr (v <-- op_res)], v, { env with m }
     | _, _ ->
       failwith "Operator is missing operands"
-
+  
   let gen_let (env : Env.t) expr letexp ts = 
     match ts with 
     | LT.Fun ts -> 
-      let open TA in
-      let fn {args = args1; _} = letexp in 
+      let { TA.args; name; is_rec; body } = letexp in 
 
-      let args_cnt = List.length letexp.args in 
+      let args_cnt = List.length args in 
       let ret      = List.drop ts args_cnt in 
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
+      
       if List.length ret > 1 || is_fun (List.hd ret)
       then (* returns closure *)
-        let m, fn = M.global env.m Letexp.closure_t letexp.name in
-        (* let m, args = M.batch_locals m letexps.args in *)
+        let m, fn = M.global env.m Letexp.closure_t name in
+        let to_local (n, t) = LT.to_ollvm t, n in 
+        let m, args = M.batch_locals m (List.map args ~f:to_local) in
 
-        (* let env   = (if letexp.is_rec
-                     then let env = Env.add env letexp.name fn in 
-                          { env with m }
-                     else env) |> in  *)
-
-
-        (* define *)
-        failwith "TODO rets closure"
+        let body_env = 
+          (if is_rec then Env.add env name fn else env)
+          |> fun env -> List.fold2_exn args ~init:env 
+                                            ~f:(fun env v (name, _) -> 
+                                                  Env.add env name v) in 
+      
+        let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
+        let iss            = List.concat iss in 
+        let ret_v          = List.last_exn values in 
+        let ret_i          = Ez.Instr.ret ret_v |> Instr in
+        let m, blocks      = result_to_blocks env.m (iss @ [ret_i]) in 
+        let df = define fn args blocks in
+        { env with m = M.definition m df }
       else (* returns value *)
         failwith "TODO rets value"
     | other -> failwith "TODO let-value"

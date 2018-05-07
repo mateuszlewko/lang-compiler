@@ -51,3 +51,10 @@ let apply fn_t arg_ts =
                       | Ok true         -> raise WrongTypeOfApplyArgument
                       end
   | _     , _      -> raise ValueCannotBeApplied
+
+let to_ollvm = 
+  let module T = High_ollvm.Ez.Type in
+  function
+  | Int         -> T.i32 
+  | Bool | Unit -> T.i1
+  | other       -> failwith "TODO to_ollvm"
