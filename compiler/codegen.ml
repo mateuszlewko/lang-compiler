@@ -46,20 +46,19 @@ module Codegen = struct
   
   let gen_literal env expr = 
     function 
-    | Int   i       -> i32 i, []
-    | Int8  i       -> i8 i, []
-    | Bool  b       -> i1 (BatBool.to_int b), []
+    | TA.Int   i    -> [], i32 i, env
+    | Bool  b       -> [], i1 (BatBool.to_int b), env
     | Array xs -> failwith "TODO array"
         (* let elems, res = List.fold_map xs 
         List.map xs (expr env %> snd) |> array *)
-    | Unit          -> i1 0, []
-    | other         -> unsupp ~name:"literal" (show_literal other)
+    | Unit          -> [], i1 0, env
+    | other         -> unsupp ~name:"literal" (TA.show_literal other)
 
   let gen_op (env : Envn.t) expr lhs rhs op = 
     match lhs, rhs with
     | Some lhs, Some rhs ->
-      let lhs, res1, _ = expr env lhs in
-      let rhs, res2, _ = expr env rhs in
+      let res1, lhs, _ = expr env lhs in
+      let res2, rhs, _ = expr env rhs in
       let res          = res1 @ res2 in 
       let m, v         = M.tmp env.m in
       
@@ -87,60 +86,75 @@ module Codegen = struct
   let gen_let (env : Env.t) expr letexp ts = 
     match ts with 
     | LT.Fun ts -> 
-      let { TA.args; name; is_rec; body } = letexp in 
+      let { TA.args = ta_args; name; is_rec; body } = letexp in 
 
-      let args_cnt = List.length args in 
+      let args_cnt = List.length ta_args in 
       let ret      = List.drop ts args_cnt in 
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
       
-      if List.length ret > 1 || is_fun (List.hd ret)
-      then (* returns closure *)
-        let m, fn = M.global env.m Letexp.closure_t name in
-        let to_local (n, t) = LT.to_ollvm t, n in 
-        let typed_args      = List.map args ~f:to_local in 
-        let m, args = M.batch_locals m typed_args in
+      let m, fn = M.global env.m Letexp.closure_t name in
+      let to_local (n, t) = LT.to_ollvm t, n in 
+      let typed_args      = List.map ta_args ~f:to_local in 
+      let m, args = M.batch_locals m typed_args in
 
-        let body_env = 
-          (if is_rec then Env.add env name fn else env)
-          |> fun env -> List.fold2_exn args ~init:env 
-                                            ~f:(fun env v (name, _) -> 
-                                                  Env.add env name v) in 
+      let body_env : Env.t = 
+        (if is_rec then Env.add env name fn else env)
+        |> fun env -> List.fold2_exn args ta_args ~init:env 
+                                                  ~f:(fun env v (name, _) -> 
+                                                        Env.add env name v) in 
+    
+      let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
+    
+      let iss       = List.concat iss in 
+      let ret_v     = List.last_exn values in 
+      let ret_i     = Ez.Instr.ret ret_v |> Instr in
+      let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
+      let df        = define fn args blocks in
       
-        let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
+      let env       = { env with m = M.definition m df } in 
+      let full_args =
+        let ts = List.take ts (List.length ts - 1) in 
+        List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
       
-        let iss       = List.concat iss in 
-        let ret_v     = List.last_exn values in 
-        let ret_i     = Ez.Instr.ret ret_v |> Instr in
-        let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
-        let df        = define fn args blocks in
-        
-        let env       = { env with m = M.definition m df } in 
-        let full_args =
-          let ts = List.take ts (List.length ts - 1) in 
-          List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
+      let m = 
+        if List.length ret > 1 || is_fun (List.hd ret)
+        then (* returns closure *)
+          Letexp.closure_entry_fns m name full_args args_cnt fn 
+        else (* returns value *)
+          let ret = List.hd_exn ret |> LT.to_ollvm in 
+          Letexp.value_entry_fns m name ret full_args fn in 
 
-        let m   = Letexp.closure_entry_fns m name full_args args_cnt fn in 
-        { env with m }
-
-      else (* returns value *)
-        failwith "TODO rets value"
+      { env with m }
     | other -> failwith "TODO let-value"
 
   (* let gen_apply m expr  *)
 
-  (* let gen_expr m =  *)
+  let rec gen_expr env = 
+    function 
+    | TA.Var v, _               -> [], Env.find env v, env 
+    | Lit    l, _               -> gen_literal env gen_expr l 
+    | Let _   , _               -> failwith "nested let here TODO"
+    | App (callee, args), t     -> failwith "apply TODO"
+    | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
+    | If    _, _                -> failwith "TODO if-expr"
+    | Exprs _, _                -> failwith "TODO exprs"
 
   (* let gen_module *)
 
   let gen_top env =
     function 
-    | TA.Expr (TA.Let letexp, t) -> () 
+    | TA.Expr (TA.Let letexp, ts) -> 
+      gen_let env gen_expr letexp ts 
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
-    let tops = TA.of_tops top_lvl_exprs in 
-    failwith "TODO gen_prog"
+    let env = TA.of_tops top_lvl_exprs 
+              |> List.fold ~init:Env.empty ~f:gen_top in 
+              
+    let llenv = LLGate.ll_module env.m.m_module in 
+    llenv.m
+    
 
   (* later:
       - gen_extern
@@ -369,7 +383,7 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
     let m = M.declaration m decl in
     let args = Array.to_list args @ ["d", None; "e", None] in
     if String.contains fn_name 'V'
-    then Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn;
+    then (); (*Letexp.value_entry_fns m env_with_let fn_name ret_t args raw_fn;*)
     let m = M.declaration m decl in
     let arity = 3 in
     if String.contains fn_name 'C' 

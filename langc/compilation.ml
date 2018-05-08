@@ -8,9 +8,7 @@ open Lang_parsing
 open Codegen
 
 let gen_llvm_exn prog =
-  try
-    let llmod = Codegen.gen_prog prog in
-    string_of_llmodule llmod
+  try Codegen.gen_prog prog |> string_of_llmodule
   with Failure msg -> begin
     printf "Compilation failed. \nFailure:\n\t%s\n" msg;
     flush_all ();

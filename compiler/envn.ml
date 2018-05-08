@@ -40,3 +40,7 @@ let add env name value =
     
     { env with prefixed = env.prefixed <-- (pref_name, value) 
               ; opened  = env.opened   <-- (name     , value) }
+
+let find env name =
+    try BatMap.find name env.opened 
+    with Not_found -> BatMap.find (name_in env name) env.prefixed

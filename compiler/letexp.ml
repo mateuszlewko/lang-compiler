@@ -348,11 +348,11 @@ let value_entry_body m pref_args raw_fn info =
   let instrs = instrs @ [ ret res ] in
   m, info.definition [ block entry_b instrs ]
 
-let value_entry_fns m env name ret_type args raw_fn = 
+let value_entry_fns m name ret_type args raw_fn = 
   let args_cnt = List.length args in 
-  let arg_names, arg_lang_ts = List.unzip args in
+  (* let arg_names, arg_lang_ts = List.unzip args in
   let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
-  let args   = List.zip_exn arg_ts arg_names in 
+  let args   = List.zip_exn arg_ts arg_names in  *)
 
   let rec fold_args ix m =
     if ix > args_cnt
@@ -366,8 +366,7 @@ let value_entry_fns m env name ret_type args raw_fn =
     end
     in
 
-  let m = fold_args 1 m in
-  LLGate.ll_module_in env.llmod m.m_module |> ignore
+  fold_args 1 m
 
 type closure_entry_info = 
   { v   : value_entry_info
