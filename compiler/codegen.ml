@@ -97,7 +97,8 @@ module Codegen = struct
       then (* returns closure *)
         let m, fn = M.global env.m Letexp.closure_t name in
         let to_local (n, t) = LT.to_ollvm t, n in 
-        let m, args = M.batch_locals m (List.map args ~f:to_local) in
+        let typed_args      = List.map args ~f:to_local in 
+        let m, args = M.batch_locals m typed_args in
 
         let body_env = 
           (if is_rec then Env.add env name fn else env)
@@ -106,12 +107,21 @@ module Codegen = struct
                                                   Env.add env name v) in 
       
         let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
-        let iss            = List.concat iss in 
-        let ret_v          = List.last_exn values in 
-        let ret_i          = Ez.Instr.ret ret_v |> Instr in
-        let m, blocks      = result_to_blocks env.m (iss @ [ret_i]) in 
-        let df = define fn args blocks in
-        { env with m = M.definition m df }
+      
+        let iss       = List.concat iss in 
+        let ret_v     = List.last_exn values in 
+        let ret_i     = Ez.Instr.ret ret_v |> Instr in
+        let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
+        let df        = define fn args blocks in
+        
+        let env       = { env with m = M.definition m df } in 
+        let full_args =
+          let ts = List.take ts (List.length ts - 1) in 
+          List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
+
+        let m   = Letexp.closure_entry_fns m name full_args args_cnt fn in 
+        { env with m }
+
       else (* returns value *)
         failwith "TODO rets value"
     | other -> failwith "TODO let-value"
@@ -353,7 +363,7 @@ and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
     let m = M.declaration m decl in
     let arity = 3 in
     if String.contains fn_name 'C' 
-    then Letexp.closure_entry_fns m env_with_let fn_name args arity raw_fn 
+    then () (*Letexp.closure_entry_fns m env_with_let fn_name args arity raw_fn *)
   end;
 
   expr_result, env_with_let

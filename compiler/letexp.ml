@@ -496,11 +496,11 @@ let closure_entry_body m arity pref_args raw_fn info =
 let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
 let size_of_args args = sum_by args bs_size 
 
-let closure_entry_fns m env name (full_args : typed_arg list) arity raw_fn = 
+let closure_entry_fns m name (full_args : _ list) arity raw_fn = 
   (* let args_cnt = List.length full_args in  *)
-  let arg_names, arg_lang_ts = List.unzip full_args in
-  let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
-  let args   = List.zip_exn arg_ts arg_names in 
+  (* let arg_names, arg_lang_ts = List.unzip full_args in *)
+  (* let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in *)
+  let args   = full_args in 
 
   let rec fold_args ix m =
     if ix >= arity
@@ -515,8 +515,8 @@ let closure_entry_fns m env name (full_args : typed_arg list) arity raw_fn =
     end
     in
 
-  let m = fold_args 1 m in
-  LLGate.ll_module_in env.llmod m.m_module |> ignore
+  fold_args 1 m
+  (* LLGate.ll_module_in env.llmod m.m_module |> ignore *)
 
 (** apply arguments to function which returns closure *)
 let value_apply m env closure_ptr ret_t args =  
