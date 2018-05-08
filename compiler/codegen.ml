@@ -132,6 +132,16 @@ module Codegen = struct
 
   (* let gen_module *)
 
+  let gen_top env =
+    function 
+    | TA.Expr (TA.Let letexp, t) -> () 
+    | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
+               |> failwith
+
+  let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
+    let tops = TA.of_tops top_lvl_exprs in 
+    failwith "TODO gen_prog"
+
   (* later:
       - gen_extern
       - gen_mod_open

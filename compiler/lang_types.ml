@@ -13,6 +13,7 @@ type lang_type =
   [@@deriving show]
 
 type t = lang_type
+[@@deriving show]
 
 exception UnsupportedType of string
 exception WrongNumberOfApplyArguments
@@ -43,7 +44,7 @@ let apply fn_t arg_ts =
   match fn_t, arg_ts with 
   | _     , []     -> fn_t 
   | Fun ts, arg_ts -> let cnt = List.length arg_ts in 
-                      let before, after = List.split_n arg_ts (cnt - 1) in 
+                      let before, after = List.split_n arg_ts cnt in 
                       begin 
                       match List.exists2 before arg_ts (<>) with 
                       | Ok false        -> Fun after

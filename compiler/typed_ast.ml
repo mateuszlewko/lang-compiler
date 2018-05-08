@@ -6,6 +6,7 @@ module LT = Lang_types
 module A  = Lang_parsing.Ast
 
 type arg = string * LT.t
+[@@deriving show]
 
 type letexp = 
   { name   : string
@@ -33,14 +34,18 @@ and expr =
   | InfixOp of string * expr_t option * expr_t option 
   | If      of ifexp 
   | Exprs   of expr_t list
+  [@@deriving show]
+
 
 and expr_t = expr * LT.t
+[@@deriving show]
 
 type top = 
   | Expr   of expr_t
   | Extern of string * LT.t
   | Module of string * top list
   | Open   of string
+  [@@deriving show]
 
 type bindings_map = (string, LT.t) BatMap.t
 
@@ -148,6 +153,6 @@ and lit env =
                          add env name t, Extern (name, t)
   | _                 -> failwith "TODO2" 
 
-let of_prog (Prog tops) = 
+let of_tops tops = 
   let env = empty |> add_builtin_ops in 
-  List.folding_map tops ~init:env
+  List.folding_map tops ~init:env ~f:top

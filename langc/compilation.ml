@@ -9,8 +9,8 @@ open Codegen
 
 let gen_llvm_exn prog =
   try
-    let llval, env = gen_prog prog in
-    string_of_llmodule env.llmod
+    let llmod = Codegen.gen_prog prog in
+    string_of_llmodule llmod
   with Failure msg -> begin
     printf "Compilation failed. \nFailure:\n\t%s\n" msg;
     flush_all ();
