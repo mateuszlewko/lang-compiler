@@ -26,7 +26,7 @@ and literal =
   | Array  of expr_t list
   | Unit
 
-and expr = 
+and body_expr = 
   | Var     of string 
   | Lit     of literal
   | Let     of letexp 
@@ -36,8 +36,7 @@ and expr =
   | Exprs   of expr_t list
   [@@deriving show]
 
-
-and expr_t = expr * LT.t
+and expr_t = body_expr * LT.t
 [@@deriving show]
 
 type top = 

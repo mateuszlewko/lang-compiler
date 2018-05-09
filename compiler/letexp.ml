@@ -636,7 +636,7 @@ let known_apply m args raw_arity full_args raw_fn =
   let args_cnt = List.length args in 
 
   if args_cnt = raw_arity 
-  then 
+  then (* just call function in c-style *)
     let open High_ollvm.Ast in
     let m, call_res = M.local m T.opaque "call_res" in
    
@@ -646,7 +646,7 @@ let known_apply m args raw_arity full_args raw_fn =
     | TYPE_Function (other, _) ->
       m, [call_res <-- call raw_fn args], call_res
     | other -> failwith "expected raw_fn to be function type"
-  else  
+  else (* here args_cnt < raw_arity, so we need to create a closure  *)
     let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
     let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 
     let data_t           = T.structure ~packed:true full_args in

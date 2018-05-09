@@ -1,23 +1,18 @@
 open High_ollvm
 
-type bindings_map = (string, Ez.Value.t) BatMap.t
+type bound        = Ez.Value.t * Lang_types.t 
+type binding      = Fun of bound | Val of bound
+type bindings_map = (string, binding) BatMap.t
+
+exception SymbolNotFound of string
 
 module V = Ez.Value
 module M = Ez.Module
 
-type environment = { 
-  (** symbols accessible with prefix *)
-    prefixed : bindings_map
-  (** symbols available without any prefix  *)
-  ; opened   : bindings_map
+type environment = 
+  { bindings : bindings_map
   (** low-level module *)
   ; m        : M.t
-  (** Top level values.
-      Each pair is a function with 0 arguments and variable
-      equal to result of function call (if any) *)
-  ; top_vals : (V.t * V.t option) list
-  (** current scope (module) prefix *)
-  ; prefix   : string
   } 
 
 type t = environment
@@ -25,22 +20,16 @@ type t = environment
 open BatMap.Infix
 
 (** Creates top-level env *)
-let empty = { prefixed = BatMap.empty
-            ; opened   = BatMap.empty
-            ; prefix   = ""
-            ; top_vals = []
+let empty = { bindings = BatMap.empty
             ; m        = M.empty }
 
 (** Evaluates name in current scope *)
-let name_in env = (^) env.prefix
+(* let name_in env = (^) env.prefix *)
 
 (** Adds new binding in current scope *)
-let add env name value =
-    let pref_name = name_in env name in
-    
-    { env with prefixed = env.prefixed <-- (pref_name, value) 
-              ; opened  = env.opened   <-- (name     , value) }
+let add env name binding = 
+  { env with bindings = env.bindings <-- (name, binding) }
 
 let find env name =
-    try BatMap.find name env.opened 
-    with Not_found -> BatMap.find (name_in env name) env.prefixed
+    try BatMap.find name env.bindings 
+    with Not_found -> SymbolNotFound name |> raise

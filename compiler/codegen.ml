@@ -85,7 +85,7 @@ module Codegen = struct
   
   let gen_let (env : Env.t) expr letexp ts = 
     match ts with 
-    | LT.Fun ts -> 
+    | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; is_rec; body } = letexp in 
 
       let args_cnt = List.length ta_args in 
@@ -98,10 +98,10 @@ module Codegen = struct
       let m, args = M.batch_locals m typed_args in
 
       let body_env : Env.t = 
-        (if is_rec then Env.add env name fn else env)
+        (if is_rec then Env.add env name (Fun (fn, fn_t)) else env)
         |> fun env -> List.fold2_exn args ta_args ~init:env 
-                                                  ~f:(fun env v (name, _) -> 
-                                                        Env.add env name v) in 
+                           ~f:(fun env v (name, t) -> 
+                                  Env.add env name (Val (v, t))) in 
     
       let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
     
@@ -127,14 +127,22 @@ module Codegen = struct
       { env with m }
     | other -> failwith "TODO let-value"
 
-  (* let gen_apply m expr  *)
+  let gen_apply env expr callee args t = 
+    match callee with 
+    | (TA.Var name), t -> 
+      begin 
+      match Env.find env name with
+      | Fun (fn, fn_t) -> failwith "TODO: known apply"
+      | Val (v , t   ) -> failwith "unkown apply 1"
+      end
+    | v -> let iss, callee, _ = expr env v in failwith "unkown apply 2"
 
   let rec gen_expr env = 
     function 
-    | TA.Var v, _               -> [], Env.find env v, env 
+    | TA.Var v, _               -> failwith "var TODO" (*[], Env.find env v, env *)
     | Lit    l, _               -> gen_literal env gen_expr l 
     | Let _   , _               -> failwith "nested let here TODO"
-    | App (callee, args), t     -> failwith "apply TODO"
+    | App (callee, args), t     -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
     | If    _, _                -> failwith "TODO if-expr"
     | Exprs _, _                -> failwith "TODO exprs"
@@ -154,7 +162,6 @@ module Codegen = struct
               
     let llenv = LLGate.ll_module env.m.m_module in 
     llenv.m
-    
 
   (* later:
       - gen_extern

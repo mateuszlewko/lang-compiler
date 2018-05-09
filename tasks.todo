@@ -52,9 +52,14 @@ Codegen:
 
     ❑ partial application @high @today
         ✔ pre-* function which returns closure @done(18-04-13 00:55)
-        ❑ pre-* function which returns value
-        ❑ call-site 
-        ❑ return PAPP
+        ✔ pre-* function which returns value @done(18-05-08 23:29)
+        ✔ call-site @done(18-05-08 23:29)
+        ✔ return PAPP @done(18-05-08 23:29)
+        ❑ application
+            ❑ call known apply
+            ❑ call closure apply 
+            ❑ call value apply
+
     ❑ record types
     ❑ lambda (fun or =>)
     ❑ mutable var
