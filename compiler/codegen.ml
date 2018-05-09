@@ -124,7 +124,7 @@ module Codegen = struct
           let ret = List.hd_exn ret |> LT.to_ollvm in 
           Letexp.value_entry_fns m name ret full_args fn in 
 
-      { env with m }
+      let env = Env.add env name (Fun (fn, fn_t)) in { env with m }
     | other -> failwith "TODO let-value"
 
   let gen_apply env expr callee args t = 
@@ -139,7 +139,7 @@ module Codegen = struct
 
   let rec gen_expr env = 
     function 
-    | TA.Var v, _               -> failwith "var TODO" (*[], Env.find env v, env *)
+    | TA.Var v, _               -> [], Env.find_val env v, env
     | Lit    l, _               -> gen_literal env gen_expr l 
     | Let _   , _               -> failwith "nested let here TODO"
     | App (callee, args), t     -> gen_apply env gen_expr callee args t 

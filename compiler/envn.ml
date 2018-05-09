@@ -30,6 +30,10 @@ let empty = { bindings = BatMap.empty
 let add env name binding = 
   { env with bindings = env.bindings <-- (name, binding) }
 
+let of_binding = function Fun b | Val b -> b
+
 let find env name =
     try BatMap.find name env.bindings 
     with Not_found -> SymbolNotFound name |> raise
+
+let find_val env name = find env name |> of_binding |> fst
