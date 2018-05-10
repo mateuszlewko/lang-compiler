@@ -11,3 +11,6 @@ let Vadder5 a b c d e = a + b + c + d + e
 
 let Ctest1 a b c : int -> int -> int = 
     Vadder5 a b c 
+
+let main () =
+    0

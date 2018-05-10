@@ -446,13 +446,17 @@ let closure_entry_body m arity pref_args raw_fn info =
   let unused_args_cnt = List.length unused_args in
   
   let then_instrs = 
-    let args = res_args::left_pass_args::unused_args in 
-    [ ret_res <-- call res_fn args
+    let res_args  = T.ptr T.i8, snd res_args in 
+    let args      = res_args::left_pass_args::unused_args in 
+    let (_, r_fn) = res_fn in 
+    let res_fn    = T.fn T.void [] |> T.ptr, r_fn in  
+    let arg_ts    = List.map args fst in 
+    [ res_fn  <-- bitcast res_fn (T.fn closure_t arg_ts |> T.ptr)
+    ; ret_res <-- call res_fn args
     ; ret ret_res
     ] in
 
   (* else branch *)
-
   let size_pref_sums = 
     List.map unused_args bs_size 
     |> List.fold ~init:([0], 0) ~f:(fun (sums, last) s -> let s = last + s

@@ -18,7 +18,7 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ✔ correct priority of operators @done(18-01-26 23:17)
 
-    ❑ proper parsing @critical
+    ❑ proper (improved) parsing @critical
 
     ❑ record types
     ❑ lambda (fun or =>)
@@ -59,8 +59,22 @@ Codegen:
             ❑ call known apply
             ❑ call closure apply 
             ❑ call value apply
+        ❑ function generation 
+            ❑ add global array of function pointers
+            ❑ move array pointer on argument apply
+            ❑ returning closure
+            ❑ returning value
 
     ❑ record types
+    ❑ mutually recursive functions
+    ❑ let-polymorphism
+    ❑ type float @medium
+    ❑ type checking / basic type inference @high
+    ❑ arithmetic operations (float) @medium
+
+    ❑ type classes
+    ❑ type inference with type classes
+
     ❑ lambda (fun or =>)
     ❑ mutable var
     ❑ lists
@@ -71,12 +85,8 @@ Codegen:
     ❑ algebraic types (unions / variants)
 
     ❑ type char @medium
-    ❑ type float @medium
-    ❑ arithmetic operations (float) @medium
-    ❑ type checking / basic type inference @high
-    ❑ multi-file programs @low @optional
+    // ❑ multi-file programs @low @optional
 
-    ❑ polymorphism
 
 Bugs:
     ❑ fix nested let @critical 
@@ -96,5 +106,5 @@ Other:
     ✔ Tests! @critical @done(18-01-27 03:16)
     ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
-    ❑ interpreter @optional
-    ❑ handle infix operators of different priority @optional
+    // ❑ interpreter @optional
+    // ❑ handle infix operators of different priority @optional
