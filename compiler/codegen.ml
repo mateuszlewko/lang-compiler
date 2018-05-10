@@ -132,7 +132,15 @@ module Codegen = struct
     | (TA.Var name), t -> 
       begin 
       match Env.find env name with
-      | Fun (fn, fn_t) -> failwith "TODO: known apply"
+      | Fun (fn, fn_t) -> 
+        let args = List.map args (expr env %> snd3) in
+        let fn_arg_ts = match fn_t with 
+                        | Fun ts -> List.take ts (List.length ts - 1)   
+                                    |> List.map ~f:LT.to_ollvm 
+                        | _      -> [] in
+
+        let m, instrs, res = Letexp.known_apply env.m args fn_arg_ts fn in
+        List.map instrs (fun x -> Instr x), res, { env with m }
       | Val (v , t   ) -> failwith "unkown apply 1"
       end
     | v -> let iss, callee, _ = expr env v in failwith "unkown apply 2"

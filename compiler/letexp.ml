@@ -632,8 +632,9 @@ let closure_apply m closure_ptr args =
 
 (** create closure *)
 [@@@warning "-8"]
-let known_apply m args raw_arity full_args raw_fn =
-  let args_cnt = List.length args in 
+let known_apply m args full_args raw_fn =
+  let args_cnt  = List.length args in 
+  let raw_arity = List.length full_args in
 
   if args_cnt = raw_arity 
   then (* just call function in c-style *)
