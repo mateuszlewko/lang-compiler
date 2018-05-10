@@ -313,6 +313,17 @@ let struct_fields m struct_ptr fields_idx =
 
   extract m [] [] fields_idx 
 
+let struct_val_fields m struct_val fields_idx = 
+  let rec extract m args instructions =
+    function 
+    | []      -> m, instructions, List.rev args
+    | ix::ixs -> 
+      let m, v   = M.local m T.opaque "val" in
+      let val_i  = v <-- extractvalue struct_val ix in
+      extract m (v::args) (val_i::instructions) ixs in
+
+  extract m [] [] fields_idx 
+
 let extract_from_struct m struct_ptr idx = failwith "TODO: extract_from_struct"
 
 let define_common m args name ret_type =
@@ -373,7 +384,7 @@ type closure_entry_info =
   (** function argument representing number of passed arguments  *)
   ; cnt : Ez.Value.t
   }
-let closure_t = T.structure ~packed:(true) [ T.ptr T.void; T.ptr T.i8; T.i8
+let closure_t = T.structure ~packed:(true) [ T.ptr (T.fn T.void []); T.ptr T.i8; T.i8
                                             ; T.i8; T.i32]
 
 let define_closure_entry m args name =
@@ -410,7 +421,7 @@ let closure_entry_body m arity pref_args raw_fn info =
 
   let m, entry_instrs, [ res_left_args; res_arity; res_fn; res_args
                        ; res_used_bytes ] = 
-    struct_fields m res [2; 3; 0; 1; 4] in
+    struct_val_fields m res [2; 3; 0; 1; 4] in
   
   let m, [x1; left_pass_args] = M.locals m T.i8 [""; "left_pass_args"] in 
   let m, x3 = M.local m T.i1 "" in 
@@ -478,14 +489,14 @@ let closure_entry_body m arity pref_args raw_fn info =
     ; memcpy dest_ptr data_ptr b_cnt |> snd
     
     (* res.left_args -= left_pass_args *)
-    ; left_args_ptr <-- struct_gep res 2
+    (* ; left_args_ptr <-- extractvalue res 2 *)
     ; new_left_args <-- sub res_left_args left_pass_args
-    ; store new_left_args left_args_ptr |> snd
+    ; insertvalue res new_left_args [2] |> snd
     
     (* res.used_bytes += b_cnt *)
-    ; used_bytes_ptr <-- struct_gep res 4 
+    (* ; used_bytes_ptr <-- extractvalue res 4  *)
     ; new_used_bytes <-- add res_used_bytes b_cnt
-    ; store new_used_bytes used_bytes_ptr |> snd ] in
+    ; insertvalue res new_used_bytes [4] |> snd ] in
 
   m, info.v.definition [ block entry_b entry_instrs 
                        ; block then_b then_instrs
@@ -672,7 +683,6 @@ let known_apply m args full_args raw_fn =
       ; store (size_of_args args |> i32) 
               cl_used_bytes |> snd
       ] in
-
-  m, else_instrs, closure_ptr
+    m, else_instrs, closure_ptr
 
 [@@@warning "+8"]
