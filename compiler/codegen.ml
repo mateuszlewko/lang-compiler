@@ -111,19 +111,21 @@ module Codegen = struct
       let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
       let df        = define fn args blocks in
       
-      let env       = { env with m = M.definition m df } in 
       let full_args =
         let ts = List.take ts (List.length ts - 1) in 
         List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
-      
+      let env = { env with m = M.definition m df } in 
+    
       let m = 
         if List.length ret > 1 || is_fun (List.hd ret)
         then (* returns closure *)
-          Letexp.closure_entry_fns m name full_args args_cnt fn 
+          Letexp.closure_entry_fns env.m name full_args args_cnt fn 
         else (* returns value *)
           let ret = List.hd_exn ret |> LT.to_ollvm in 
-          Letexp.value_entry_fns m name ret full_args fn in 
+          Letexp.value_entry_fns env.m name ret full_args fn in 
 
+      printf "add %s to env.m\n" name;
+      
       let env = Env.add env name (Fun (fn, fn_t)) in { env with m }
     | other -> failwith "TODO let-value"
 

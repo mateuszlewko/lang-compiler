@@ -1,5 +1,4 @@
 open Lang_compiler
-open Core
 open Llvm
 open Core
 open BatPervasives
@@ -9,9 +8,11 @@ open Codegen
 
 let gen_llvm_exn prog =
   try Codegen.gen_prog prog |> string_of_llmodule
-  with Failure msg -> begin
+  with 
+  | Failure msg -> begin
     printf "Compilation failed. \nFailure:\n\t%s\n" msg;
     flush_all ();
+    
     exit 0 |> ignore;
     ""
     end
@@ -19,6 +20,9 @@ let gen_llvm_exn prog =
     printf "Compilation failed with unknown error!";
     raise e
 
+let gen_llvm_exn prog =
+  Codegen.gen_prog prog |> string_of_llmodule
+  
 let llvm_out_only = ref false
 let output_path = ref "a.out"
 let input_path = ref ""
