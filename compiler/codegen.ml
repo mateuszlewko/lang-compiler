@@ -93,13 +93,18 @@ module Codegen = struct
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
       
       let m, fn = M.global env.m Letexp.closure_t name in
-      let to_local (n, t) = LT.to_ollvm t, n in 
-      let typed_args      = List.map ta_args ~f:to_local in 
+      let to_local t = LT.to_ollvm t, "" in 
+      let fn_args    = List.take ts (List.length ts - 1) in
+      let fn_args_named = 
+        List.mapi fn_args (fun i a -> if i < args_cnt 
+                                      then fst (List.nth_exn ta_args i), a
+                                      else "", a) in 
+      let typed_args = List.map fn_args to_local in 
       let m, args = M.batch_locals m typed_args in
 
       let body_env : Env.t = 
         (if is_rec then Env.add env name (Fun (fn, fn_t)) else env)
-        |> fun env -> List.fold2_exn args ta_args ~init:env 
+        |> fun env -> List.fold2_exn args fn_args_named ~init:env 
                            ~f:(fun env v (name, t) -> 
                                   Env.add env name (Val (v, t))) in 
     

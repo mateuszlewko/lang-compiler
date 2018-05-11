@@ -474,7 +474,7 @@ let closure_entry_body m arity pref_args raw_fn info =
   let m, data_ptr  = M.local m (T.ptr data_t) "data_ptr" in
 
   let else_instrs = 
-    [ b_cnt_ptr <-- get_elem_ptr_raw size_pref_sums_g [left_pass_args] 
+    [ b_cnt_ptr <-- get_elem_ptr_raw size_pref_sums_g [i32 0; left_pass_args] 
     ; b_cnt     <-- load b_cnt_ptr
     ; data_ptr  <-- alloca data_t ] in
 
@@ -500,12 +500,22 @@ let closure_entry_body m arity pref_args raw_fn info =
     (* res.used_bytes += b_cnt *)
     (* ; used_bytes_ptr <-- extractvalue res 4  *)
     ; new_used_bytes <-- add res_used_bytes b_cnt
-    ; insertvalue res new_used_bytes [4] |> snd ] in
+    ; insertvalue res new_used_bytes [4] |> snd
+    ; ret res ] in
 
   m, info.v.definition [ block entry_b entry_instrs 
                        ; block then_b then_instrs
                        ; block else_b else_instrs ]
 [@@@warning "+8"]
+
+(* 
+
+define i32 @main() {
+instrs1:
+  ret i32 0
+} 
+
+*)
 
 let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
 let size_of_args args = sum_by args bs_size 
