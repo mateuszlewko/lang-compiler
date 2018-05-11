@@ -56,7 +56,7 @@ Codegen:
         ✔ call-site @done(18-05-08 23:29)
         ✔ return PAPP @done(18-05-08 23:29)
         ❑ application
-            ❑ call known apply
+            ✔ call known apply @done(18-05-11 19:17)
             ❑ call closure apply 
             ❑ call value apply
         ❑ function generation 
