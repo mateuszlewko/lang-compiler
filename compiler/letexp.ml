@@ -490,6 +490,8 @@ let closure_entry_body m arity pref_args raw_fn info =
   let else_instrs = else_instrs @ instrs @ 
     [ dest_ptr <-- get_elem_ptr_raw res_args [res_used_bytes]
     (* memcpy(res_args + res_used_bytes, data_ptr, b_cnt) *)
+    ; dest_ptr <-- bitcast dest_ptr (T.ptr T.i8) 
+    ; data_ptr <-- bitcast data_ptr (T.ptr T.i8) 
     ; memcpy dest_ptr data_ptr b_cnt |> snd
     
     (* res.left_args -= left_pass_args *)

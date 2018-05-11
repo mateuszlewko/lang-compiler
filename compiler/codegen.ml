@@ -92,7 +92,10 @@ module Codegen = struct
       let ret      = List.drop ts args_cnt in 
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
       
-      let m, fn = M.global env.m Letexp.closure_t name in
+      let ret_t = if List.length ret > 1 || is_fun (List.hd ret)
+                  then Letexp.closure_t else LT.to_ollvm (List.hd_exn ret) in
+      
+      let m, fn = M.global env.m ret_t name in
       let to_local t = LT.to_ollvm t, "" in 
       let fn_args    = List.take ts (List.length ts - 1) in
       let fn_args_named = 
