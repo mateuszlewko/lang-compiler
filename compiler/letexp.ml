@@ -684,18 +684,23 @@ let known_apply m args full_args raw_fn =
       ; args_ptr      <-- struct_gep closure_ptr 1
       ; args_ptr_cast <-- bitcast args_ptr (T.ptr data_t)
       ; heap_bytes    <-- malloc data_t
+      ; heap_bytes    <-- bitcast heap_bytes (T.ptr T.i8)
       ; store heap_bytes args_ptr |> snd
       ] in 
 
     let m, instrs1 = set_fields m args_ptr_cast (List.range 0 args_cnt) args in 
-    let m, instrs2, [cl_arity; cl_left_args; cl_used_bytes] = 
-      struct_fields m closure_ptr [3; 2; 4] in
+    let m, tmp = M.tmp m in
+      (* gep m closure_ptr [3; 2; 4] in *)
 
-    let else_instrs = else_instrs @ instrs1 @ instrs2 @
-      [ store (i32 raw_arity) cl_arity |> snd
-      ; store (i32 (raw_arity - args_cnt)) cl_left_args |> snd 
+    let else_instrs = else_instrs @ instrs1 @
+      [ tmp <-- gep closure_ptr [0; 3] 
+      ; store (i8 raw_arity) tmp |> snd
+      ; tmp <-- gep closure_ptr [0; 2] 
+      ; store (i8 (raw_arity - args_cnt)) tmp |> snd 
+      ; tmp <-- gep closure_ptr [0; 4] 
       ; store (size_of_args args |> i32) 
-              cl_used_bytes |> snd
+              tmp |> snd
+      ; closure_ptr <-- load closure_ptr
       ] in
     m, else_instrs, closure_ptr
 
