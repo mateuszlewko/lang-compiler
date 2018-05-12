@@ -1,7 +1,7 @@
 open High_ollvm
 
 type bound        = Ez.Value.t * Lang_types.t 
-type binding      = Fun of bound | Val of bound
+type binding      = Fun of bound * Ez.Value.t | Val of bound
 type bindings_map = (string, binding) BatMap.t
 
 exception SymbolNotFound of string
@@ -30,7 +30,7 @@ let empty = { bindings = BatMap.empty
 let add env name binding = 
   { env with bindings = env.bindings <-- (name, binding) }
 
-let of_binding = function Fun b | Val b -> b
+let of_binding = function Fun (b, _) | Val b -> b
 
 let find env name =
     try BatMap.find name env.bindings 

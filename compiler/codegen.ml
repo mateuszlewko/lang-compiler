@@ -104,9 +104,21 @@ module Codegen = struct
                                       else "", a) in 
       let typed_args = List.map fn_args to_local in 
       let m, args = M.batch_locals m typed_args in
+      
+      let full_args =
+        let ts = List.take ts (List.length ts - 1) in 
+        List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
+    
+      let m, fns_arr = 
+        if List.length ret > 1 || is_fun (List.hd ret)
+        then (* returns closure *)
+          Letexp.closure_entry_fns env.m name full_args args_cnt fn 
+        else (* returns value *)
+          let ret = List.hd_exn ret |> LT.to_ollvm in 
+          Letexp.value_entry_fns env.m name ret full_args fn in 
 
       let body_env : Env.t = 
-        (if is_rec then Env.add env name (Fun (fn, fn_t)) else env)
+        (if is_rec then Env.add env name (Fun ((fn, fn_t), fns_arr)) else env)
         |> fun env -> List.fold2_exn args fn_args_named ~init:env 
                            ~f:(fun env v (name, t) -> 
                                   Env.add env name (Val (v, t))) in 
@@ -118,23 +130,11 @@ module Codegen = struct
       let ret_i     = Ez.Instr.ret ret_v |> Instr in
       let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
       let df        = define fn args blocks in
-      
-      let full_args =
-        let ts = List.take ts (List.length ts - 1) in 
-        List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
       let env = { env with m = M.definition m df } in 
-    
-      let m = 
-        if List.length ret > 1 || is_fun (List.hd ret)
-        then (* returns closure *)
-          Letexp.closure_entry_fns env.m name full_args args_cnt fn 
-        else (* returns value *)
-          let ret = List.hd_exn ret |> LT.to_ollvm in 
-          Letexp.value_entry_fns env.m name ret full_args fn in 
 
       printf "add %s to env.m\n" name;
       
-      let env = Env.add env name (Fun (fn, fn_t)) in { env with m }
+      let env = Env.add env name (Fun ((fn, fn_t), fns_arr)) in { env with m }
     | other -> failwith "TODO let-value"
 
   let gen_apply env expr callee args t = 
@@ -142,14 +142,15 @@ module Codegen = struct
     | (TA.Var name), t -> 
       begin 
       match Env.find env name with
-      | Fun (fn, fn_t) -> 
+      | Fun ((fn, fn_t), fns_arr) -> 
         let args = List.map args (expr env %> snd3) in
         let fn_arg_ts = match fn_t with 
                         | Fun ts -> List.take ts (List.length ts - 1)   
                                     |> List.map ~f:LT.to_ollvm 
                         | _      -> [] in
 
-        let m, instrs, res = Letexp.known_apply env.m args fn_arg_ts fn in
+        let m, instrs, res = 
+          Letexp.known_apply env.m args fn_arg_ts fn fns_arr in
         List.map instrs (fun x -> Instr x), res, { env with m }
       | Val (v , t   ) -> failwith "unkown apply 1"
       end

@@ -386,7 +386,7 @@ let value_entry_fns m name ret_type args raw_fn =
     in
 
   let m, fns = fold_args 1 [] m in
-  array_of_fns m (name ^ "_entry_fns") raw_fn fns |> fst
+  array_of_fns m (name ^ "_entry_fns") raw_fn fns
 
 type closure_entry_info = 
   { v   : value_entry_info
@@ -494,10 +494,12 @@ let closure_entry_body m arity pref_args raw_fn info =
     set_fields m data_ptr (List.init unused_args_cnt identity) unused_args in
 
   let m, dest_ptr       = M.local m (T.ptr T.opaque) "dest_ptr" in
-  let m, left_args_ptr  = M.local m T.opaque "" in 
-  let m, new_left_args  = M.local m T.opaque "" in
-  let m, used_bytes_ptr = M.local m T.opaque "" in 
-  let m, new_used_bytes = M.local m T.opaque "" in
+  let m, left_args_ptr  = M.tmp m in
+  let m, new_left_args  = M.tmp m in
+  let m, used_bytes_ptr = M.tmp m in
+  let m, new_used_bytes = M.tmp m in 
+  let m, fn_ptr         = M.local m T.opaque "fn_ptr" in
+  let m, last           = M.tmp m in
 
   let else_instrs = else_instrs @ instrs @ 
     [ dest_ptr <-- get_elem_ptr_raw res_args [res_used_bytes]
@@ -505,12 +507,17 @@ let closure_entry_body m arity pref_args raw_fn info =
     ; dest_ptr <-- bitcast dest_ptr (T.ptr T.i8) 
     ; data_ptr <-- bitcast data_ptr (T.ptr T.i8) 
     ; memcpy dest_ptr data_ptr b_cnt |> snd
-    
+
     (* res.left_args -= left_pass_args *)
     (* ; left_args_ptr <-- extractvalue res 2 *)
     ; new_left_args <-- sub res_left_args left_pass_args
     ; insertvalue res new_left_args [2] |> snd
     
+    (* increase fn pointer by number of applied args *)
+    ; fn_ptr         <-- extractvalue res 0
+    ; last           <-- get_elem_ptr_raw fn_ptr [left_pass_args]
+    ; insertvalue res last [0] |> snd
+
     (* res.used_bytes += b_cnt *)
     (* ; used_bytes_ptr <-- extractvalue res 4  *)
     ; new_used_bytes <-- add res_used_bytes b_cnt
@@ -551,7 +558,7 @@ let closure_entry_fns m name full_args arity raw_fn =
     in
 
   let m, fns = fold_args 1 [] m in 
-  array_of_fns m (name ^ "_entry_fns") raw_fn fns |> fst
+  array_of_fns m (name ^ "_entry_fns") raw_fn fns
 
 (** apply arguments to function which returns closure *)
 let value_apply m env closure_ptr ret_t args =  
@@ -639,17 +646,23 @@ let closure_apply m closure_ptr args =
   let cnt               = List.length args in
   let m, instrs         = set_fields m last (List.range 0 cnt) args in
   let m, left_args_ptr  = M.local m T.opaque "left_args_ptr" in 
-  let m, used_bytes_ptr = M.local m T.opaque "left_args_ptr" in 
+  let m, used_bytes_ptr = M.local m T.opaque "used_bytes_ptr" in 
+  let m, fn_ptr = M.local m T.opaque "used_bytes_ptr" in 
 
   let then_instrs = then_instrs @ instrs @ 
     [ left_args_ptr  <-- struct_gep res 2 
     ; last           <-- sub cl_left_args (i8 cnt)
     ; store last left_args_ptr |> snd
+    (* increase fn pointer by number of applied args *)
+    ; fn_ptr         <-- struct_gep res 0 
+    ; last           <-- load fn_ptr 
+    ; last           <-- gep last [cnt]
+    ; store last fn_ptr |> snd
+
     ; used_bytes_ptr <-- struct_gep res 4 
     ; last           <-- add cl_used_bytes args_size 
     ; store last used_bytes_ptr |> snd
     ; last           <-- load res
-    (* ; ret last *)
     ] in
 
   let call_args   = cl_args_ptr::(i8 cnt)::args in 
@@ -660,14 +673,13 @@ let closure_apply m closure_ptr args =
     [ cl_fn <-- load cl_fn
     ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
     ; last  <-- call cl_fn call_args
-    (* ; ret last  *)
     ] in 
 
   entry_instrs, [ block then_b then_instrs; block else_b else_instrs ], last
 
 (** create closure *)
 [@@@warning "-8"]
-let known_apply m args full_args raw_fn =
+let known_apply m args full_args raw_fn entry_fns_arr =
   let args_cnt  = List.length args in 
   let raw_arity = List.length full_args in
 
@@ -700,6 +712,7 @@ let known_apply m args full_args raw_fn =
 
     let m, instrs1 = set_fields m args_ptr_cast (List.range 0 args_cnt) args in 
     let m, tmp = M.tmp m in
+    let m, fn_ptr = M.tmp m in
       (* gep m closure_ptr [3; 2; 4] in *)
 
     let else_instrs = else_instrs @ instrs1 @
@@ -708,8 +721,13 @@ let known_apply m args full_args raw_fn =
       ; tmp <-- gep closure_ptr [0; 2] 
       ; store (i8 (raw_arity - args_cnt)) tmp |> snd 
       ; tmp <-- gep closure_ptr [0; 4] 
-      ; store (size_of_args args |> i32) 
-              tmp |> snd
+      ; store (size_of_args args |> i32) tmp |> snd
+      
+      (*  *)
+      ; tmp    <-- gep entry_fns_arr [args_cnt]
+      ; fn_ptr <-- gep closure_ptr [0; 0]
+      ; store tmp fn_ptr |> snd
+
       ; closure_ptr <-- load closure_ptr
       ] in
     m, else_instrs, closure_ptr

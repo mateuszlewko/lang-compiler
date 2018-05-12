@@ -61,7 +61,7 @@ Codegen:
             ❑ call value apply
         ❑ function generation 
             ✔ add global array of function pointers @done(18-05-12 18:52)
-            ❑ move array pointer on argument apply
+            ✔ move array pointer on argument apply @done(18-05-12 22:05)
             ❑ returning closure
             ❑ returning value
 
