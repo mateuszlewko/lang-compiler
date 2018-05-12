@@ -339,12 +339,12 @@ let define_value_entry m args name ret_type =
   let def = define fn (args @ [data_ptr])
   in m, { definition = def; data_ptr; args; fn }
 
-let array_of_fns m name fns = 
+let array_of_fns m name raw_fn fns = 
   let ptr_t   = T.ptr (T.fn T.void []) in 
-  let fns     = List.map fns (fun f -> !% (bitcast f ptr_t)) in
+  let fns     = raw_fn :: List.rev fns 
+                |> List.map ~f:(fun f -> !% (bitcast f ptr_t)) in
   let fns_arr = T.array (List.length fns) ptr_t, Ast.VALUE_Array fns in 
   M.global_val m ~const:true fns_arr name
-
 
 let entry_body_common m pref_args raw_fn data_ptr pass_args = 
   let data_t           = T.structure ~packed:true pref_args |> T.ptr in
@@ -386,15 +386,17 @@ let value_entry_fns m name ret_type args raw_fn =
     in
 
   let m, fns = fold_args 1 [] m in
-  array_of_fns m (name ^ "_entry_fns") fns |> fst
+  array_of_fns m (name ^ "_entry_fns") raw_fn fns |> fst
 
 type closure_entry_info = 
   { v   : value_entry_info
   (** function argument representing number of passed arguments  *)
   ; cnt : Ez.Value.t
   }
-let closure_t = T.structure ~packed:(true) [ T.ptr (T.fn T.void []); T.ptr T.i8; T.i8
-                                            ; T.i8; T.i32]
+
+let closure_t = T.structure ~packed:(true) 
+                  [ T.ptr (T.ptr (T.fn T.void [])); T.ptr T.i8; T.i8; T.i8
+                  ; T.i32 ]
 
 let define_closure_entry m args name =
   let m, fn, args, data_ptr = define_common m args name closure_t in
@@ -460,7 +462,8 @@ let closure_entry_body m arity pref_args raw_fn info =
     let (_, r_fn) = res_fn in 
     let res_fn    = T.fn T.void [] |> T.ptr, r_fn in  
     let arg_ts    = List.map args fst in 
-    [ res_fn  <-- bitcast res_fn (T.fn closure_t arg_ts |> T.ptr)
+    [ res_fn  <-- load res_fn 
+    ; res_fn  <-- bitcast res_fn (T.fn closure_t arg_ts |> T.ptr)
     ; ret_res <-- call res_fn args
     ; ret ret_res
     ] in
@@ -548,7 +551,7 @@ let closure_entry_fns m name full_args arity raw_fn =
     in
 
   let m, fns = fold_args 1 [] m in 
-  array_of_fns m (name ^ "_entry_fns") fns |> fst
+  array_of_fns m (name ^ "_entry_fns") raw_fn fns |> fst
 
 (** apply arguments to function which returns closure *)
 let value_apply m env closure_ptr ret_t args =  
@@ -556,12 +559,11 @@ let value_apply m env closure_ptr ret_t args =
                        ; cl_used_bytes ] = 
     struct_fields m closure_ptr [2; 3; 0; 1; 4] in
 
-  let m, then_b = M.local m T.label "then_b" in 
-  let m, else_b = M.local m T.label "else_b" in 
-  let m, last   = M.local m T.opaque "__tmp_last" in 
+  let m, then_b  = M.local m T.label "then_b" in 
+  let m, else_b  = M.local m T.label "else_b" in 
+  let m, last    = M.local m T.opaque "__tmp_last" in 
   let args_cnt_c = List.length args |> i8 in 
   
-
   let call_args   = cl_args::args_cnt_c::args in 
   let call_args_t = List.map call_args fst in 
 
@@ -571,14 +573,16 @@ let value_apply m env closure_ptr ret_t args =
     ] in
 
   let then_instrs = 
-    [ last <-- bitcast cl_fn (T.fn ret_t call_args_t)
+    [ last <-- load cl_fn
+    ; last <-- bitcast last (T.fn ret_t call_args_t)
     ; last <-- call last call_args 
     ] in
 
   let m, tmp = M.local m T.opaque "tmp_res" in 
 
   let else_instrs = 
-    [ last <-- bitcast cl_fn (T.fn closure_t call_args_t)
+    [ last <-- load cl_fn
+    ; last <-- bitcast last (T.fn closure_t call_args_t)
     ; tmp  <-- call last call_args] in
 
   let m, instrs, [tmp_fn; tmp_env] = struct_fields m tmp [0; 1] in
@@ -587,7 +591,8 @@ let value_apply m env closure_ptr ret_t args =
   let call_args_empty_t = List.map call_args fst in 
 
   let else_instrs = else_instrs @ instrs @ 
-    [ tmp_fn <-- bitcast tmp_fn (T.fn ret_t call_args_empty_t)
+    [ tmp_fn <-- load tmp_fn
+    ; tmp_fn <-- bitcast tmp_fn (T.fn ret_t call_args_empty_t)
     ; last   <-- call tmp_fn call_args_empty
     ] in
 
@@ -652,7 +657,8 @@ let closure_apply m closure_ptr args =
 
   (* else branch *)
   let else_instrs = 
-    [ cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
+    [ cl_fn <-- load cl_fn
+    ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
     ; last  <-- call cl_fn call_args
     (* ; ret last  *)
     ] in 
