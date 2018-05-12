@@ -298,6 +298,7 @@ type value_entry_info =
   { definition : Ez.Block.block list -> Ast.definition
   ; data_ptr   : Ez.Value.t 
   ; args       : Ez.Value.t list 
+  ; fn         : Ez.Value.t
   }
 
 let struct_fields m struct_ptr fields_idx = 
@@ -336,7 +337,14 @@ let define_value_entry m args name ret_type =
   let m, fn, args, data_ptr = define_common m args name ret_type in
  
   let def = define fn (args @ [data_ptr])
-  in m, { definition = def; data_ptr; args }
+  in m, { definition = def; data_ptr; args; fn }
+
+let array_of_fns m name fns = 
+  let ptr_t   = T.ptr (T.fn T.void []) in 
+  let fns     = List.map fns (fun f -> !% (bitcast f ptr_t)) in
+  let fns_arr = T.array (List.length fns) ptr_t, Ast.VALUE_Array fns in 
+  M.global_val m ~const:true fns_arr name
+
 
 let entry_body_common m pref_args raw_fn data_ptr pass_args = 
   let data_t           = T.structure ~packed:true pref_args |> T.ptr in
@@ -365,19 +373,20 @@ let value_entry_fns m name ret_type args raw_fn =
   let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in
   let args   = List.zip_exn arg_ts arg_names in  *)
 
-  let rec fold_args ix m =
+  let rec fold_args ix fns m =
     if ix > args_cnt
-    then m 
+    then m, fns 
     else begin 
       let pref_args, args = List.split_n args ix in 
       let name    = sprintf "lang.entry.value.%s-%d" name ix in
       let m, info = define_value_entry m args name ret_type in
       let m, def  = value_entry_body m (List.map pref_args fst) raw_fn info in 
-      M.definition m def |> fold_args (ix + 1) 
+      M.definition m def |> fold_args (ix + 1) (info.fn::fns)
     end
     in
 
-  fold_args 1 m
+  let m, fns = fold_args 1 [] m in
+  array_of_fns m (name ^ "_entry_fns") fns |> fst
 
 type closure_entry_info = 
   { v   : value_entry_info
@@ -393,7 +402,7 @@ let define_closure_entry m args name =
   let m, cnt = M.local m T.i8 "cnt" in 
   let def    = define fn (data_ptr::cnt::args) in 
   
-  m, { v = { definition = def; data_ptr; args } ; cnt }                  
+  m, { v = { definition = def; data_ptr; args; fn } ; cnt }                  
 
 let set_field m ptr ix value =
     let m, elem_ptr = M.local m (T.ptr T.opaque) "elem_ptr" in
@@ -460,7 +469,7 @@ let closure_entry_body m arity pref_args raw_fn info =
   let size_pref_sums = 
     List.map unused_args bs_size 
     |> List.fold ~init:([0], 0) ~f:(fun (sums, last) s -> let s = last + s
-                                                         in (s::sums, s))
+                                                          in (s::sums, s))
     |> fst |> List.rev in
 
   let m, size_pref_sums_g = 
@@ -523,33 +532,26 @@ let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
 let size_of_args args = sum_by args bs_size 
 
 let closure_entry_fns m name full_args arity raw_fn = 
-  (* let args_cnt = List.length full_args in  *)
-  (* let arg_names, arg_lang_ts = List.unzip full_args in *)
-  (* let arg_ts = List.map arg_lang_ts (annot_to_ho_type ~fn_ptr:true) in *)
   let args   = full_args in 
 
-  let rec fold_args ix m =
+  let rec fold_args ix fns m =
     if ix >= arity
-    then m 
+    then m, fns
     else begin 
       let pref_args, args = List.split_n args ix in 
       let name    = sprintf "lang.entry.closure.%s-%d" name ix in
       let m, info = define_closure_entry m args name in
       let m, def  = 
         closure_entry_body m arity (List.map pref_args fst) raw_fn info in 
-      M.definition m def |> fold_args (ix + 1) 
+      M.definition m def |> fold_args (ix + 1) (info.v.fn::fns)
     end
     in
 
-  fold_args 1 m
-  (* LLGate.ll_module_in env.llmod m.m_module |> ignore *)
+  let m, fns = fold_args 1 [] m in 
+  array_of_fns m (name ^ "_entry_fns") fns |> fst
 
 (** apply arguments to function which returns closure *)
 let value_apply m env closure_ptr ret_t args =  
-  (* let m,  = M.local m T.label "after_b" in  *)
-  (* let m, res_fn = M.local m (T.fn ret_t ) *)
-  (* let after_instrs =  *)
-
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
     struct_fields m closure_ptr [2; 3; 0; 1; 4] in

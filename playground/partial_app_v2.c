@@ -64,7 +64,7 @@ int pre_adder5(byte env_args, byte cnt, byte* data,
     }
 }
 
-void* arr[] = { &pre_adder5, &adder5 };
+static const void* arr[] = { &pre_adder5, &adder5 };
 
 
 // int pre_adder5(byte env_args, byte cnt, byte* data,
@@ -155,6 +155,8 @@ struct thunk get_adder() {
 
     return t;
 }
+
+int (*funcs[]) () = {get_adder, pre_wrapped_adder};
 
 int applyIIIII(struct thunk t /* int -> int -> int -> int -> int -> int */, 
                int a, int b, int c, int d, int e) /* -> int */ {
@@ -281,6 +283,10 @@ void test_new2() {
 }
 
 int main() {
+    void (*fn)() = funcs[1];
+    void (*fn2)() = arr[0];
+
+
     test_new();
     test_new2();
 
