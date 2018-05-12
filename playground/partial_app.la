@@ -1,16 +1,7 @@
 let Vadder5 a b c d e = a + b + c + d + e 
 
-(* let adder3 a b c : int -> int -> int = 
-    let fn d e = adder5 a b c d e
-    fn *)
-
-(* let apply4 (fn : int -> int -> int -> int -> int) : int -> int =
-    apply4 1 2 -3 4  *)
-
-(* open Prelude *)
-
 let Ctest1 a b c : int -> int -> int = 
     Vadder5 a b c 
 
 let main () =
-    0
+    (Ctest1 1 2 3) 10 10

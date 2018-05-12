@@ -592,7 +592,7 @@ let value_apply m env closure_ptr ret_t args =
     ; last <-- bitcast last (T.fn closure_t call_args_t)
     ; tmp  <-- call last call_args] in
 
-  let m, instrs, [tmp_fn; tmp_env] = struct_fields m tmp [0; 1] in
+  let m, instrs, [tmp_fn; tmp_env] = struct_val_fields m tmp [0; 1] in
 
   let call_args_empty   = [tmp_env; i8 0] in 
   let call_args_empty_t = List.map call_args fst in 
@@ -609,7 +609,7 @@ let value_apply m env closure_ptr ret_t args =
 let closure_apply m closure_ptr args = 
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
-    struct_fields m closure_ptr [2; 3; 0; 1; 4] in
+    struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
 
   let m, x1     = M.local m T.i8 "cmp" in 
   let m, then_b = M.local m T.label "then_b" in 
@@ -628,7 +628,7 @@ let closure_apply m closure_ptr args =
   let m, heap_bytes   = M.local m (T.ptr T.i8) "bytes_ptr" in
   let m, cl_args_ptr  = M.local m (T.ptr T.i8) "args_ptr" in 
   let m, last         = M.local m T.opaque "__any_last" in 
-  let data_t = T.structure ~packed:true (List.map args fst) in
+  let data_t = T.structure ~packed:true (List.map args fst) |> T.ptr in
   let args_size = size_of_args args |> i8 in 
 
   let then_instrs = 
@@ -638,9 +638,10 @@ let closure_apply m closure_ptr args =
     ; heap_bytes   <-- malloc_raw total_bytes
     ; store heap_bytes res_args_ptr |> snd
     ; memcpy res_args_ptr cl_args_ptr cl_used_bytes |> snd
-    ; last <-- ptr2i res_args_ptr T.i8
-    ; last <-- add last cl_used_bytes
-    ; last <-- bitcast last data_t
+    ; last         <-- get_elem_ptr_raw res_args_ptr [cl_used_bytes] 
+    (* ; last <-- ptr2i res_args_ptr T.i8 *)
+    (* ; last <-- add last cl_used_bytes *)
+    ; last <-- bitcast last data_t 
     ] in 
 
   let cnt               = List.length args in
@@ -675,7 +676,7 @@ let closure_apply m closure_ptr args =
     ; last  <-- call cl_fn call_args
     ] in 
 
-  entry_instrs, [ block then_b then_instrs; block else_b else_instrs ], last
+  m, entry_instrs, [ block then_b then_instrs; block else_b else_instrs ], last
 
 (** create closure *)
 [@@@warning "-8"]

@@ -117,6 +117,7 @@ module Codegen = struct
           let ret = List.hd_exn ret |> LT.to_ollvm in 
           Letexp.value_entry_fns env.m name ret full_args fn in 
 
+      let env = { env with m } in
       let body_env : Env.t = 
         (if is_rec then Env.add env name (Fun ((fn, fn_t), fns_arr)) else env)
         |> fun env -> List.fold2_exn args fn_args_named ~init:env 
@@ -134,16 +135,17 @@ module Codegen = struct
 
       printf "add %s to env.m\n" name;
       
-      let env = Env.add env name (Fun ((fn, fn_t), fns_arr)) in { env with m }
+      let env = Env.add env name (Fun ((fn, fn_t), fns_arr)) in env
     | other -> failwith "TODO let-value"
 
-  let gen_apply env expr callee args t = 
+  let gen_apply (env : Env.t) expr callee args app_t = 
+    let args = List.map args (expr env %> snd3) in
+
     match callee with 
-    | (TA.Var name), t -> 
+    | TA.Var name, t -> 
       begin 
       match Env.find env name with
       | Fun ((fn, fn_t), fns_arr) -> 
-        let args = List.map args (expr env %> snd3) in
         let fn_arg_ts = match fn_t with 
                         | Fun ts -> List.take ts (List.length ts - 1)   
                                     |> List.map ~f:LT.to_ollvm 
@@ -152,9 +154,17 @@ module Codegen = struct
         let m, instrs, res = 
           Letexp.known_apply env.m args fn_arg_ts fn fns_arr in
         List.map instrs (fun x -> Instr x), res, { env with m }
-      | Val (v , t   ) -> failwith "unkown apply 1"
+      | Val (v , t   ) -> failwith "unknown apply 1"
       end
-    | v -> let iss, callee, _ = expr env v in failwith "unkown apply 2"
+    | v -> 
+      let iss, callee, _ = expr env v in 
+      match app_t with 
+      | LT.Fun app_ts -> 
+        let m, app_iss, blocks, res = Letexp.closure_apply env.m callee args in 
+        let app_iss = List.map app_iss (fun x -> Instr x) in 
+        let blocks  = List.map blocks (fun x -> Block x) in
+        iss @ app_iss @ blocks, res, { env with m }
+      | app_t         -> failwith "unknown apply 2"
 
   let rec gen_expr env = 
     function 
@@ -177,8 +187,10 @@ module Codegen = struct
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
     let env = TA.of_tops top_lvl_exprs 
-              |> List.fold ~init:Env.empty ~f:gen_top in 
-              
+              |> List.fold ~init:Env.empty ~f:gen_top in  
+
+    (* printf "module: %s" (Ast.show_modul env.m.m_module); *)
+    
     let llenv = LLGate.ll_module env.m.m_module in 
     llenv.m
 
