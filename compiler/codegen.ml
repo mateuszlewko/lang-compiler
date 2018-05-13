@@ -26,10 +26,46 @@ module Codegen = struct
     ; t     : LT.t
     } [@@deriving fields] *)
 
-  type result_type = Instr of Ast.instr | Block of Ez.Block.block
+  type block_type = 
+    | Simple of Ez.Block.block 
+    | Cont   of (Ez.Value.t -> Ez.Block.block)
+
+  type result_type = 
+    | Instr     of Ast.instr 
+    | Block     of block_type
 
   let result_to_blocks m res = 
     let rec merge m blocks = 
+      function 
+      | []    , [] -> m, blocks 
+      | instrs, [] -> 
+        let m, b = M.local m T.label "instrs" in 
+        m, (List.rev instrs |> block b |> Simple)::blocks 
+      | instrs, (Instr i)::xs -> merge m blocks (i::instrs, xs)
+      | []    , (Block b)::xs -> merge m (b::blocks) ([], xs)
+      | instrs, (Block b2)::xs -> 
+        let m, b1 = M.local m T.label "instrs" in 
+        merge m (b2::(List.rev instrs |> block b1 |> Simple)::blocks) ([], xs)
+      in
+
+    let rec apply_conts m = 
+      function 
+      | blocks           , []                  -> m, blocks
+      | last::_ as blocks, (Cont c)::xs        ->
+        let b = c (label last) in 
+        apply_conts m (b :: blocks, xs) 
+      | []               , ((Cont _)::_ as xs) -> 
+        let m, last = M.local m T.label "last_b" in 
+        let last    = block last [ ret_void ] in 
+        apply_conts m ([last], xs) 
+      | blocks           , (Simple b)::xs      ->
+        apply_conts m (b::blocks, xs)
+      in
+
+    let m, blocks = merge m [] ([], res) in 
+    apply_conts m ([], blocks)
+
+    (* let rec merge m blocks = 
       function 
       | []    , [] -> m, List.rev blocks 
       | instrs, [] -> 
@@ -37,12 +73,19 @@ module Codegen = struct
         m, (List.rev instrs |> block b)::blocks |> List.rev
       | instrs, (Instr i)::xs -> merge m blocks (i::instrs, xs)
       | []    , (Block b)::xs -> merge m (b::blocks) ([], xs)
+      | []    , [BlockCont cont] -> 
+        let m, last_b = M.local m T.label "last_b" in 
+        let b = cont last_b in 
+        let last_b = block last_b [ret_void] in
+        m, List.rev (b::last_b::blocks)
+      | []    , (BlockCont cont)::b2::xs -> 
+        
       | instrs, (Block b2)::xs -> 
         let m, b1 = M.local m T.label "instrs" in 
         merge m (b2::(List.rev instrs |> block b1)::blocks) ([], xs)
-      in 
+      in  *)
 
-    merge m [] ([], res) 
+    
   
   let gen_literal env expr = 
     function 
@@ -167,7 +210,8 @@ module Codegen = struct
 
         let sink_b  = block sink_b [res <-- phi_i] in
         let app_iss = List.map app_iss (fun x -> Instr x) in 
-        let blocks  = List.map (blocks @ [sink_b]) (fun x -> Block x) in
+        let blocks  = 
+          List.map (blocks @ [sink_b]) (fun x -> Block (Simple x)) in
         
         iss @ app_iss @ blocks, res, { env with m }
       | app_t         -> failwith "unknown apply 2"
