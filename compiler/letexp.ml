@@ -648,7 +648,6 @@ let closure_apply m closure_ptr args sink_block =
     (* ; last <-- add last cl_used_bytes *)
     ; last <-- bitcast last data_t 
     ; then_res <-- load res
-    ; br1 sink_block
     ] in 
 
   let cnt               = List.length args in
@@ -680,8 +679,11 @@ let closure_apply m closure_ptr args sink_block =
   (* else branch *)
   let else_instrs = 
     [ cl_fn <-- load cl_fn
-    ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
+    ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)
+    ; cl_args_ptr <-- load cl_args_ptr
+    (* ; cl_fn <-- load cl_fn *)
     ; res   <-- call cl_fn call_args
+    ; br1 sink_block
     ] in 
   (* TODO: add: br to final block and phi *)
 

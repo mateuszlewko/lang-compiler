@@ -4,4 +4,4 @@ let Ctest1 a b c : int -> int -> int =
     Vadder5 a b c 
 
 let main () =
-    (Ctest1 1 2 3) 10 10
+    (Ctest1 1 2 3) 10 11

@@ -44,10 +44,16 @@ let apply fn_t arg_ts =
   match fn_t, arg_ts with 
   | _     , []     -> fn_t 
   | Fun ts, arg_ts -> let cnt = List.length arg_ts in 
-                      let before, after = List.split_n arg_ts cnt in 
+                      let before, after = List.split_n ts cnt in 
                       begin 
                       match List.exists2 before arg_ts (<>) with 
-                      | Ok false        -> Fun after
+                      | Ok false        -> 
+                        begin 
+                        match after with 
+                        | []  -> raise WrongNumberOfApplyArguments
+                        | [t] -> t 
+                        | ts  -> Fun ts
+                        end
                       | Unequal_lengths -> raise WrongNumberOfApplyArguments
                       | Ok true         -> raise WrongTypeOfApplyArgument
                       end

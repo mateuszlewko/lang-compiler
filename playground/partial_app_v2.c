@@ -285,6 +285,7 @@ void test_new2() {
 int main() {
     void (*fn)() = funcs[1];
     void (*fn2)() = arr[0];
+    fn2(2);
 
 
     test_new();
