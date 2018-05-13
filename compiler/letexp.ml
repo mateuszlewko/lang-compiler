@@ -606,17 +606,20 @@ let value_apply m env closure_ptr ret_t args =
   entry_instrs, [block then_b then_instrs; block else_b else_instrs], last
 
 (** apply arguments to function which returns value *)
-let closure_apply m closure_ptr args = 
+let closure_apply m closure_ptr args sink_block = 
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
     struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
+
+  let cl_left_args = T.i8, snd cl_left_args in
+  let cl_used_bytes = T.i32, snd cl_used_bytes in
 
   let m, x1     = M.local m T.i8 "cmp" in 
   let m, then_b = M.local m T.label "then_b" in 
   let m, else_b = M.local m T.label "else_b" in 
   
   let entry_instrs = entry_instrs @  
-    [ x1 <-- sgt cl_left_args (List.length args |> i8)
+    [ x1 <-- sgt cl_left_args (List.length args |> i32)
     ; br x1 then_b else_b
     ] in 
 
@@ -628,6 +631,8 @@ let closure_apply m closure_ptr args =
   let m, heap_bytes   = M.local m (T.ptr T.i8) "bytes_ptr" in
   let m, cl_args_ptr  = M.local m (T.ptr T.i8) "args_ptr" in 
   let m, last         = M.local m T.opaque "__any_last" in 
+  let m, then_res     = M.local m closure_t "then_res" in
+  let m, else_res     = M.local m closure_t "then_res" in
   let data_t = T.structure ~packed:true (List.map args fst) |> T.ptr in
   let args_size = size_of_args args |> i8 in 
 
@@ -642,6 +647,8 @@ let closure_apply m closure_ptr args =
     (* ; last <-- ptr2i res_args_ptr T.i8 *)
     (* ; last <-- add last cl_used_bytes *)
     ; last <-- bitcast last data_t 
+    ; then_res <-- load res
+    ; br1 sink_block
     ] in 
 
   let cnt               = List.length args in
@@ -663,7 +670,8 @@ let closure_apply m closure_ptr args =
     ; used_bytes_ptr <-- struct_gep res 4 
     ; last           <-- add cl_used_bytes args_size 
     ; store last used_bytes_ptr |> snd
-    ; last           <-- load res
+    ; else_res       <-- load res
+    ; br1 sink_block
     ] in
 
   let call_args   = cl_args_ptr::(i8 cnt)::args in 
@@ -673,10 +681,12 @@ let closure_apply m closure_ptr args =
   let else_instrs = 
     [ cl_fn <-- load cl_fn
     ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t)
-    ; last  <-- call cl_fn call_args
+    ; res   <-- call cl_fn call_args
     ] in 
+  (* TODO: add: br to final block and phi *)
 
-  m, entry_instrs, [ block then_b then_instrs; block else_b else_instrs ], last
+  let blocks = [ block then_b then_instrs; block else_b else_instrs ] in
+  m, entry_instrs, blocks, phi [then_res, then_b; else_res, else_b]
 
 (** create closure *)
 [@@@warning "-8"]
@@ -726,6 +736,7 @@ let known_apply m args full_args raw_fn entry_fns_arr =
       
       (*  *)
       ; tmp    <-- gep entry_fns_arr [args_cnt]
+      ; tmp    <-- bitcast tmp (T.ptr (T.ptr (T.fn T.void [])))
       ; fn_ptr <-- gep closure_ptr [0; 0]
       ; store tmp fn_ptr |> snd
 

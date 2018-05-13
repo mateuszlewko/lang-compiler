@@ -160,9 +160,15 @@ module Codegen = struct
       let iss, callee, _ = expr env v in 
       match app_t with 
       | LT.Fun app_ts -> 
-        let m, app_iss, blocks, res = Letexp.closure_apply env.m callee args in 
+        let m, sink_b = M.local env.m T.label "sink_b" in 
+        let m, res    = M.tmp m in 
+        let m, app_iss, blocks, phi_i = 
+          Letexp.closure_apply env.m callee args sink_b in 
+
+        let sink_b  = block sink_b [res <-- phi_i] in
         let app_iss = List.map app_iss (fun x -> Instr x) in 
-        let blocks  = List.map blocks (fun x -> Block x) in
+        let blocks  = List.map (blocks @ [sink_b]) (fun x -> Block x) in
+        
         iss @ app_iss @ blocks, res, { env with m }
       | app_t         -> failwith "unknown apply 2"
 
