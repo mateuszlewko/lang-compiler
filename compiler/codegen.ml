@@ -161,8 +161,13 @@ module Codegen = struct
           Letexp.value_entry_fns env.m name ret full_args fn in 
 
       let env = { env with m } in
+      let add_this_fn env = 
+        Env.add env name (Fun { fn    = (fn, fn_t)
+                              ; arr   = fns_arr
+                              ; arity = args_cnt }) in
+
       let body_env : Env.t = 
-        (if is_rec then Env.add env name (Fun ((fn, fn_t), fns_arr)) else env)
+        (if is_rec then add_this_fn env else env)
         |> fun env -> List.fold2_exn args fn_args_named ~init:env 
                            ~f:(fun env v (name, t) -> 
                                   Env.add env name (Val (v, t))) in 
@@ -176,9 +181,8 @@ module Codegen = struct
       let df        = define fn args blocks in
       let env = { env with m = M.definition m df } in 
 
-      printf "add %s to env.m\n" name;
-      
-      let env = Env.add env name (Fun ((fn, fn_t), fns_arr)) in env
+      (* printf "add %s to env.m\n" name; *)
+      add_this_fn env
     | other -> failwith "TODO let-value"
 
   let gen_apply (env : Env.t) expr callee args app_t = 
@@ -188,36 +192,38 @@ module Codegen = struct
     | TA.Var name, t -> 
       begin 
       match Env.find env name with
-      | Fun ((fn, fn_t), fns_arr) -> 
+      | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
         let fn_arg_ts = match fn_t with 
                         | Fun ts -> List.take ts (List.length ts - 1)   
                                     |> List.map ~f:LT.to_ollvm 
                         | _      -> [] in
 
         let m, instrs, res = 
-          Letexp.known_apply env.m args fn_arg_ts fn fns_arr in
+          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
         List.map instrs (fun x -> Instr x), res, { env with m }
       | Val (v , t   ) -> failwith "unknown apply 1"
       end
     | v -> 
       let iss, callee, _ = expr env v in 
-      printf "app_t : %s\n" (LT.show_lang_type app_t);
+      (* printf "app_t : %s\n" (LT.show_lang_type app_t); *)
+
+      let m, sink_b = M.local env.m T.label "sink_b" in 
+      let m, res    = M.tmp m in 
+      let m, app_iss, blocks, phi_i = 
+        match app_t with 
+        (* application returns closure (function) *)
+        | LT.Fun app_ts -> Letexp.closure_apply env.m callee args sink_b 
+        (* application returns value *)
+        | app_t         -> 
+          Letexp.value_apply env.m callee (LT.to_ollvm app_t) args sink_b in 
+
+      let sink_b  = (fun label -> block sink_b [res <-- phi_i; br1 label])
+                    |> Cont |> Block in
+      let app_iss = List.map app_iss (fun x -> Instr x) in 
+      let blocks  = List.map blocks (fun x -> Block (Simple x)) @ [sink_b] in
       
-      match app_t with 
-      | LT.Fun app_ts -> 
-        let m, sink_b = M.local env.m T.label "sink_b" in 
-        let m, res    = M.tmp m in 
-        let m, app_iss, blocks, phi_i = 
-          Letexp.closure_apply env.m callee args sink_b in 
-
-        let sink_b  = (fun label -> block sink_b [res <-- phi_i; br1 label])
-                      |> Cont |> Block in
-        let app_iss = List.map app_iss (fun x -> Instr x) in 
-        let blocks  = List.map blocks (fun x -> Block (Simple x)) @ [sink_b] in
-        
-        iss @ app_iss @ blocks, res, { env with m }
-      | app_t         -> failwith "unknown apply 2"
-
+      iss @ app_iss @ blocks, res, { env with m }
+      
   let rec gen_expr env = 
     function 
     | TA.Var v, _               -> [], Env.find_val env v, env

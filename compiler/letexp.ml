@@ -344,7 +344,7 @@ let array_of_fns m name raw_fn fns =
   let fns     = raw_fn :: List.rev fns 
                 |> List.map ~f:(fun f -> !% (bitcast f ptr_t)) in
   let fns_arr = T.array (List.length fns) ptr_t, Ast.VALUE_Array fns in 
-  M.global_val m ~const:true fns_arr name
+  M.global_val m fns_arr name
 
 let entry_body_common m pref_args raw_fn data_ptr pass_args = 
   let data_t           = T.structure ~packed:true pref_args |> T.ptr in
@@ -561,17 +561,22 @@ let closure_entry_fns m name full_args arity raw_fn =
   array_of_fns m (name ^ "_entry_fns") raw_fn fns
 
 (** apply arguments to function which returns closure *)
-let value_apply m env closure_ptr ret_t args =  
+let value_apply m closure_ptr ret_t args sink_b =  
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
-    struct_fields m closure_ptr [2; 3; 0; 1; 4] in
+    struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
+  
+  (* set correct types (currently type of struct field is opaque) *)
+  let cl_args      = T.ptr T.i8, snd cl_args in
+  let cl_left_args = T.i8, snd cl_left_args in 
 
   let m, then_b  = M.local m T.label "then_b" in 
   let m, else_b  = M.local m T.label "else_b" in 
   let m, last    = M.local m T.opaque "__tmp_last" in 
-  let args_cnt_c = List.length args |> i8 in 
-  
-  let call_args   = cl_args::args_cnt_c::args in 
+  let m, then_res = M.local m T.opaque "then_res" in 
+  let m, else_res = M.local m T.opaque "else_res" in 
+  let args_cnt_c  = List.length args |> i8 in 
+  let call_args   = args @ [cl_args] in 
   let call_args_t = List.map call_args fst in 
 
   let entry_instrs = entry_instrs @ 
@@ -580,30 +585,38 @@ let value_apply m env closure_ptr ret_t args =
     ] in
 
   let then_instrs = 
-    [ last <-- load cl_fn
-    ; last <-- bitcast last (T.fn ret_t call_args_t)
-    ; last <-- call last call_args 
+    [ 
+      (* last     <-- cl_fn *)
+      last     <-- load cl_fn
+    ; last     <-- bitcast last (T.fn ret_t call_args_t |> T.ptr)
+    ; then_res <-- call last call_args 
+    ; br1 sink_b
     ] in
 
   let m, tmp = M.local m T.opaque "tmp_res" in 
 
   let else_instrs = 
-    [ last <-- load cl_fn
-    ; last <-- bitcast last (T.fn closure_t call_args_t)
+    [ 
+      (* last <-- load cl_fn *)
+      last <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)
+    (* ; last <-- load last *)
     ; tmp  <-- call last call_args] in
 
   let m, instrs, [tmp_fn; tmp_env] = struct_val_fields m tmp [0; 1] in
-
+  let tmp_env = T.ptr T.i8, snd tmp_env in 
+  
   let call_args_empty   = [tmp_env; i8 0] in 
-  let call_args_empty_t = List.map call_args fst in 
+  let call_args_empty_t = List.map call_args_empty fst in 
 
   let else_instrs = else_instrs @ instrs @ 
-    [ tmp_fn <-- load tmp_fn
-    ; tmp_fn <-- bitcast tmp_fn (T.fn ret_t call_args_empty_t)
-    ; last   <-- call tmp_fn call_args_empty
+    [ tmp_fn   <-- load tmp_fn
+    ; tmp_fn   <-- bitcast tmp_fn (T.fn ret_t call_args_empty_t |> T.ptr)
+    ; else_res <-- call tmp_fn call_args_empty
+    ; br1 sink_b
     ] in
 
-  entry_instrs, [block then_b then_instrs; block else_b else_instrs], last
+  let blocks = [block then_b then_instrs; block else_b else_instrs] in 
+  m, entry_instrs, blocks, phi [then_res, then_b; else_res, else_b]
 
 (** apply arguments to function which returns value *)
 let closure_apply m closure_ptr args sink_block = 
@@ -692,39 +705,48 @@ let closure_apply m closure_ptr args sink_block =
 
 (** create closure *)
 [@@@warning "-8"]
-let known_apply m args full_args raw_fn entry_fns_arr =
+let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
   let args_cnt  = List.length args in 
-  let raw_arity = List.length full_args in
+  (* let raw_arity = List.length full_args in *)
+
+  printf "args_cnt: %d, raw_arity: %d\n" args_cnt raw_arity;
 
   if args_cnt = raw_arity 
   then (* just call function in c-style *)
     let open High_ollvm.Ast in
     let m, call_res = M.local m T.opaque "call_res" in
-   
-    match fst raw_fn with 
+    let m, tmp = M.tmp m in 
+    (* match fst raw_fn with 
     | TYPE_Function (TYPE_Void, _) ->
       m, [call raw_fn args |> snd], call_res
-    | TYPE_Function (other, _) ->
-      m, [call_res <-- call raw_fn args], call_res
-    | other -> failwith "expected raw_fn to be function type"
+    | TYPE_Function (other, _) -> *)
+      let args_t   = List.map args fst in 
+      let new_fn_t = T.fn (fst raw_fn) args_t |> T.ptr in
+       
+      let instrs = [ tmp      <-- bitcast raw_fn new_fn_t
+                   ; call_res <-- call tmp args] in
+      m, instrs, call_res
+    (* | other -> 
+      sprintf "expected raw_fn to be function type, instead got: %s" 
+        (show_raw_type other) |> failwith *)
+
   else (* here args_cnt < raw_arity, so we need to create a closure  *)
     let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
     let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 
     let data_t           = T.structure ~packed:true full_args in
-    let m, args_ptr_cast = M.local m data_t "data_ptr_cast" in 
+    (* let m, args_ptr_cast = M.local m data_t "data_ptr_cast" in  *)
     let m, heap_bytes    = M.local m (T.ptr data_t) "malloc_data_ptr" in 
 
     let else_instrs = 
       [ closure_ptr   <-- alloca closure_t
       ; args_ptr      <-- struct_gep closure_ptr 1
-      ; args_ptr_cast <-- bitcast args_ptr (T.ptr data_t)
+      (* ; args_ptr_cast <-- bitcast args_ptr (T.ptr data_t) *)
       ; heap_bytes    <-- malloc data_t
-      ; heap_bytes    <-- bitcast heap_bytes (T.ptr T.i8)
-      ; store heap_bytes args_ptr |> snd
+      ; store !%(bitcast heap_bytes (T.ptr T.i8)) args_ptr |> snd
       ] in 
 
-    let m, instrs1 = set_fields m args_ptr_cast (List.range 0 args_cnt) args in 
-    let m, tmp = M.tmp m in
+    let m, instrs1 = set_fields m heap_bytes (List.range 0 args_cnt) args in 
+    let m, tmp    = M.tmp m in
     let m, fn_ptr = M.tmp m in
       (* gep m closure_ptr [3; 2; 4] in *)
 
@@ -737,7 +759,7 @@ let known_apply m args full_args raw_fn entry_fns_arr =
       ; store (size_of_args args |> i32) tmp |> snd
       
       (*  *)
-      ; tmp    <-- gep entry_fns_arr [args_cnt]
+      ; tmp    <-- gep entry_fns_arr [0; args_cnt]
       ; tmp    <-- bitcast tmp (T.ptr (T.ptr (T.fn T.void [])))
       ; fn_ptr <-- gep closure_ptr [0; 0]
       ; store tmp fn_ptr |> snd

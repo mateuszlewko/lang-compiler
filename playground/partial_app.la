@@ -1,7 +1,7 @@
-let Vadder5 a b c d e = a + b + c + d + e 
+let adder5 a b c d e = a + b + c + d + e 
 
-let Ctest1 a b c : int -> int -> int = 
-    Vadder5 a b c 
+let test1 a b c : int -> int -> int = 
+    adder5 a b c 
 
 let main () =
-    (Ctest1 1 2 3) 10 11
+    (test1 1 2 3) 10 11

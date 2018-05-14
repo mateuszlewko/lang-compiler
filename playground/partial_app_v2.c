@@ -31,6 +31,7 @@ let apply1
 */
 
 int adder5(int a, int b, int c, int d, int e) {
+    printf("%d %d %d %d %d\n", a, b, c, d, e);
     return a + b + c + d + e;
 } 
 
@@ -282,14 +283,19 @@ void test_new2() {
     printf("%d\n", res);
 }
 
+void (*fn[])() = {adder5, adder5};
+
 int main() {
-    void (*fn)() = funcs[1];
-    void (*fn2)() = arr[0];
-    fn2(2);
+    // void (*fn)() = funcs[1];
+    // void (*fn2)() = arr[0];
+    // fn2(2);
+    int a, b, c;
+    scanf ("%d %d %d", &a, &b, &c);
+    int (*f)(int, int, int) = (int (*)(int, int, int))fn[1];
+    printf("res is %d\n", f(a, b, c));
 
-
-    test_new();
-    test_new2();
+    // test_new();
+    // test_new2();
 
     // perf_test();
 }
