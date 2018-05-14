@@ -59,9 +59,12 @@ let apply fn_t arg_ts =
                       end
   | _     , _      -> raise ValueCannotBeApplied
 
-let to_ollvm = 
+let rec to_ollvm = 
   let module T = High_ollvm.Ez.Type in
   function
   | Int         -> T.i32 
   | Bool | Unit -> T.i1
-  | other       -> failwith "TODO to_ollvm"
+  | Fun _       -> Letexp.closure_t
+  | Float       -> T.float
+  | Array t     -> T.array 0 (to_ollvm t) |> T.ptr
+  | String      -> T.ptr T.i8

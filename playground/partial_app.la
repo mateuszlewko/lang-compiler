@@ -1,7 +1,11 @@
 let adder5 a b c d e = a + b + c + d + e 
 
 let test1 a b c : int -> int -> int = 
-    adder5 a b c 
+    adder5 a b c
 
-let main () =
-    (test1 1 2 3) 10 11
+let apply2 (f3 : int -> int -> int) = f3 10 11
+
+let main () = apply2 (test1 1 2 3)
+
+(* let main () =
+    (test1 100 2 100) 10 11 *)

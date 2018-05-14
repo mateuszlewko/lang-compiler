@@ -58,12 +58,12 @@ Codegen:
         ❑ application
             ✔ call known apply @done(18-05-11 19:17)
             ❑ call closure apply 
-            ❑ call value apply
+            ✔ call value apply @done(18-05-14 04:09)
         ❑ function generation 
             ✔ add global array of function pointers @done(18-05-12 18:52)
             ✔ move array pointer on argument apply @done(18-05-12 22:05)
-            ❑ returning closure
-            ❑ returning value
+            ✔ returning closure @done(18-05-14 04:09)
+            ✔ returning value @done(18-05-14 04:09)
 
     ❑ record types
     ❑ mutually recursive functions

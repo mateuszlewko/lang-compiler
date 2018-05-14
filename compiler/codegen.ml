@@ -187,26 +187,7 @@ module Codegen = struct
 
   let gen_apply (env : Env.t) expr callee args app_t = 
     let args = List.map args (expr env %> snd3) in
-
-    match callee with 
-    | TA.Var name, t -> 
-      begin 
-      match Env.find env name with
-      | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
-        let fn_arg_ts = match fn_t with 
-                        | Fun ts -> List.take ts (List.length ts - 1)   
-                                    |> List.map ~f:LT.to_ollvm 
-                        | _      -> [] in
-
-        let m, instrs, res = 
-          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-        List.map instrs (fun x -> Instr x), res, { env with m }
-      | Val (v , t   ) -> failwith "unknown apply 1"
-      end
-    | v -> 
-      let iss, callee, _ = expr env v in 
-      (* printf "app_t : %s\n" (LT.show_lang_type app_t); *)
-
+    let unknown_apply iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
       let m, res    = M.tmp m in 
       let m, app_iss, blocks, phi_i = 
@@ -222,8 +203,26 @@ module Codegen = struct
       let app_iss = List.map app_iss (fun x -> Instr x) in 
       let blocks  = List.map blocks (fun x -> Block (Simple x)) @ [sink_b] in
       
-      iss @ app_iss @ blocks, res, { env with m }
-      
+      iss @ app_iss @ blocks, res, { env with m } in
+
+    match callee with 
+    | TA.Var name, t -> begin 
+      match Env.find env name with
+      | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
+        let fn_arg_ts = match fn_t with 
+                        | Fun ts -> List.take ts (List.length ts - 1)   
+                                    |> List.map ~f:LT.to_ollvm 
+                        | _      -> [] in
+
+        let m, instrs, res = 
+          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
+        List.map instrs (fun x -> Instr x), res, { env with m }
+      | Val (v, _) -> unknown_apply [] v 
+      end
+    | v -> 
+      let iss, callee, _ = expr env v in 
+      unknown_apply iss callee 
+
   let rec gen_expr env = 
     function 
     | TA.Var v, _               -> [], Env.find_val env v, env
