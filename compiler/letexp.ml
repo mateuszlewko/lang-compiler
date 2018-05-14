@@ -714,8 +714,8 @@ let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
   if args_cnt = raw_arity 
   then (* just call function in c-style *)
     let open High_ollvm.Ast in
-    let m, call_res = M.local m T.opaque "call_res" in
-    let m, tmp = M.tmp m in 
+    let m, call_res = M.local m T.opaque "call_res__" in
+    let m, tmp = M.local m T.opaque "callee_tmp" in 
     (* match fst raw_fn with 
     | TYPE_Function (TYPE_Void, _) ->
       m, [call raw_fn args |> snd], call_res

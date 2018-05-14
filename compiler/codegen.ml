@@ -178,6 +178,11 @@ module Codegen = struct
       let ret_v     = List.last_exn values in 
       let ret_i     = Ez.Instr.ret ret_v |> Instr in
       let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
+      
+      printf "\n--- START OF FUN --- \n";
+      List.iter blocks (show_block %> printf "block: %s\n");
+      printf "--- END OF FUN --- \n";
+
       let df        = define fn args blocks in
       let env = { env with m = M.definition m df } in 
 
@@ -186,7 +191,12 @@ module Codegen = struct
     | other -> failwith "TODO let-value"
 
   let gen_apply (env : Env.t) expr callee args app_t = 
-    let args = List.map args (expr env %> snd3) in
+    let arg_instrs, args = 
+      List.fold_map args ~init:[] 
+        ~f:(fun all arg -> let iss, arg, _ = expr env arg in iss @ all, arg) in
+
+    (* List.iter args (Ez.Value.show %> printf "val: %s\n"); *)
+
     let unknown_apply iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
       let m, res    = M.tmp m in 
@@ -202,8 +212,9 @@ module Codegen = struct
                     |> Cont |> Block in
       let app_iss = List.map app_iss (fun x -> Instr x) in 
       let blocks  = List.map blocks (fun x -> Block (Simple x)) @ [sink_b] in
+      let instrs  = arg_instrs @ iss @ app_iss @ blocks in 
       
-      iss @ app_iss @ blocks, res, { env with m } in
+      instrs , res, { env with m } in
 
     match callee with 
     | TA.Var name, t -> begin 
@@ -216,7 +227,8 @@ module Codegen = struct
 
         let m, instrs, res = 
           Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-        List.map instrs (fun x -> Instr x), res, { env with m }
+        let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
+        instrs, res, { env with m }
       | Val (v, _) -> unknown_apply [] v 
       end
     | v -> 
