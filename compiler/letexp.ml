@@ -714,22 +714,13 @@ let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
   if args_cnt = raw_arity 
   then (* just call function in c-style *)
     let open High_ollvm.Ast in
-    let m, call_res = M.local m T.opaque "call_res__" in
-    let m, tmp = M.local m T.opaque "callee_tmp" in 
-    (* match fst raw_fn with 
-    | TYPE_Function (TYPE_Void, _) ->
-      m, [call raw_fn args |> snd], call_res
-    | TYPE_Function (other, _) -> *)
-      let args_t   = List.map args fst in 
-      let new_fn_t = T.fn (fst raw_fn) args_t |> T.ptr in
-       
-      let instrs = [ tmp      <-- bitcast raw_fn new_fn_t
-                   ; call_res <-- call tmp args] in
-      m, instrs, call_res
-    (* | other -> 
-      sprintf "expected raw_fn to be function type, instead got: %s" 
-        (show_raw_type other) |> failwith *)
+    let m, call_res = M.local m T.opaque "call_res" in
 
+    let new_fn_t = List.take full_args args_cnt |> T.fn (fst raw_fn) |> T.ptr in
+      
+    let instrs = [ call_res <-- call !%(bitcast raw_fn new_fn_t) args ] in
+    m, instrs, call_res
+  
   else (* here args_cnt < raw_arity, so we need to create a closure  *)
     let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
     let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 

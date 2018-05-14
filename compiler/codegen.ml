@@ -220,6 +220,8 @@ module Codegen = struct
     | TA.Var name, t -> begin 
       match Env.find env name with
       | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
+        printf "fn named: %s, has type: %s" name (LT.show fn_t); 
+        
         let fn_arg_ts = match fn_t with 
                         | Fun ts -> List.take ts (List.length ts - 1)   
                                     |> List.map ~f:LT.to_ollvm 
