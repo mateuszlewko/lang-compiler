@@ -6,9 +6,11 @@ let test1 a b c : int -> int -> int =
 let apply2 which (f3 : int -> int -> int) (g3 : int -> int -> int) = 
     if which = 1
     then (f3 1 2) + (f3 3 10) 
-    else (f3 1 2) + (f3 3 11)
+    elif which = 2 
+    then (f3 1 2) + (f3 3 11)
+    else (f3 1 2) + (f3 3 12)
 
-let main () = apply2 1 (test1 5 6 7) (test1 8 9 10)
+let main () = apply2 2 (test1 5 6 7) (test1 8 9 10)
 
 (* let main () =
     (test1 100 2 100) 10 11 *)

@@ -132,10 +132,12 @@ let rec expr env =
                |> List.map ~f:(expr env %> snd %> snd) in 
     env, (InfixOp (name, map lhs, map rhs), LT.apply op_t arg_ts)
   | IfExp (cond, then_, elifs, else_) ->
-    (* TODO: elifs *)
     let expr = expr env %> snd in 
     let then_body = expr then_ in 
-    let else_body = Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr in 
+    let else_body = 
+      match elifs with 
+      | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr 
+      | (cond, body)::es -> expr (IfExp (cond, body, es, else_)) in
    
     if snd then_body <> snd else_body 
     then raise IfBranchesTypeMismatched;

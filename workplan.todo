@@ -1,5 +1,5 @@
 // 1 weeks -> 2-3 weeks
-❑ 1. Finish partial application (currying, Push-enter)
+✔ 1. Finish partial application (currying, Push-enter) @done
 
 // 1-2 weeks
 ❑ 2a. Fix nested functions (lambda lifting + closure conversion)
