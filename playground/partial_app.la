@@ -3,9 +3,10 @@ let adder5 a b c d e = a + b + c + d + e
 let test1 a b c : int -> int -> int = 
     adder5 a b c
 
-let apply2 (f3 : int -> int -> int) = f3 4 50
+let apply2 (f3 : int -> int -> int) (g3 : int -> int -> int) = 
+    (f3 5 5) + (g3 15 500)
 
-let main () = apply2 (test1 10 2 3)
+let main () = apply2 (test1 10 10 30) (test1 10 10 5)
 
 (* let main () =
     (test1 100 2 100) 10 11 *)

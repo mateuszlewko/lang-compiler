@@ -100,10 +100,10 @@ module Codegen = struct
   let gen_op (env : Envn.t) expr lhs rhs op = 
     match lhs, rhs with
     | Some lhs, Some rhs ->
-      let res1, lhs, _ = expr env lhs in
-      let res2, rhs, _ = expr env rhs in
-      let res          = res1 @ res2 in 
-      let m, v         = M.tmp env.m in
+      let res1, lhs, env = expr env lhs in
+      let res2, rhs, env = expr env rhs in
+      let res   = res1 @ res2 in 
+      let m, v  = M.tmp env.m in
       
       (match op with
       (* operators returning int *)
@@ -155,10 +155,10 @@ module Codegen = struct
       let m, fns_arr = 
         if List.length ret > 1 || is_fun (List.hd ret)
         then (* returns closure *)
-          Letexp.closure_entry_fns env.m name full_args args_cnt fn 
+          Letexp.closure_entry_fns m name full_args args_cnt fn 
         else (* returns value *)
           let ret = List.hd_exn ret |> LT.to_ollvm in 
-          Letexp.value_entry_fns env.m name ret full_args fn in 
+          Letexp.value_entry_fns m name ret full_args fn in 
 
       let env = { env with m } in
       let add_this_fn env = 
@@ -172,7 +172,12 @@ module Codegen = struct
                            ~f:(fun env v (name, t) -> 
                                   Env.add env name (Val (v, t))) in 
     
-      let iss, values, _ = List.map body (expr body_env) |> List.unzip3 in 
+      let iss, values = 
+        List.folding_map body ~init:(body_env) 
+          ~f:(fun env e -> 
+                let iss, vals, env = expr env e in 
+                env, (iss, vals))
+        |> List.unzip  in 
     
       let iss       = List.concat iss in 
       let ret_v     = List.last_exn values in 
@@ -191,22 +196,24 @@ module Codegen = struct
     | other -> failwith "TODO let-value"
 
   let gen_apply (env : Env.t) expr callee args app_t = 
-    let arg_instrs, args = 
-      List.fold_map args ~init:[] 
-        ~f:(fun all arg -> let iss, arg, _ = expr env arg in iss @ all, arg) in
+    let (arg_instrs, env), args = 
+      List.fold_map args ~init:([], env) 
+        ~f:(fun (all, env) arg ->  
+              let iss, arg, env = expr env arg in
+              (iss @ all, env), arg) in
 
     (* List.iter args (Ez.Value.show %> printf "val: %s\n"); *)
 
-    let unknown_apply iss callee = 
+    let unknown_apply (env : Env.t) iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
       let m, res    = M.tmp m in 
       let m, app_iss, blocks, phi_i = 
         match app_t with 
         (* application returns closure (function) *)
-        | LT.Fun app_ts -> Letexp.closure_apply env.m callee args sink_b 
+        | LT.Fun app_ts -> Letexp.closure_apply m callee args sink_b 
         (* application returns value *)
         | app_t         -> 
-          Letexp.value_apply env.m callee (LT.to_ollvm app_t) args sink_b in 
+          Letexp.value_apply m callee (LT.to_ollvm app_t) args sink_b in 
 
       let sink_b  = (fun label -> block sink_b [res <-- phi_i; br1 label])
                     |> Cont |> Block in
@@ -221,7 +228,7 @@ module Codegen = struct
       match Env.find env name with
       | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
         printf "fn named: %s, has type: %s" name (LT.show fn_t); 
-        
+
         let fn_arg_ts = match fn_t with 
                         | Fun ts -> List.take ts (List.length ts - 1)   
                                     |> List.map ~f:LT.to_ollvm 
@@ -231,11 +238,11 @@ module Codegen = struct
           Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
         let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
         instrs, res, { env with m }
-      | Val (v, _) -> unknown_apply [] v 
+      | Val (v, _) -> unknown_apply env [] v 
       end
     | v -> 
-      let iss, callee, _ = expr env v in 
-      unknown_apply iss callee 
+      let iss, callee, env = expr env v in 
+      unknown_apply env iss callee 
 
   let rec gen_expr env = 
     function 
