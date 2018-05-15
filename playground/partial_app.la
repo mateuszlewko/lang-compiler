@@ -6,7 +6,7 @@ let test1 a b c : int -> int -> int =
 let apply2 which (f3 : int -> int -> int) (g3 : int -> int -> int) = 
     if which = 1
     then (f3 1 2) + (f3 3 10) 
-    else (f3 1 2) + (g3 3 9)
+    else (f3 1 2) + (f3 3 11)
 
 let main () = apply2 1 (test1 5 6 7) (test1 8 9 10)
 

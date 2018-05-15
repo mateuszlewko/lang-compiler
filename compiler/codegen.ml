@@ -34,6 +34,12 @@ module Codegen = struct
     | Instr     of Ast.instr 
     | Block     of block_type
 
+  let terminates = 
+    function 
+    | Ast.INSTR_Br _ | Ast.INSTR_Br_1 _ | Ast.INSTR_Ret _ 
+    | Ast.INSTR_Ret_void -> true 
+    | other              -> false
+
   let result_to_blocks m res = 
     let rec merge m blocks = 
       function 
@@ -43,9 +49,15 @@ module Codegen = struct
         m, (List.rev instrs |> block b |> Simple)::blocks 
       | instrs, (Instr i)::xs -> merge m blocks (i::instrs, xs)
       | []    , (Block b)::xs -> merge m (b::blocks) ([], xs)
-      | instrs, (Block b2)::xs -> 
+      | last_i::_ as instrs, (Block b2)::xs -> 
         let m, b1 = M.local m T.label "instrs" in 
-        merge m (b2::(List.rev instrs |> block b1 |> Simple)::blocks) ([], xs)
+        let b1 = 
+          if terminates last_i 
+          then List.rev instrs |> block b1 |> Simple
+          else (fun next -> List.rev (br1 next :: instrs) |> block b1)
+               |> Cont in
+          
+        merge m (b2::b1::blocks) ([], xs)
       in
 
     let rec apply_conts m = 
@@ -248,8 +260,9 @@ module Codegen = struct
     let post_else = [Simple (block post_else_b [br1 sink_b]) |> Block] in 
    
     let sink = 
-      [(fun next -> block sink_b [res <-- phi [ then_res, post_then_b
-                                             ; else_res, post_else_b ]]) 
+      [(fun next -> block sink_b [ res <-- phi [ then_res, post_then_b
+                                             ; else_res, post_else_b ]
+                                 ; br1 next ]) 
        |> Cont |> Block] in 
     
     let blocks = cond_iss @ 
@@ -259,13 +272,21 @@ module Codegen = struct
 
     blocks, res, { env with m}
 
+  let gen_exprs env expr es =
+    let (instrs, env), args = 
+      List.fold_map es ~init:([], env) 
+        ~f:(fun (all, env) arg ->  
+              let iss, arg, env = expr env arg in
+              (iss @ all, env), arg) in
+    instrs, List.last_exn args, env
+
   let rec gen_expr env = 
     function 
     | TA.Var v, _ -> [], Env.find_val env v, env
     | Lit    l, _ -> gen_literal env gen_expr l 
     | Let _   , _ -> failwith "nested let here TODO"
     | If ifexp, _ -> gen_if env gen_expr ifexp 
-    | Exprs es, _ -> failwith "TODO exprs"
+    | Exprs es, _ -> gen_exprs env gen_expr es 
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
 
