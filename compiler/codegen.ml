@@ -64,28 +64,6 @@ module Codegen = struct
 
     let m, blocks = merge m [] ([], res) in 
     apply_conts m ([], blocks)
-
-    (* let rec merge m blocks = 
-      function 
-      | []    , [] -> m, List.rev blocks 
-      | instrs, [] -> 
-        let m, b = M.local m T.label "instrs" in 
-        m, (List.rev instrs |> block b)::blocks |> List.rev
-      | instrs, (Instr i)::xs -> merge m blocks (i::instrs, xs)
-      | []    , (Block b)::xs -> merge m (b::blocks) ([], xs)
-      | []    , [BlockCont cont] -> 
-        let m, last_b = M.local m T.label "last_b" in 
-        let b = cont last_b in 
-        let last_b = block last_b [ret_void] in
-        m, List.rev (b::last_b::blocks)
-      | []    , (BlockCont cont)::b2::xs -> 
-        
-      | instrs, (Block b2)::xs -> 
-        let m, b1 = M.local m T.label "instrs" in 
-        merge m (b2::(List.rev instrs |> block b1)::blocks) ([], xs)
-      in  *)
-
-    
   
   let gen_literal env expr = 
     function 
@@ -244,15 +222,52 @@ module Codegen = struct
       let iss, callee, env = expr env v in 
       unknown_apply env iss callee 
 
+  let gen_if (env : Env.t) expr (ifexp : TA.ifexp) = 
+    let cond_iss, cond_res, env = expr env ifexp.cond in 
+    let then_iss, then_res, env = expr env ifexp.then_body in 
+    let else_iss, else_res, env = expr env ifexp.else_body in 
+
+    let mk_block m name = M.local m T.label name in 
+    let m = env.m in 
+
+    let m, sink_b      = mk_block m "sink_b" in 
+    let m, pre_then_b  = mk_block m "pre_then_b" in 
+    let m, post_then_b = mk_block m "post_then_b" in 
+    let m, pre_else_b  = mk_block m "pre_else_b" in 
+    let m, post_else_b = mk_block m "post_else_b" in 
+
+    let m, res = M.local m T.opaque "if-else_res" in 
+
+    let cond_iss = cond_iss @ [br cond_res pre_then_b pre_else_b |> Instr] in 
+
+    let of_label label = [Cont (fun next -> block label [br1 next]) |> Block] in 
+    let pre_then_iss   = of_label pre_then_b in 
+    let pre_else_iss   = of_label pre_else_b in 
+
+    let post_then = [Simple (block post_then_b [br1 sink_b]) |> Block] in 
+    let post_else = [Simple (block post_else_b [br1 sink_b]) |> Block] in 
+   
+    let sink = 
+      [(fun next -> block sink_b [res <-- phi [ then_res, post_then_b
+                                             ; else_res, post_else_b ]]) 
+       |> Cont |> Block] in 
+    
+    let blocks = cond_iss @ 
+                 pre_then_iss @ then_iss @ post_then @ 
+                 pre_else_iss @ else_iss @ post_else @ 
+                 sink in 
+
+    blocks, res, { env with m}
+
   let rec gen_expr env = 
     function 
-    | TA.Var v, _               -> [], Env.find_val env v, env
-    | Lit    l, _               -> gen_literal env gen_expr l 
-    | Let _   , _               -> failwith "nested let here TODO"
-    | App (callee, args), t     -> gen_apply env gen_expr callee args t 
+    | TA.Var v, _ -> [], Env.find_val env v, env
+    | Lit    l, _ -> gen_literal env gen_expr l 
+    | Let _   , _ -> failwith "nested let here TODO"
+    | If ifexp, _ -> gen_if env gen_expr ifexp 
+    | Exprs es, _ -> failwith "TODO exprs"
+    | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
-    | If    _, _                -> failwith "TODO if-expr"
-    | Exprs _, _                -> failwith "TODO exprs"
 
   (* let gen_module *)
 

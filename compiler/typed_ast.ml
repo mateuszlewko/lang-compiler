@@ -76,7 +76,8 @@ let find env name =
     try BatMap.find name env.opened
     with Not_found -> BatMap.find (name_in env name) env.prefixed
 
-exception ArrayElementsMustHaveSameType 
+exception ArrayElementsTypeMismatched
+exception IfBranchesTypeMismatched 
 
 let add_builtin_ops env = 
   let ii2i  = LT.Fun ([LT.Int; LT.Int; LT.Int]) in 
@@ -130,7 +131,16 @@ let rec expr env =
     let arg_ts = Option.to_list lhs @ Option.to_list rhs 
                |> List.map ~f:(expr env %> snd %> snd) in 
     env, (InfixOp (name, map lhs, map rhs), LT.apply op_t arg_ts)
-  | IfExp (cond, then_, elifs, else_) -> failwith "TODO IfExps"
+  | IfExp (cond, then_, elifs, else_) ->
+    let expr = expr env %> snd in 
+    let then_body = expr then_ in 
+    let else_body = Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr in 
+   
+    if snd then_body <> snd else_body 
+    then raise IfBranchesTypeMismatched;
+
+    env, (If { cond = expr cond; then_body; else_body }, snd then_body)
+    (* failwith "TODO IfExps" *)
 
 and lit env = 
   function
@@ -140,7 +150,7 @@ and lit env =
   | Array (x::xs)    ->
     let (x, t1), xs = expr env x |> snd, Core.List.map xs (expr env %> snd) in
     if List.exists xs (snd %> (<>) t1)
-    then raise ArrayElementsMustHaveSameType 
+    then raise ArrayElementsTypeMismatched 
     else Lit (Array ((x, t1)::xs)), LT.Array t1
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
