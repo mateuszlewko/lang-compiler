@@ -720,7 +720,7 @@ let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
       
     let instrs = [ call_res <-- call !%(bitcast raw_fn new_fn_t) args ] in
     m, instrs, call_res
-  
+    
   else (* here args_cnt < raw_arity, so we need to create a closure  *)
     let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
     let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 

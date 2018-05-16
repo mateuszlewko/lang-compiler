@@ -185,6 +185,8 @@ module Codegen = struct
       add_this_fn env
     | other -> failwith "TODO let-value"
 
+  let insert_type t (_, v) = t, v 
+
   let gen_apply (env : Env.t) expr callee args app_t = 
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
@@ -192,7 +194,8 @@ module Codegen = struct
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
 
-    (* List.iter args (Ez.Value.show %> printf "val: %s\n"); *)
+    List.iter args (Ez.Value.show %> printf "arg val: %s\n");
+    let typed = insert_type (LT.to_ollvm app_t) in 
 
     let unknown_apply (env : Env.t) iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
@@ -211,7 +214,7 @@ module Codegen = struct
       let blocks  = List.map blocks (fun x -> Block (Simple x)) @ [sink_b] in
       let instrs  = arg_instrs @ iss @ app_iss @ blocks in 
       
-      instrs , res, { env with m } in
+      instrs, typed res, { env with m } in
 
     match callee with 
     | TA.Var name, t -> begin 
@@ -227,7 +230,7 @@ module Codegen = struct
         let m, instrs, res = 
           Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
         let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
-        instrs, res, { env with m }
+        instrs, typed res, { env with m }
       | Val (v, _) -> unknown_apply env [] v 
       end
     | v -> 
