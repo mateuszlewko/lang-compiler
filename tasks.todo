@@ -50,16 +50,16 @@ Codegen:
     ✔ arithmetic operations (int) @high @done(18-01-14 23:24)
     ✔ improved error handling @medium @done(18-01-22 00:54)
 
-    ❑ partial application @high @today
+    ✔ partial application @high @today @done(18-05-15 23:50)
         ✔ pre-* function which returns closure @done(18-04-13 00:55)
         ✔ pre-* function which returns value @done(18-05-08 23:29)
         ✔ call-site @done(18-05-08 23:29)
         ✔ return PAPP @done(18-05-08 23:29)
-        ❑ application
+        ✔ application @done(18-05-15 23:50)
             ✔ call known apply @done(18-05-11 19:17)
-            ❑ call closure apply 
+            ✔ call closure apply @done(18-05-15 23:50)
             ✔ call value apply @done(18-05-14 04:09)
-        ❑ function generation 
+        ✔ function generation @done(18-05-15 23:50)
             ✔ add global array of function pointers @done(18-05-12 18:52)
             ✔ move array pointer on argument apply @done(18-05-12 22:05)
             ✔ returning closure @done(18-05-14 04:09)
