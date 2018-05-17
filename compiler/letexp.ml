@@ -600,8 +600,8 @@ let value_apply m closure_ptr ret_t args sink_b =
 
   let else_instrs = 
     [ 
-      (* last <-- load cl_fn *)
-      last <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)
+      last <-- load cl_fn
+    ; last <-- bitcast last (T.fn closure_t call_args_t |> T.ptr)
     (* ; last <-- load last *)
     ; tmp  <-- call last call_args] in
 
@@ -655,15 +655,15 @@ let closure_apply m closure_ptr args sink_block =
 
   let then_instrs = 
     [ res          <-- alloca closure_t 
+    ; store closure_ptr res |> snd
     ; res_args_ptr <-- struct_gep res 1 
     ; total_bytes  <-- add cl_used_bytes args_size
     ; heap_bytes   <-- malloc_raw total_bytes
     ; store heap_bytes res_args_ptr |> snd
     ; memcpy cl_args heap_bytes cl_used_bytes |> snd
-    ; last         <-- get_elem_ptr_raw res_args_ptr [cl_used_bytes] 
-    (* ; last <-- ptr2i res_args_ptr T.i8 *)
+    ; last         <-- get_elem_ptr_raw heap_bytes [cl_used_bytes] 
     (* ; last <-- add last cl_used_bytes *)
-    ; last <-- bitcast last data_t 
+    ; last         <-- bitcast last data_t 
     (* ; then_res <-- load res *)
     ] in 
 
@@ -694,7 +694,6 @@ let closure_apply m closure_ptr args sink_block =
   let call_args_t = List.map call_args fst in 
 
   (* else branch *)
-  (* FIXME: TODO: case when used_bytes is 0 *)
   let else_instrs = 
     [ cl_fn       <-- load cl_fn
     ; cl_fn       <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)

@@ -1,4 +1,4 @@
-let adder5 a b c d e = a + b + c + d + e 
+(* let adder5 a b c d e = a + b + c + d + e 
 
 let adder3 a b c : int -> int -> int = 
     adder5 a b c
@@ -15,20 +15,20 @@ let rec test (fn : unit -> int) cnt =
     then fn ()
     else 
         fn ()
-        test fn (cnt - 1)
+        test fn (cnt - 1) *)
 
 let adder5b a b c : int -> int -> int = 
-    let innerAdder d e = 
+    let innerAdder c d e = 
         a + b + c + d + e
 
-    innerAdder
+    innerAdder b
 
-let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000
+(* let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000  *)
 
-(* let main () =
-    let tmp x : int -> int -> int = 
-        adder5b x 2 3
-    (tmp 1) 4 5 *)
+let main () =
+    let tmp x y : int -> int -> int = 
+        adder5b x y 3
+    (tmp 1 4) 4 5
 
 (* let main () =
     (test1 100 2 100) 10 11 *)
