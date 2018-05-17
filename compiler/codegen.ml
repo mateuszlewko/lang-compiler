@@ -116,10 +116,10 @@ module Codegen = struct
     | _, _ ->
       failwith "Operator is missing operands"
   
-  let gen_let (env : Env.t) expr letexp ts = 
+  let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
     | LT.Fun ts as fn_t -> 
-      let { TA.args = ta_args; name; is_rec; body } = letexp in 
+      let { TA.args = ta_args; name; is_rec; body } = funexp in 
 
       let args_cnt = List.length ta_args in 
       let ret      = List.drop ts args_cnt in 
@@ -287,7 +287,7 @@ module Codegen = struct
     function 
     | TA.Var v, _ -> [], Env.find_val env v, env
     | Lit    l, _ -> gen_literal env gen_expr l 
-    | Let _   , _ -> failwith "nested let here TODO"
+    (* | Let _   , _ -> failwith "nested let here TODO" *)
     | If ifexp, _ -> gen_if env gen_expr ifexp 
     | Exprs es, _ -> gen_exprs env gen_expr es 
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
@@ -297,8 +297,8 @@ module Codegen = struct
 
   let gen_top env =
     function 
-    | TA.Expr (TA.Let letexp, ts) -> 
-      gen_let env gen_expr letexp ts 
+    | TA.Fun (funexp, ts) -> 
+      gen_let env gen_expr funexp ts 
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 
@@ -441,7 +441,7 @@ and gen_raw_if env cond then_exp else_exp =
 and gen_simple_if env cond then_exp else_exp =
   let _, _, _, res = gen_raw_if env cond then_exp else_exp in res
 
-and gen_letexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
+and gen_funexp env is_rec (name, ret_type_raw) args_raw fst_line body_lines =
   let args = Array.of_list args_raw in
   let is_val = Array.is_empty args in
   if is_rec && is_val
@@ -577,7 +577,7 @@ and gen_application env callee line_args rest_of_args =
 and gen_expr env =
   function
   | LetExp (is_rec, e1, e2, e3, e4) ->
-    gen_letexp env is_rec e1 e2 e3 e4
+    gen_funexp env is_rec e1 e2 e3 e4
   | LitExp lit -> gen_literal env lit, env
   | AppExp (callee, args, rest_of_args) ->
     gen_application env callee args rest_of_args, env

@@ -8,7 +8,7 @@ module A  = Lang_parsing.Ast
 type arg = string * LT.t
 [@@deriving show]
 
-type letexp = 
+type funexp = 
   { name   : string
   ; is_rec : bool 
   ; args   : arg list
@@ -29,7 +29,7 @@ and literal =
 and body_expr = 
   | Var     of string 
   | Lit     of literal
-  | Let     of letexp 
+  | Value   of string * expr_t
   | App     of expr_t * expr_t list 
   | InfixOp of string * expr_t option * expr_t option 
   | If      of ifexp 
@@ -41,26 +41,35 @@ and expr_t = body_expr * LT.t
 
 type top = 
   | Expr   of expr_t
+  | Fun    of funexp * LT.t
   | Extern of string * LT.t
   | Module of string * top list
   | Open   of string
   [@@deriving show]
 
-type bindings_map = (string, LT.t) BatMap.t
+type location = AtLevel of int | Global 
+type bound = LT.t * location 
+type bindings_map = (string, bound) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
-    prefixed : bindings_map
+    prefixed  : bindings_map
   (** symbols available without any prefix  *)
-  ; opened   : bindings_map
+  ; opened    : bindings_map
   (** current scope (module) prefix *)
-  ; prefix   : string
+  ; prefix    : string
+  ; free_vars : (int, string * LT.t) BatMultiMap.t
+  ; level     : int 
+  ; extra_fun : (funexp * LT.t) list 
   } 
 
 (** Creates top-level env *)
-let empty = { prefixed = BatMap.empty
-            ; opened   = BatMap.empty
-            ; prefix   = "" }
+let empty = { prefixed  = BatMap.empty
+            ; opened    = BatMap.empty
+            ; prefix    = "" 
+            ; free_vars = BatMultiMap.empty
+            ; level     = 0 
+            ; extra_fun = [] }
 
 (** Evaluates name in current scope *)
 let name_in env = (^) env.prefix
@@ -73,8 +82,8 @@ let add env name value =
              ; opened   = BatMap.add name value env.opened }
 
 let find env name =
-    try BatMap.find name env.opened
-    with Not_found -> BatMap.find (name_in env name) env.prefixed
+    try BatMap.find name env.opened 
+    with Not_found -> BatMap.find (name_in env name) env.prefixed 
 
 exception ArrayElementsTypeMismatched
 exception IfBranchesTypeMismatched 
@@ -88,12 +97,21 @@ let add_builtin_ops env =
   let b     = ["="; "<"; "<="; ">"; ">="; "<>"] |> map ii2b in
   let c     = ["&&"; "||"]                      |> map bb2b in
 
-  List.fold (a @ b @ c) ~init:env ~f:(fun env (n, t) -> add env n t) 
+  List.fold (a @ b @ c) ~init:env ~f:(fun env (n, t) -> add env n (t, Global)) 
  
 let rec expr env = 
   function 
-  | VarExp v -> env, (Var v, find env v)
-  | LitExp l -> env, lit env l 
+  | VarExp v -> 
+    let t, loc = find env v in
+    let var = Var v, t in 
+    begin 
+    match loc with 
+    | Global -> env, var
+    | AtLevel l when l = env.level -> env, var
+    | AtLevel l -> let free_vars = BatMultiMap.add l (v, t) env.free_vars in 
+                   { env with free_vars }, var
+    end
+  | LitExp l -> env, lit env l
   | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
     let args, arg_ts = List.unzip args in 
 
@@ -101,15 +119,39 @@ let rec expr env =
     let args   = List.zip_exn args arg_ts in 
     let ret_t  = LT.of_annotation ret_t in 
     let fn_t   = LT.merge arg_ts ret_t in 
-    let env    = let env = if is_rec then add env name fn_t else env in 
-                 List.fold args ~init:env ~f:(fun env (a, t) -> add env a t) in 
+    
+    let env = { env with level = env.level + 1 } in
+    let lvl = AtLevel env.level in 
+    let env = let env = if is_rec 
+                        then add env name (fn_t, Global) 
+                        else env in 
+              List.fold args ~init:env 
+                             ~f:(fun env (a, t) -> add env a (t, lvl)) in 
     
     let env, body = 
       let init = Option.value body ~default:[] in 
       Option.fold body1 ~init ~f:(flip List.cons)
       |> List.fold_map ~init:env ~f:expr in
 
-    add env name fn_t, (Let { name; is_rec; args; body }, fn_t)
+    let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
+                       |> List.map ~f:snd in 
+    let extra_arg_ts = List.map extra_args snd in
+ 
+    let global_fn_t = LT.merge extra_arg_ts fn_t in
+    let g_name      = name ^ ".lifted" in
+    let global_fn   = { name = g_name; is_rec; args; body }, global_fn_t in
+    let env         = { env with extra_fun = global_fn::env.extra_fun } in
+ 
+    let fn_with_env  = 
+      let args = List.map extra_args (fun (s, t) -> Var s, t) in
+      let app  = App ((Var g_name, global_fn_t), args) in 
+      Value (name, (app, fn_t)) in
+
+    let env = add env name (fn_t, lvl) in 
+    let env = { env with level = env.level - 1 } in
+
+    env, (fn_with_env, fn_t)
+
   | AppExp (callee, args1, args2) -> 
     let args = args1 @ (Option.value args2 ~default:[]) 
                |> List.map ~f:(expr env %> snd) in 
@@ -126,10 +168,10 @@ let rec expr env =
                    map env (x::acc) xs
     in map env [] es
   | InfixOp (name, lhs, rhs)          -> 
-    let op_t   = find env name in 
-    let map    = Option.map ~f:(expr env %> snd) in 
-    let arg_ts = Option.to_list lhs @ Option.to_list rhs 
-               |> List.map ~f:(expr env %> snd %> snd) in 
+    let op_t, loc = find env name in 
+    let map       = Option.map ~f:(expr env %> snd) in 
+    let arg_ts    = Option.to_list lhs @ Option.to_list rhs 
+                  |> List.map ~f:(expr env %> snd %> snd) in 
     env, (InfixOp (name, map lhs, map rhs), LT.apply op_t arg_ts)
   | IfExp (cond, then_, elifs, else_) ->
     let expr = expr env %> snd in 
@@ -161,9 +203,12 @@ and lit env =
   function 
   | A.Expr e          -> let env, e = expr env e in env, Expr e
   | Extern (name, ta) -> let t = LT.of_annotation (Some ta) in 
-                         add env name t, Extern (name, t)
-  | _                 -> failwith "TODO2" 
+                           add env name (t, Global), Extern (name, t)
+  | Module _          -> failwith "TODO: Module"
+  | Open _            -> failwith "TODO: Open"
+  | TypeDecl _        -> failwith "TODO: TypeDecl"
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 
   List.folding_map tops ~init:env ~f:top
+  @ (List.map env.extra_fun (fun (f, t) -> Fun (f, t)))
