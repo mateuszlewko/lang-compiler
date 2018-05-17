@@ -156,17 +156,19 @@ let rec expr env =
       let app  = App ((Var g_name, global_fn_t), args) in 
       Value (name, (app, fn_t)) in
 
-    let env       = add env name (fn_t, lvl) in 
+    (* remove vars defined in current scope *)
     let free_vars = BatMultiMap.remove_all env.level env.free_vars in 
     let env       = { env with level = env.level - 1; free_vars } in
+    (* added new binding to parent scope *)
+    let env       = add env name (fn_t, AtLevel env.level) in 
 
     env, (fn_with_env, fn_t)
 
   | AppExp (callee, args1, args2) -> 
-    let args = args1 @ (Option.value args2 ~default:[]) 
-               |> List.map ~f:(expr env %> snd) in 
+    let env, args   = args1 @ (Option.value args2 ~default:[]) 
+                      |> List.fold_map ~init:env ~f:expr in 
+    let env, callee = expr env callee in 
 
-    let callee = expr env callee |> snd in 
     env, (App (callee, args), LT.apply (snd callee) (List.map args snd))
   | Exprs es ->
     let rec map env acc = 
@@ -209,7 +211,7 @@ and lit env =
   | String s         -> Lit (String s), LT.String 
   | Bool b           -> Lit (Bool   b), LT.Bool  
   | Array (x::xs)    ->
-    (* TODO: add env passing here *)
+    (* FIXME: TODO: add env passing here *)
     let (x, t1), xs = expr env x |> snd, Core.List.map xs (expr env %> snd) in
     if List.exists xs (snd %> (<>) t1)
     then raise ArrayElementsTypeMismatched 

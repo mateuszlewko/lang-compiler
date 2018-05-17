@@ -88,12 +88,15 @@ Codegen:
     ❑ type char @medium
     // ❑ multi-file programs @low @optional
 
+Optimisations: @optional
+    ❑ Value expression instead of closure conversion and lifting when letexp is value
+    ❑ No closure conversion when no free variable
 
 Bugs:
-    ❑ fix nested let @critical 
-        ❑ closure conversion @today 
-        ❑ lambda lifting @today 
-        ❑ label / assign expression in typed ast @today 
+    ✔ fix nested let @critical @done(18-05-18 00:35)
+        ✔ closure conversion @today @done(18-05-18 00:35)
+        ✔ lambda lifting @today @done(18-05-18 00:35)
+        ✔ label / assign expression in typed ast @today @done(18-05-18 01:35)
     ✔ nested functions can't access values from outer scope (not global) @critical @done(18-01-26 22:35)
     ✔ let-value in another let expression body may not be correct @done(18-01-23 17:47)
     ✔ adding int constant to variable may not work @done(18-01-23 17:13)
