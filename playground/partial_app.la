@@ -19,14 +19,16 @@ let rec test (fn : unit -> int) cnt =
 
 let adder5b a b c : int -> int -> int = 
     let innerAdder d e = 
-        a + b + c + d + e 
+        a + b + c + d + e
 
     innerAdder
 
-(* let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 1000 *)
+let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000
 
-let main () =
-    (adder5b 1 2 10) 4 10
+(* let main () =
+    let tmp x : int -> int -> int = 
+        adder5b x 2 3
+    (tmp 1) 4 5 *)
 
 (* let main () =
     (test1 100 2 100) 10 11 *)

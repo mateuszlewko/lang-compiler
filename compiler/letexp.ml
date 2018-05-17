@@ -339,9 +339,9 @@ let define_value_entry m args name ret_type =
   let def = define fn (args @ [data_ptr])
   in m, { definition = def; data_ptr; args; fn }
 
-let array_of_fns m name raw_fn fns = 
+let array_of_fns m name fns = 
   let ptr_t   = T.ptr (T.fn T.void []) in 
-  let fns     = raw_fn :: List.rev fns 
+  let fns     = List.rev fns 
                 |> List.map ~f:(fun f -> !% (bitcast f ptr_t)) in
   let fns_arr = T.array (List.length fns) ptr_t, Ast.VALUE_Array fns in 
   M.global_val m fns_arr name
@@ -351,8 +351,11 @@ let entry_body_common m pref_args raw_fn data_ptr pass_args =
   let m, data_ptr_cast = M.local m data_t "data_ptr_cast" in 
   
   let data_i          = data_ptr_cast <-- bitcast data_ptr data_t in
-  let m, instrs, args = BatList.range 0 `To (List.length pref_args - 1)  
-                        |> struct_fields m data_ptr_cast in 
+  let m, instrs, args = 
+    let to_ = List.length pref_args - 1 in 
+    if to_ >= 0 
+    then BatList.range 0 `To to_ |> struct_fields m data_ptr_cast
+    else m, [], [] in 
 
   let m, res = M.local m T.opaque "ret__" in
   let args   = args @ pass_args in 
@@ -385,8 +388,8 @@ let value_entry_fns m name ret_type args raw_fn =
     end
     in
 
-  let m, fns = fold_args 1 [] m in
-  array_of_fns m (name ^ "_entry_fns") raw_fn fns
+  let m, fns = fold_args 0 [] m in
+  array_of_fns m (name ^ "_entry_fns") fns
 
 type closure_entry_info = 
   { v   : value_entry_info
@@ -545,7 +548,7 @@ let closure_entry_fns m name full_args arity raw_fn =
   let args   = full_args in 
 
   let rec fold_args ix fns m =
-    if ix >= arity
+    if ix > arity
     then m, fns
     else begin 
       let pref_args, args = List.split_n args ix in 
@@ -557,8 +560,8 @@ let closure_entry_fns m name full_args arity raw_fn =
     end
     in
 
-  let m, fns = fold_args 1 [] m in 
-  array_of_fns m (name ^ "_entry_fns") raw_fn fns
+  let m, fns = fold_args 0 [] m in 
+  array_of_fns m (name ^ "_entry_fns") fns
 
 (** apply arguments to function which returns closure *)
 let value_apply m closure_ptr ret_t args sink_b =  
@@ -624,8 +627,9 @@ let closure_apply m closure_ptr args sink_block =
                        ; cl_used_bytes ] = 
     struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
 
-  let cl_left_args = T.i8, snd cl_left_args in
+  let cl_left_args  = T.i8, snd cl_left_args in
   let cl_used_bytes = T.i32, snd cl_used_bytes in
+  let cl_args       = T.ptr T.i8, snd cl_args in 
 
   let m, x1     = M.local m T.i8 "cmp" in 
   let m, then_b = M.local m T.label "then_b" in 
@@ -645,7 +649,7 @@ let closure_apply m closure_ptr args sink_block =
   let m, cl_args_ptr  = M.local m (T.ptr T.i8) "args_ptr" in 
   let m, last         = M.local m T.opaque "__any_last" in 
   let m, then_res     = M.local m closure_t "then_res" in
-  let m, else_res     = M.local m closure_t "then_res" in
+  let m, else_res     = M.local m closure_t "else_res" in
   let data_t = T.structure ~packed:true (List.map args fst) |> T.ptr in
   let args_size = size_of_args args |> i8 in 
 
@@ -655,12 +659,12 @@ let closure_apply m closure_ptr args sink_block =
     ; total_bytes  <-- add cl_used_bytes args_size
     ; heap_bytes   <-- malloc_raw total_bytes
     ; store heap_bytes res_args_ptr |> snd
-    ; memcpy res_args_ptr cl_args_ptr cl_used_bytes |> snd
+    ; memcpy cl_args heap_bytes cl_used_bytes |> snd
     ; last         <-- get_elem_ptr_raw res_args_ptr [cl_used_bytes] 
     (* ; last <-- ptr2i res_args_ptr T.i8 *)
     (* ; last <-- add last cl_used_bytes *)
     ; last <-- bitcast last data_t 
-    ; then_res <-- load res
+    (* ; then_res <-- load res *)
     ] in 
 
   let cnt               = List.length args in
@@ -682,23 +686,23 @@ let closure_apply m closure_ptr args sink_block =
     ; used_bytes_ptr <-- struct_gep res 4 
     ; last           <-- add cl_used_bytes args_size 
     ; store last used_bytes_ptr |> snd
-    ; else_res       <-- load res
+    ; then_res       <-- load res
     ; br1 sink_block
     ] in
 
-  let call_args   = cl_args_ptr::(i8 cnt)::args in 
+  let call_args   = cl_args::(i8 cnt)::args in 
   let call_args_t = List.map call_args fst in 
 
   (* else branch *)
+  (* FIXME: TODO: case when used_bytes is 0 *)
   let else_instrs = 
-    [ cl_fn <-- load cl_fn
-    ; cl_fn <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)
-    ; cl_args_ptr <-- load cl_args_ptr
+    [ cl_fn       <-- load cl_fn
+    ; cl_fn       <-- bitcast cl_fn (T.fn closure_t call_args_t |> T.ptr)
+    (* ; cl_args_ptr <-- cl_args *)
     (* ; cl_fn <-- load cl_fn *)
-    ; res   <-- call cl_fn call_args
+    ; else_res    <-- call cl_fn call_args
     ; br1 sink_block
     ] in 
-  (* TODO: add: br to final block and phi *)
 
   let blocks = [ block then_b then_instrs; block else_b else_instrs ] in
   m, entry_instrs, blocks, phi [then_res, then_b; else_res, else_b]
@@ -724,6 +728,7 @@ let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
   else (* here args_cnt < raw_arity, so we need to create a closure  *)
     let m, closure_ptr   = M.local m (T.ptr closure_t) "closure" in 
     let m, args_ptr      = M.local m (T.ptr T.i8) "args_ptr" in 
+                    (* TODO: full_args is probably too much, try args *)
     let data_t           = T.structure ~packed:true full_args in
     (* let m, args_ptr_cast = M.local m data_t "data_ptr_cast" in  *)
     let m, heap_bytes    = M.local m (T.ptr data_t) "malloc_data_ptr" in 

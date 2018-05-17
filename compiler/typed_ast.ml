@@ -254,5 +254,12 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 
-  let env, tops = List.fold_map tops ~init:env ~f:top in 
-  (List.map env.extra_fun (fun (f, t) -> Fun (f, t))) @ tops
+  let top env expr =
+    let env, res = top env expr in 
+    let extra_fun = List.map env.extra_fun (fun (f, t) -> Fun (f, t)) in 
+    { env with extra_fun = [] }, extra_fun @ [res] in 
+
+  let env, tops = 
+    List.fold_map tops ~init:env ~f:top in 
+  List.concat tops 
+  (* (List.map env.extra_fun (fun (f, t) -> Fun (f, t))) @ tops *)
