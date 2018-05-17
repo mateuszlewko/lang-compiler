@@ -121,6 +121,9 @@ module Codegen = struct
     | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; is_rec; body } = funexp in 
 
+      printf "fun name: %s\n" name; 
+      List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
+
       let args_cnt = List.length ta_args in 
       let ret      = List.drop ts args_cnt in 
       let is_fun = function Some LT.Fun _ -> true | _ -> false in
@@ -283,13 +286,18 @@ module Codegen = struct
               (iss @ all, env), arg) in
     instrs, List.last_exn args, env
 
+  let gen_value env expr name e t = 
+    let iss, v, env = expr env e in 
+    let env         = Env.add env name (Env.Val (v, t)) in 
+    iss, v, env
+
   let rec gen_expr env = 
     function 
     | TA.Var v, _ -> [], Env.find_val env v, env
     | Lit    l, _ -> gen_literal env gen_expr l 
-    (* | Let _   , _ -> failwith "nested let here TODO" *)
     | If ifexp, _ -> gen_if env gen_expr ifexp 
     | Exprs es, _ -> gen_exprs env gen_expr es 
+    | Value   (name, e)     , t -> gen_value env gen_expr name e t
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
 
@@ -303,8 +311,10 @@ module Codegen = struct
                |> failwith
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
-    let env = TA.of_tops top_lvl_exprs 
-              |> List.fold ~init:Env.empty ~f:gen_top in  
+    let tops = TA.of_tops top_lvl_exprs in 
+    List.iter tops (TA.show_top %> printf "top: %s\n");
+    
+    let env  = List.fold tops ~init:Env.empty ~f:gen_top in  
 
     (* printf "module: %s" (Ast.show_modul env.m.m_module); *)
     
