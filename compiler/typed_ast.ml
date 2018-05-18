@@ -29,6 +29,7 @@ and literal =
 
 and body_expr = 
   | Var     of string 
+  | SetVar  of string * expr_t
   | Lit     of literal
   | Value   of string * expr_t
   | App     of expr_t * expr_t list 

@@ -188,6 +188,33 @@ module Codegen = struct
       add_this_fn env
     | other -> failwith "TODO let-value"
 
+
+  let gen_top_value (env : Env.t) expr funexp ts = 
+    let { TA.name; gen_name; is_rec; body; _ } = funexp in 
+
+    let args   = ["unit_arg", LT.Unit] in 
+    let new_ts = LT.merge [LT.Unit] ts in 
+    let ret_t  = LT.to_ollvm ts in 
+    let tpv    = ".top_val" in 
+
+    let new_name = name ^ tpv in 
+    let new_fun  = { funexp with args; name     = new_name
+                                     ; gen_name = gen_name ^ tpv } in
+    let env      = gen_let env expr new_fun new_ts in
+
+    let m, g_val = M.global_val env.m (ret_t, Ast.VALUE_Null) gen_name in 
+    let env      = Env.add { env with m } name (Val (g_val, ts)) in 
+
+    let instrs, _, env = ( SetVar ( name
+                                  , ( App ( 
+                                      ( Var new_name
+                                      , new_ts )
+                                    , [Lit TA.Unit, LT.Unit])
+                                    , ts ))
+                         , LT.Unit ) |> expr env in 
+
+    instrs, env 
+
   let insert_type t (_, v) = t, v 
 
   let gen_apply (env : Env.t) expr callee args app_t = 
@@ -298,7 +325,8 @@ module Codegen = struct
 
   let rec gen_expr env = 
     function 
-    | (TA.Var v, t) as var -> 
+    | TA.SetVar (name, e), _ -> failwith "todo set var"
+    | (TA.Var v, t) as var   -> 
       begin 
       match Env.find env v with 
       | Fun f -> gen_expr env (TA.App (var, []), t)
@@ -340,7 +368,6 @@ module Codegen = struct
                              ; gen_name = name ^ ".ext_wrapped" }, fn_t))
       | other  -> failwith "external values not supported"
       end 
-      (* failwith "extern todo" *)
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 
@@ -356,7 +383,6 @@ module Codegen = struct
     llenv.m
 
   (* later:
-      - gen_extern
       - gen_mod_open
       - gen_mod_decl
       - gen_top_value *)
