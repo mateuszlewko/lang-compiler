@@ -17,12 +17,18 @@ let rec test (fn : unit -> int) cnt =
         fn ()
         test fn (cnt - 1) *)
 
+external ll_putint     : int -> () 
+external ll_print_line : ()  -> () 
+
 let adder5b a b c : int -> int -> int = 
     let innerAdder d e = 
         a + b + c + d + e
 
     innerAdder
 
+let printn (p : int -> ()) v : () = 
+    p v 
+    ll_print_line ()
 (* let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000  *)
 
 let main () =
@@ -31,8 +37,15 @@ let main () =
     (* let tmp2 : int -> int -> int = tmp 1 2
     let tmp3 : int -> int -> int = tmp2 *)
     (* let my_fn x : int -> int -> int -> int -> int = adder5b x *)
-    let a1 x : int -> int = (tmp adder5b 1 x) -3
-    (a1 2 0) + (a1 3 0)
+    let a1 x : int -> int = 
+        ll_putint 1
+        ll_print_line ()
+        (tmp adder5b 1 x) -3
+
+    let res = (a1 2 0) + (a1 3 0)
+    
+    printn ll_putint res
+    0
 
 (* let main () =
     (test1 100 2 100) 10 11 *)

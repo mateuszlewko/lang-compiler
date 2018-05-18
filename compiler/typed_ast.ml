@@ -9,10 +9,11 @@ type arg = string * LT.t
 [@@deriving show]
 
 type funexp = 
-  { name   : string
-  ; is_rec : bool 
-  ; args   : arg list
-  ; body   : expr_t list }
+  { name     : string
+  ; gen_name : string
+  ; is_rec   : bool 
+  ; args     : arg list
+  ; body     : expr_t list }
 
 and ifexp = 
   { cond      : expr_t 
@@ -148,7 +149,7 @@ let rec expr env =
       printf "fun: %s, extra args:\n" g_name;
       List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
-      { name = g_name; is_rec; args; body }, global_fn_t in
+      { name = g_name; gen_name = g_name; is_rec; args; body }, global_fn_t in
     let env         = { env with extra_fun = global_fn::env.extra_fun } in
  
     let fn_with_env  = 
@@ -242,7 +243,8 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
 
-  add env name (fn_t, Global), Fun ({ name; is_rec; args; body }, fn_t)
+  add env name (fn_t, Global), Fun ({ name; gen_name = name; is_rec
+                                    ; args; body }, fn_t)
 
  and top env =
   function 

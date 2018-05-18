@@ -1,4 +1,5 @@
 open Core
+open BatPervasives
 
 module A = Lang_parsing.Ast
 
@@ -35,10 +36,19 @@ let of_annotation : A.type_annot option -> _ =
   | Some [t] -> single t
   | Some ts  -> List.map ts single |> Fun
 
+let value_if_not_function = 
+  function
+  | Fun []      -> raise (UnsupportedType "<empty function>")
+  | Fun [x]     -> x 
+  | Fun _ as ft -> ft
+  | other       -> other
+
 let merge ts = 
+  begin
   function
   | Fun latter_ts -> Fun (ts @ latter_ts)
   | last_t        -> Fun (ts @ [last_t])
+  end %> value_if_not_function
 
 let apply fn_t arg_ts = 
   match fn_t, arg_ts with 
@@ -50,12 +60,17 @@ let apply fn_t arg_ts =
                       | Ok false        -> 
                         begin 
                         match after with 
-                        | []  -> raise WrongNumberOfApplyArguments
+                        | []  -> 
+                          raise WrongNumberOfApplyArguments
                         | [t] -> t 
                         | ts  -> Fun ts
                         end
                       | Unequal_lengths -> raise WrongNumberOfApplyArguments
-                      | Ok true         -> raise WrongTypeOfApplyArgument
+                      | Ok true         -> 
+                        printf "fn_t: %s\n" (show_lang_type fn_t);
+                        List.iter arg_ts (show_lang_type %> printf "arg: %s\n");
+                        raise WrongTypeOfApplyArgument
+
                       end
   | _     , _      -> raise ValueCannotBeApplied
 

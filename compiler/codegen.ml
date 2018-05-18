@@ -119,7 +119,7 @@ module Codegen = struct
   let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
     | LT.Fun ts as fn_t -> 
-      let { TA.args = ta_args; name; is_rec; body } = funexp in 
+      let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
 
       printf "fun name: %s\n" name; 
       List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
@@ -131,7 +131,7 @@ module Codegen = struct
       let ret_t = if List.length ret > 1 || is_fun (List.hd ret)
                   then Letexp.closure_t else LT.to_ollvm (List.hd_exn ret) in
       
-      let m, fn = M.global env.m ret_t name in
+      let m, fn = M.global env.m ret_t gen_name in
       let to_local t = LT.to_ollvm t, "" in 
       let fn_args    = List.take ts (List.length ts - 1) in
       let fn_args_named = 
@@ -230,26 +230,15 @@ module Codegen = struct
       match Env.find env name with
       | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
         printf "fn named: %s, has type: %s" name (LT.show fn_t); 
+        let fn_arg_ts = match fn_t with 
+                        | Fun ts -> List.take ts (List.length ts - 1)   
+                                    |> List.map ~f:LT.to_ollvm 
+                        | _      -> [] in
 
-        (* let args_cnt = List.length init_args in 
-        if  args_cnt > arity
-        then 
-          let pre, post = BatList.takedrop arity init_args in 
-          expr init_env 
-            ( TA.App (
-              ( TA.App ((TA.Var name, t), pre)
-              , LT.merge (List.map post snd) app_t)
-            , post), app_t)
-        else  *)
-          let fn_arg_ts = match fn_t with 
-                          | Fun ts -> List.take ts (List.length ts - 1)   
-                                      |> List.map ~f:LT.to_ollvm 
-                          | _      -> [] in
-
-          let m, instrs, res = 
-            Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-          let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
-          instrs, typed res, { env with m }
+        let m, instrs, res = 
+          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
+        let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
+        instrs, typed res, { env with m }
       | Val (v, _) -> unknown_apply env [] v 
       end
     | v -> 
@@ -324,10 +313,34 @@ module Codegen = struct
 
   (* let gen_module *)
 
-  let gen_top env =
+  let rec gen_top env =
+    let open TA in 
     function 
-    | TA.Fun (funexp, ts) -> 
-      gen_let env gen_expr funexp ts 
+    | Fun (funexp, t)  -> gen_let env gen_expr funexp t
+    | Extern (name, t) -> 
+      begin 
+      match t with 
+      | Fun (_::_::_ as ts) as fn_t -> 
+        let arity           = List.length ts - 1 in 
+        let ast_arg_ts, [ast_ret_t] = BatList.takedrop arity ts in 
+        let arg_ts, ret_t   = List.map ast_arg_ts LT.to_ollvm
+                            , LT.to_ollvm ast_ret_t in 
+
+        let m, fn    = M.global env.m ret_t name in 
+        let m        = declare fn arg_ts |> M.declaration m in 
+        let ext_name = name ^ ".external" in
+        let env      = Env.add { env with m } ext_name 
+                         (Fun { fn = fn, fn_t; arr = null; arity }) in 
+        
+        let args       = List.mapi ast_arg_ts (fun i t -> string_of_int i, t) in 
+        let apply_args = List.map args (fun (a, t)     -> Var a, t) in 
+        let body       = [App ((Var ext_name, fn_t), apply_args), ast_ret_t] in 
+        
+        gen_top env (TA.Fun ({ name = name; is_rec = false; args; body
+                             ; gen_name = name ^ ".ext_wrapped" }, fn_t))
+      | other  -> failwith "external values not supported"
+      end 
+      (* failwith "extern todo" *)
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 
