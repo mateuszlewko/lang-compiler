@@ -67,7 +67,7 @@ Codegen:
     ✔ applying known function with more arguments than defined @today @critical @done(18-05-18 18:09)
     ✔ fix passing known function as argument @today @done(18-05-18 18:41)
     ✔ fix external functions @today @done(18-05-18 20:09)
-    ❑ top level values (defined with let) with side effects @today 
+    ✔ top level values (defined with let) with side effects @today @done(18-05-19 01:15)
     ❑ implement modules and open in typed ast @today 
     ❑ multiple global variables with same name @critical 
 
