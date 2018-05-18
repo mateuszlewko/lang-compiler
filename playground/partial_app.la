@@ -31,7 +31,7 @@ let printn (p : int -> ()) v : () =
     ll_print_line ()
 (* let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000  *)
 
-let main () =
+let my_main () =
     let tmp (fn : int -> int -> int -> int -> int -> int) x y : int -> int -> int = 
         fn x y 3
     (* let tmp2 : int -> int -> int = tmp 1 2
@@ -47,6 +47,25 @@ let main () =
     printn ll_putint res
     0
 
+let other_top = 
+    ll_putint 11
+    ll_print_line ()
+    2
+let top = 
+    ll_putint 22
+    ll_print_line ()
+    2 + other_top
+
+let eff = 
+    ll_putint top 
+    ll_print_line ()
+    my_main ()
+
+let top2 = 
+    ll_putint 33
+    ll_print_line ()
+    2 + other_top
+    
 (* let main () =
     (test1 100 2 100) 10 11 *)
 
