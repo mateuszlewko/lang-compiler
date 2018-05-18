@@ -188,6 +188,7 @@ let rec expr env =
                       |> List.fold_map ~init:env ~f:(expr) in 
     let arg_ts = List.map arg_ts snd in 
 
+    (* TODO: Handle cases when one of operands is missing *)
     let Some (env, lhs) = map lhs ~f:(expr env) in 
     let Some (env, rhs) = map rhs ~f:(expr env) in 
 

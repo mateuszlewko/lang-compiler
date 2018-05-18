@@ -509,22 +509,22 @@ let closure_entry_body m arity pref_args raw_fn info =
     (* memcpy(res_args + res_used_bytes, data_ptr, b_cnt) *)
     ; dest_ptr <-- bitcast dest_ptr (T.ptr T.i8) 
     ; data_ptr <-- bitcast data_ptr (T.ptr T.i8) 
-    ; memcpy dest_ptr data_ptr b_cnt |> snd
+    ; memcpy data_ptr dest_ptr b_cnt |> snd
 
     (* res.left_args -= left_pass_args *)
     (* ; left_args_ptr <-- extractvalue res 2 *)
     ; new_left_args <-- sub res_left_args left_pass_args
-    ; insertvalue res new_left_args [2] |> snd
+    ; res <-- insertvalue res new_left_args [2] 
     
     (* increase fn pointer by number of applied args *)
     ; fn_ptr         <-- extractvalue res 0
     ; last           <-- get_elem_ptr_raw fn_ptr [left_pass_args]
-    ; insertvalue res last [0] |> snd
+    ; res <-- insertvalue res last [0]
 
     (* res.used_bytes += b_cnt *)
     (* ; used_bytes_ptr <-- extractvalue res 4  *)
     ; new_used_bytes <-- add res_used_bytes b_cnt
-    ; insertvalue res new_used_bytes [4] |> snd
+    ; res <-- insertvalue res new_used_bytes [4] 
     ; ret res ] in
 
   m, info.v.definition [ block entry_b entry_instrs 
@@ -597,18 +597,20 @@ let value_apply m closure_ptr ret_t args sink_b =
     ] in
 
   let m, tmp = M.local m T.opaque "tmp_res" in 
+  let closure_call_args   = cl_args::args_cnt_c::args in 
+  let closure_call_args_t = List.map closure_call_args fst in 
 
   let else_instrs = 
     [ 
       last <-- load cl_fn
-    ; last <-- bitcast last (T.fn closure_t call_args_t |> T.ptr)
+    ; last <-- bitcast last (T.fn closure_t closure_call_args_t |> T.ptr)
     (* ; last <-- load last *)
-    ; tmp  <-- call last call_args] in
+    ; tmp  <-- call last closure_call_args] in
 
   let m, instrs, [tmp_fn; tmp_env] = struct_val_fields m tmp [0; 1] in
   let tmp_env = T.ptr T.i8, snd tmp_env in 
   
-  let call_args_empty   = [tmp_env; i8 0] in 
+  let call_args_empty   = [tmp_env] in 
   let call_args_empty_t = List.map call_args_empty fst in 
 
   let else_instrs = else_instrs @ instrs @ 

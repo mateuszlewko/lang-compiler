@@ -26,12 +26,12 @@ let adder5b a b c : int -> int -> int =
 (* let main () = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000  *)
 
 let main () =
-    let tmp x y : int -> int -> int = 
-        adder5b x y 3
-    let tmp2 : int -> int -> int = tmp 1 2
-    let tmp3 : int -> int -> int = tmp2
-
-    tmp3 34 5
+    let tmp (fn : int -> int -> int -> int -> int -> int) x y : int -> int -> int = 
+        fn x y 3
+    (* let tmp2 : int -> int -> int = tmp 1 2
+    let tmp3 : int -> int -> int = tmp2 *)
+    let my_fn x : int -> int -> int -> int -> int = adder5b x
+    (tmp my_fn) 1 2 4 5
 
 (* let main () =
     (test1 100 2 100) 10 11 *)

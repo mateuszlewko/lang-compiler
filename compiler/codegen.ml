@@ -191,13 +191,18 @@ module Codegen = struct
   let insert_type t (_, v) = t, v 
 
   let gen_apply (env : Env.t) expr callee args app_t = 
+    let init_env  = env in 
+    let init_args = args in 
+
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
 
+    printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
     List.iter args (Ez.Value.show %> printf "arg val: %s\n");
+
     let typed = insert_type (LT.to_ollvm app_t) in 
 
     let unknown_apply (env : Env.t) iss callee = 
@@ -206,7 +211,8 @@ module Codegen = struct
       let m, app_iss, blocks, phi_i = 
         match app_t with 
         (* application returns closure (function) *)
-        | LT.Fun app_ts -> Letexp.closure_apply m callee args sink_b 
+        | LT.Fun app_ts -> 
+          Letexp.closure_apply m callee args sink_b 
         (* application returns value *)
         | app_t         -> 
           Letexp.value_apply m callee (LT.to_ollvm app_t) args sink_b in 
@@ -225,15 +231,25 @@ module Codegen = struct
       | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
         printf "fn named: %s, has type: %s" name (LT.show fn_t); 
 
-        let fn_arg_ts = match fn_t with 
-                        | Fun ts -> List.take ts (List.length ts - 1)   
-                                    |> List.map ~f:LT.to_ollvm 
-                        | _      -> [] in
+        (* let args_cnt = List.length init_args in 
+        if  args_cnt > arity
+        then 
+          let pre, post = BatList.takedrop arity init_args in 
+          expr init_env 
+            ( TA.App (
+              ( TA.App ((TA.Var name, t), pre)
+              , LT.merge (List.map post snd) app_t)
+            , post), app_t)
+        else  *)
+          let fn_arg_ts = match fn_t with 
+                          | Fun ts -> List.take ts (List.length ts - 1)   
+                                      |> List.map ~f:LT.to_ollvm 
+                          | _      -> [] in
 
-        let m, instrs, res = 
-          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-        let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
-        instrs, typed res, { env with m }
+          let m, instrs, res = 
+            Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
+          let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
+          instrs, typed res, { env with m }
       | Val (v, _) -> unknown_apply env [] v 
       end
     | v -> 
@@ -313,7 +329,7 @@ module Codegen = struct
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
     let tops = TA.of_tops top_lvl_exprs in 
     List.iter tops (TA.show_top %> printf "top: %s\n");
-    
+
     let env  = List.fold tops ~init:Env.empty ~f:gen_top in  
 
     (* printf "module: %s" (Ast.show_modul env.m.m_module); *)
