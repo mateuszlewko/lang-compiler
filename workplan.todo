@@ -2,7 +2,7 @@
 ✔ 1. Finish partial application (currying, Push-enter) @done
 
 // 1-2 weeks
-❑ 2a. Fix nested functions (lambda lifting + closure conversion)
+✔ 2a. Fix nested functions (lambda lifting + closure conversion) @done(18-05-18 18:09)
 ❑ 2b. Rewrite existing codegen to use high-ollvm @optional 
 
 // 1-2 weeks
