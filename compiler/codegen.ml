@@ -211,7 +211,7 @@ module Codegen = struct
                                       , new_ts )
                                     , [Lit TA.Unit, LT.Unit])
                                     , ts ))
-                         , LT.Unit ) |> expr env in 
+                         , ts ) |> expr env in 
 
     instrs, env 
 
@@ -323,9 +323,18 @@ module Codegen = struct
     let env         = Env.add env name (Env.Val (v, t)) in 
     iss, v, env
 
+  let gen_set_var env expr name e = 
+    let iss, src, env = expr env e in 
+    let iss = 
+      match Env.find env name with 
+      | Val (dest, _) -> iss @ [ Instr (store src dest |> snd) ]
+      | Fun _         -> sprintf "setting value to fun: %s is not supported"
+                           name |> failwith in 
+    iss, src, env
+
   let rec gen_expr env = 
     function 
-    | TA.SetVar (name, e), _ -> failwith "todo set var"
+    | TA.SetVar (name, e), _ -> gen_set_var env gen_expr name e 
     | (TA.Var v, t) as var   -> 
       begin 
       match Env.find env v with 
