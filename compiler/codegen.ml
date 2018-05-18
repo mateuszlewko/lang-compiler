@@ -309,7 +309,12 @@ module Codegen = struct
 
   let rec gen_expr env = 
     function 
-    | TA.Var v, _ -> [], Env.find_val env v, env
+    | (TA.Var v, t) as var -> 
+      begin 
+      match Env.find env v with 
+      | Fun f -> gen_expr env (TA.App (var, []), t)
+      | Val b -> [], fst b, env 
+      end 
     | Lit    l, _ -> gen_literal env gen_expr l 
     | If ifexp, _ -> gen_if env gen_expr ifexp 
     | Exprs es, _ -> gen_exprs env gen_expr es 

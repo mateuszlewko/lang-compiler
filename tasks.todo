@@ -65,7 +65,9 @@ Codegen:
             ✔ returning closure @done(18-05-14 04:09)
             ✔ returning value @done(18-05-14 04:09)
     ✔ applying known function with more arguments than defined @today @critical @done(18-05-18 18:09)
-    ❑ fix passing known function as argument
+    ✔ fix passing known function as argument @today @done(18-05-18 18:41)
+    ❑ fix external functions @today 
+    ❑ implement modules and open in typed ast @today 
 
     ❑ record types
     ❑ mutually recursive functions
