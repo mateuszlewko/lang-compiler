@@ -3,7 +3,6 @@ open Llvm
 open Core
 open BatPervasives
 open BatString
-open Codegen_utils
 
 module Codegen = struct 
   open High_ollvm.Ez.Value
