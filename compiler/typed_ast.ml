@@ -276,10 +276,13 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
                                         ; gen_name = name }
                                       , t )]
   | Module (name, tops) -> 
-    let parent_pref = env.prefix in 
+    let parent_prefix   = env.prefix in 
+    let parent_prefixed = env.prefixed in 
     let env         = { env with prefix = env.prefix ^ name ^ "." } in 
     let env, tops   = List.fold_map tops ~init:env ~f:top in
-    { env with prefix = parent_pref }, List.concat tops
+    let env         = { env with prefix   = parent_prefix
+                               ; prefixed = parent_prefixed } in
+    env, List.concat tops
   | Open _            -> failwith "TODO: Open"
   | TypeDecl _        -> failwith "TODO: TypeDecl"
 

@@ -18,7 +18,7 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ✔ correct priority of operators @done(18-01-26 23:17)
 
-    ❑ proper (improved) parsing @critical
+    ❑ proper (improved) parsing @critical @today 
 
     ❑ record types
     ❑ lambda (fun or =>)
