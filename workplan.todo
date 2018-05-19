@@ -3,7 +3,7 @@
 
 // 1-2 weeks
 ✔ 2a. Fix nested functions (lambda lifting + closure conversion) @done(18-05-18 18:09)
-❑ 2b. Rewrite existing codegen to use high-ollvm @optional 
+✔ 2b. Rewrite existing codegen to use high-ollvm @optional @done(18-05-19 16:31)
 
 // 1-2 weeks
 ❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)

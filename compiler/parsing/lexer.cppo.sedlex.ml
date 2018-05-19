@@ -28,13 +28,12 @@ let _ =
   register_error_of_exn (function
     | LexError (pos, msg) ->
       let loc = { loc_start = pos; loc_end = pos; loc_ghost = false} in
-      Some { loc; msg; sub=[]; if_highlight=""; }
+      Some { loc; msg; sub = []; if_highlight = ""; }
     | ParseError (token, loc_start, loc_end) ->
       let loc = Location.{ loc_start; loc_end; loc_ghost = false} in
-      let msg =
-        show_token token
-        |> Printf.sprintf "Parse error after reading token '%s'." in
-      Some { loc; msg; sub=[]; if_highlight=""; }
+      let msg = show_token token
+                |> Printf.sprintf "Parse error after reading token '%s'." in
+      Some { loc; msg; sub = []; if_highlight = ""; }
     | _ -> None)
 
 
@@ -46,26 +45,28 @@ let illegal buf c =
   |> failwith buf
 
 (* regular expressions  *)
-let letter = [%sedlex.regexp? 'A'..'Z' | 'a'..'z']
-let digit = [%sedlex.regexp? '0'..'9']
-let id_init = [%sedlex.regexp? letter  | '_']
-let id_cont = [%sedlex.regexp? id_init | Chars "'" | digit ]
+let letter       = [%sedlex.regexp? 'A'..'Z' | 'a'..'z']
+let digit        = [%sedlex.regexp? '0'..'9']
+let id_init      = [%sedlex.regexp? letter  | '_']
+let id_cont      = [%sedlex.regexp? id_init | Chars "'" | digit ]
 let id_nest_cont = [%sedlex.regexp? id_init | Chars ".\'" | digit ]
-let id = [%sedlex.regexp? id_init, Star id_cont ]
-let id_nest = [%sedlex.regexp? id_init, Star id_nest_cont ]
-let hex = [%sedlex.regexp? digit | 'a'..'f' | 'A'..'F' ]
-let hexnum = [%sedlex.regexp? '0', 'x', Plus hex ]
+let id           = [%sedlex.regexp? id_init, Star id_cont ]
+let id_nest      = [%sedlex.regexp? id_init, Star id_nest_cont ]
+
+let hex        = [%sedlex.regexp? digit | 'a'..'f' | 'A'..'F' ]
+let hexnum     = [%sedlex.regexp? '0', 'x', Plus hex ]
 let decnum_pos = [%sedlex.regexp? Plus digit]
 let decnum_neg = [%sedlex.regexp? '-', Plus digit]
-(* let decnum = [%sedlex.regexp? decnum_pos | decnum_neg] *)
-let decbyte = [%sedlex.regexp? (digit,digit,digit) | (digit,digit) | digit ]
-let hexbyte = [%sedlex.regexp? hex,hex ]
-let blank = [%sedlex.regexp? ' ' | '\t' ]
-let space = [%sedlex.regexp? ' ' ]
-let newline = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
-let operator = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ]
+(* let decnum  = [%sedlex.regexp? decnum_pos | decnum_neg] *)
+let decbyte    = [%sedlex.regexp? (digit,digit,digit) | (digit,digit) | digit ]
+let hexbyte    = [%sedlex.regexp? hex,hex ]
+let blank      = [%sedlex.regexp? ' ' | '\t' ]
+let space      = [%sedlex.regexp? ' ' ]
+let newline    = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
+let operator   = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ]
 
-type state = { level : int; stack : int list }
+
+type state     = { level : int; stack : int list }
 let init_state = { level = 0; stack = [0] }
 
 let rec end_of_indent buf state =
