@@ -24,11 +24,14 @@ let funA1 x = x
 module ModA = 
     let funA2 x = (funA1 x) + x
 
-let adder5b a b c : int -> int -> int = 
-    let innerAdder d e = 
-        a + b + c + d + e
+module Add = 
+    let adder5b a b c : int -> int -> int = 
+        let innerAdder d e = 
+            a + b + c + d + e
 
-    innerAdder
+        innerAdder
+
+open Add
 
 let printn (p : int -> ()) v : () = 
     p v 

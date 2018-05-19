@@ -276,14 +276,40 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
                                         ; gen_name = name }
                                       , t )]
   | Module (name, tops) -> 
-    let parent_prefix   = env.prefix in 
-    let parent_prefixed = env.prefixed in 
+    let parent_prefix = env.prefix in 
+    let parent_opened = env.opened in 
     let env         = { env with prefix = env.prefix ^ name ^ "." } in 
     let env, tops   = List.fold_map tops ~init:env ~f:top in
-    let env         = { env with prefix   = parent_prefix
-                               ; prefixed = parent_prefixed } in
+    let env         = { env with prefix = parent_prefix
+                               ; opened = parent_opened } in
     env, List.concat tops
-  | Open _            -> failwith "TODO: Open"
+  | Open path          -> 
+    let merge key l r = 
+      match l, r with 
+      | Some l, Some r              -> Some r
+      | Some x, None | None, Some x -> Some x
+      | None  , None                -> None in
+
+    let open BatString in 
+    let path   = env.prefix ^ path ^ "." in 
+    let opened =
+      (* All symbols *)
+      BatMap.merge merge env.prefixed env.opened
+      (* Select symbols that will be opened *)
+      |> BatMap.filter (fun k _ -> starts_with k path)
+      (* |> fun m -> BatMap.iter (fun k _ -> printf "-- o key: %s\n" k) m; m *)
+      (* Remove path prefix from selected symbols *)
+      |> fun map -> 
+        BatMap.foldi 
+          (fun key v new_map ->
+            let path_len = length path in
+            let new_name = sub key path_len (length key - path_len) in
+            BatMap.add new_name v new_map)
+          map BatMap.empty
+      (* Merge with previously opened symbols, possibly overwriting
+         some of them *)
+      |> BatMap.merge merge env.opened in
+    { env with opened }, []
   | TypeDecl _        -> failwith "TODO: TypeDecl"
 
 let of_tops tops = 
@@ -296,4 +322,3 @@ let of_tops tops =
   let env, tops = 
     List.fold_map tops ~init:env ~f:top in 
   List.concat tops 
-  (* (List.map env.extra_fun (fun (f, t) -> Fun (f, t))) @ tops *)
