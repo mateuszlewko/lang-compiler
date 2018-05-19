@@ -68,20 +68,24 @@ Codegen:
     ✔ fix passing known function as argument @today @done(18-05-18 18:41)
     ✔ fix external functions @today @done(18-05-18 20:09)
     ✔ top level values (defined with let) with side effects @today @done(18-05-19 01:15)
-    ❑ implement modules and open in typed ast @today 
+    ✔ implement modules @today @done(18-05-19 03:01)
+    ❑ implement open in typed ast @today 
     ❑ multiple global variables with same name @critical 
 
     ❑ top level expressions 
 
     ❑ record types
-    ❑ mutually recursive functions
     ❑ let-polymorphism
+    ❑ mutually recursive functions
     ❑ type float @medium
     ❑ type checking / basic type inference @high
     ❑ arithmetic operations (float) @medium
 
     ❑ type classes
     ❑ type inference with type classes
+
+    ❑ generic arrays
+    ❑ simple boehm gc
 
     ❑ lambda (fun or =>)
     ❑ mutable var

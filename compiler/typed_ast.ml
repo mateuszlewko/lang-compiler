@@ -41,17 +41,25 @@ and body_expr =
 and expr_t = body_expr * LT.t
 [@@deriving show]
 
+type extern = { name : string; gen_name : string }
+[@@deriving show]
+
 type top = 
   | Expr   of expr_t
   | Fun    of funexp * LT.t
-  | Extern of string * LT.t
+  | Extern of extern * LT.t
   | Module of string * top list
   | Open   of string
   [@@deriving show]
 
 type location = AtLevel of int | Global 
-type bound = LT.t * location 
-type bindings_map = (string, bound) BatMap.t
+[@@deriving show]
+type bound = LT.t * location
+[@@deriving show]
+type bbb = bound * string 
+[@@deriving show]
+ 
+type bindings_map = (string, bound * string) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
@@ -68,7 +76,7 @@ type environment = {
 (** Creates top-level env *)
 let empty = { prefixed  = BatMap.empty
             ; opened    = BatMap.empty
-            ; prefix    = "" 
+            ; prefix    = "." 
             ; free_vars = BatMultiMap.empty
             ; level     = 0 
             ; extra_fun = [] }
@@ -80,12 +88,19 @@ let name_in env = (^) env.prefix
 let add env name value =
     let pref_name = name_in env name in
     
-    { env with prefixed = BatMap.add pref_name value env.prefixed 
-             ; opened   = BatMap.add name value env.opened }
+    { env with prefixed = BatMap.add pref_name (value, pref_name) env.prefixed 
+             ; opened   = BatMap.add name (value, pref_name) env.opened }
 
 let find env name =
     try BatMap.find name env.opened 
-    with Not_found -> BatMap.find (name_in env name) env.prefixed 
+    with Not_found -> 
+    try BatMap.find (name_in env name) env.prefixed 
+    with Not_found ->
+      env.opened 
+      |> BatMap.iter (fun s b -> printf "s: %s, b: %s" s (show_bbb b));
+
+      sprintf "Not found: %s, with prefix: %s\n" name env.prefix 
+      |> failwith
 
 exception ArrayElementsTypeMismatched
 exception IfBranchesTypeMismatched 
@@ -104,11 +119,11 @@ let add_builtin_ops env =
 let rec expr env = 
   function 
   | VarExp v -> 
-    let t, loc = find env v in
+    let (t, loc), pref_name = find env v in
     let var = Var v, t in 
     begin 
     match loc with 
-    | Global -> env, var
+    | Global -> env, (Var pref_name, t)
     | AtLevel l when l = env.level -> 
       printf "var: %s is at level: %d\n" v l;
       env, var
@@ -182,9 +197,11 @@ let rec expr env =
                    map env (x::acc) xs
     in map env [] es
   | InfixOp (name, lhs, rhs)          -> 
-    let op_t, loc = find env name in 
+    let (op_t, loc), name = find env name in 
+   
     if loc <> Global 
     then sprintf "Non global operator: %s is not supported." name |> failwith;
+
     let open Option in 
     let env, arg_ts = to_list lhs @ to_list rhs 
                       |> List.fold_map ~init:env ~f:(expr) in 
@@ -223,6 +240,7 @@ and lit env =
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
 and funexp env (is_rec, (name, ret_t), args, body1, body) =
+  let gen_name = name_in env name in 
   let args, arg_ts = List.unzip args in 
 
   let arg_ts = List.map arg_ts LT.of_annotation in 
@@ -244,17 +262,24 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
 
-  add env name (fn_t, Global), Fun ({ name; gen_name = name; is_rec
-                                    ; args; body }, fn_t)
+  add env name (fn_t, Global), [Fun ({ name = gen_name; gen_name; is_rec
+                                     ; args; body }, fn_t)]
 
  and top env =
   function 
   | A.Expr (LetExp (is_rec, (name, ret_t), args, body1, body)) ->
-    funexp env (is_rec, (name, ret_t), args, body1, body) 
-  | Expr e            -> let env, e = expr env e in env, Expr e
-  | Extern (name, ta) -> let t = LT.of_annotation (Some ta) in 
-                         add env name (t, Global), Extern (name, t)
-  | Module _          -> failwith "TODO: Module"
+    funexp env (is_rec, (name, ret_t), args, body1, body)
+  | Expr e            -> let env, e = expr env e in env, [Expr e]
+  | Extern (name, ta) -> 
+    let t = LT.of_annotation (Some ta) in 
+    add env name (t, Global), [Extern ( { name     = name_in env name
+                                        ; gen_name = name }
+                                      , t )]
+  | Module (name, tops) -> 
+    let parent_pref = env.prefix in 
+    let env         = { env with prefix = env.prefix ^ name ^ "." } in 
+    let env, tops   = List.fold_map tops ~init:env ~f:top in
+    { env with prefix = parent_pref }, List.concat tops
   | Open _            -> failwith "TODO: Open"
   | TypeDecl _        -> failwith "TODO: TypeDecl"
 
@@ -263,7 +288,7 @@ let of_tops tops =
   let top env expr =
     let env, res = top env expr in 
     let extra_fun = List.map env.extra_fun (fun (f, t) -> Fun (f, t)) in 
-    { env with extra_fun = [] }, extra_fun @ [res] in 
+    { env with extra_fun = [] }, extra_fun @ res in 
 
   let env, tops = 
     List.fold_map tops ~init:env ~f:top in 

@@ -96,19 +96,19 @@ module Codegen = struct
       
       (match op with
       (* operators returning int *)
-      | "+"   -> add  lhs rhs
-      | "-"   -> sub  lhs rhs
-      | "*"   -> mul  lhs rhs
-      | "/"   -> sdiv lhs rhs
+      | ".+"   -> add  lhs rhs
+      | ".-"   -> sub  lhs rhs
+      | ".*"   -> mul  lhs rhs
+      | "./"   -> sdiv lhs rhs
       (* operators returning bool *)
-      | "="   -> eq   lhs rhs
-      | "<"   -> slt  lhs rhs
-      | "<="  -> sle  lhs rhs
-      | ">"   -> sgt  lhs rhs
-      | ">="  -> sge  lhs rhs
-      | "<>"  -> ne   lhs rhs
-      | "&&"  -> and_ lhs rhs
-      | "||"  -> or_  lhs rhs
+      | ".="   -> eq   lhs rhs
+      | ".<"   -> slt  lhs rhs
+      | ".<="  -> sle  lhs rhs
+      | ".>"   -> sgt  lhs rhs
+      | ".>="  -> sge  lhs rhs
+      | ".<>"  -> ne   lhs rhs
+      | ".&&"  -> and_ lhs rhs
+      | ".||"  -> or_  lhs rhs
       (* raise when operator is unknown *)
       | other -> unsupp ~name:"operator" other)
       |> fun op_res -> res @ [Instr (v <-- op_res)], v, { env with m }
@@ -356,7 +356,7 @@ module Codegen = struct
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
 
-  let gen_extern (env : Env.t) gen_top name t =
+  let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
     match t with 
     | LT.Fun (_::_::_ as ts) as fn_t -> 
@@ -365,7 +365,7 @@ module Codegen = struct
       let arg_ts, ret_t   = List.map ast_arg_ts LT.to_ollvm
                           , LT.to_ollvm ast_ret_t in 
 
-      let m, fn    = M.global env.m ret_t name in 
+      let m, fn    = M.global env.m ret_t gen_name in 
       let m        = declare fn arg_ts |> M.declaration m in 
       let ext_name = name ^ ".external" in
       let env      = Env.add { env with m } ext_name 
@@ -392,7 +392,7 @@ module Codegen = struct
       let main_expr, env = gen_top_value env gen_expr funexp t in 
       env, [main_expr]
     | Fun (funexp, t)  -> gen_let env gen_expr funexp t, []
-    | Extern (name, t) -> gen_extern env gen_top name t    
+    | Extern (extern, t) -> gen_extern env gen_top extern t    
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 

@@ -20,6 +20,10 @@ let rec test (fn : unit -> int) cnt =
 external ll_putint     : int -> () 
 external ll_print_line : ()  -> () 
 
+let funA1 x = x
+module ModA = 
+    let funA2 x = (funA1 x) + x
+
 let adder5b a b c : int -> int -> int = 
     let innerAdder d e = 
         a + b + c + d + e
@@ -61,11 +65,14 @@ let eff =
     ll_print_line ()
     my_main ()
 
+let pn () : () = ll_print_line ()
+
 let top2 = 
     ll_putint 33
-    ll_print_line ()
+    pn ()
     2 + other_top
-    
+
+
 (* let main () =
     (test1 100 2 100) 10 11 *)
 
