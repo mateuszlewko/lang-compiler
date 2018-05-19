@@ -3,8 +3,8 @@
    https://github.com/smolkaj/ocaml-parsing/blob/master/src/Lexer.cppo.sedlex.ml
    Modified by: Mateusz Lewko
    Added:
-     - tokenize indentation
-     - parsing tokens defines in grammar *)
+     - tokenized indentation
+     - parsing tokens defined in grammar *)
 
 #include "tokens.ml"
   [@@deriving show]

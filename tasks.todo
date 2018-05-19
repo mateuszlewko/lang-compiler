@@ -69,7 +69,7 @@ Codegen:
     ✔ fix external functions @today @done(18-05-18 20:09)
     ✔ top level values (defined with let) with side effects @today @done(18-05-19 01:15)
     ✔ implement modules @today @done(18-05-19 03:01)
-    ❑ implement open in typed ast @today 
+    ✔ implement open in typed ast @today @done(18-05-19 16:27)
     ❑ multiple global variables with same name @critical 
 
     ❑ top level expressions 
