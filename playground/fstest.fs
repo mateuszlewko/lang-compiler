@@ -19,5 +19,11 @@ let l1 = empty |> push 1 |> push 2 |> push 3 |> pop
 
 printfn "%A" l1
 
+let fnAA (a : int) = a + a ; 
+                     () in 
+              fnAA 
+                   3
+
 let v1 = Pair (1, Pair (2, ()))
-printfn "%A" v1        
+printfn "%A" v1       
+// fnAA 2 

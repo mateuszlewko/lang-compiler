@@ -176,9 +176,9 @@ module Codegen = struct
       let ret_i     = Ez.Instr.ret ret_v |> Instr in
       let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
       
-      printf "\n--- START OF FUN --- \n";
+      (* printf "\n--- START OF FUN --- \n";
       List.iter blocks (show_block %> printf "block: %s\n");
-      printf "--- END OF FUN --- \n";
+      printf "--- END OF FUN --- \n"; *)
 
       let df        = define fn args blocks in
       let env = { env with m = M.definition m df } in 
@@ -320,7 +320,7 @@ module Codegen = struct
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
-    instrs, List.last_exn args, env
+    instrs, List.last_exn args, env in
 
   let gen_value env expr name e t = 
     let iss, v, env = expr env e in 
@@ -398,7 +398,7 @@ module Codegen = struct
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
     let tops = TA.of_tops top_lvl_exprs in 
-    List.iter tops (TA.show_top %> printf "top: %s\n");
+    (* List.iter tops (TA.show_top %> printf "top: %s\n"); *)
 
     let env, main_exprs = List.fold_map tops ~init:Env.empty ~f:gen_top in  
     let env             = List.concat main_exprs |> gen_main env in 

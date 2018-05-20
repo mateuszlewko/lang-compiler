@@ -27,6 +27,8 @@ let to_exps fst_line rest =
 %token ARRAY_OPEN ARRAY_CLOSE
 %left OPERATOR
 
+%token IN BEGIN END SEP
+
 %token LEQ GEQ LE GE NEQ PLUS MINUS DIV MULT AND OR
 %left AND OR
 %left LEQ GEQ EQ LE GE NEQ 
@@ -51,7 +53,6 @@ empty_line:
 
 single_type_anot:
   | UNIT { "()" }
-  /* | i = INT { string_of_int i } */
   | ts = SYMBOL { ts }
 
 nested_sym:

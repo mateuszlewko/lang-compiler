@@ -65,14 +65,17 @@ let next lexbuf =
   | Some '\r' ->
     lexbuf.pos <- { pos with
       pos_bol = pos.pos_cnum - 1;
-      pos_lnum = pos.pos_lnum + 1; }
+      pos_lnum = pos.pos_lnum + 1;
+      pos_cnum = 0 }
   | Some '\n' when not (lexbuf.last_char = Some cr) ->
     lexbuf.pos <- { pos with
       pos_bol = pos.pos_cnum - 1;
-      pos_lnum = pos.pos_lnum + 1; }
+      pos_lnum = pos.pos_lnum + 1;
+      pos_cnum = 0 }
   | Some '\n' -> ()
   | _ -> lexbuf.pos <- pos);
   lexbuf.last_char <- Some c;
+  (* Core.printf "next on: %c\n" (Char.of_int_exn c); *)
   c
 
 let raw lexbuf : int array =

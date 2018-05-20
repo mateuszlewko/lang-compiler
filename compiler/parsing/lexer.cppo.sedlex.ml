@@ -66,29 +66,39 @@ let newline    = [%sedlex.regexp? '\r' | '\n' | "\r\n" ]
 let operator   = [%sedlex.regexp? Plus (Chars "!%&*+-./<=>?@^|~") ]
 
 
-type state     = { level : int; stack : int list }
-let init_state = { level = 0; stack = [0] }
+type context = SeqBlock | Paren of string | If | Else | Vanilla | Let
+
+type state     = { level : int; stack : (int * context) list }
+let init_state = { level = 0; stack = [0, SeqBlock] }
 
 let rec end_of_indent buf state =
   (* printf "level: %d, stack: %s\n" state.level (dump state.stack); *)
+  let curr_level, curr_ctx = List.hd_exn state.stack in 
+  let col_pos              = buf.pos.pos_cnum in
 
-  if state.level > List.hd_exn state.stack
-  then [INDENT], { state with stack = state.level::state.stack }
-  else if state.level < List.hd_exn state.stack
+  if state.level > curr_level
+  then begin
+    match curr_ctx with
+    | Let -> [], { state with stack = (col_pos, SeqBlock)::state.stack }
+    | _   -> [], state
+  end
+  else if state.level < curr_level
   then
     let rec dedents res =
       function
-      | top::stack when top > state.level ->
+      | (top, top_ctx)::stack when top > state.level ->
           dedents (DEDENT::res) stack
-      | top::stack when top <= state.level -> res, top::stack
+      | (top, top_ctx::stack when top <= state.level -> res, top::stack
       (* | top::stack when top < state.level ->
         failwith buf "Current indentation level needs to match some previous \
                       indentation. Try indenting this token further or closer." *)
-      | [] -> failwith buf "Unexpected case, indentation stack is empty."
-    in
+      | [] -> failwith buf "Unexpected case, indentation stack is empty." in
     let deds, stack = dedents [] state.stack in
     deds, { state with stack = stack }
-  else [], state
+  else 
+    match curr_ctx with 
+    | SeqBlock -> [SEP], state 
+    | _        -> [], state
 
 let rec indentation state buf =
   match%sedlex buf with
@@ -117,10 +127,13 @@ and comment depth state buf =
        | newline -> comment depth { state with level = 0} buf
        | any     -> comment depth { state with level = state.level + 1 } buf
        | _       -> assert false
+  
+(* let top stack = List.hd_exn stack *)
 
 (* returns the next token *)
 and token state buf =
   let state = garbage state buf in
+  let col_pos = buf.pos.pos_cnum in 
 
   match%sedlex buf with
   | eof -> [EOF], state
@@ -135,7 +148,10 @@ and token state buf =
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
 
-  | "let"   -> [LET], state
+  | "let"   -> 
+    printf "let col: %d\n" (state.level);
+    printf "let col2: %d\n" (col_pos);
+    [LET], { state with stack = (Let, col_pos)::state.stack }
   | "rec"   -> [REC], state
   | "if"    -> [IF], state
   | "else"  -> [ELSE], state
@@ -154,6 +170,8 @@ and token state buf =
   | ';'   -> [SEMICOL], state
   | ':'   -> [COLON], state
   | ','   -> [COMMA], state
+  | '=' when fst state.stack = Let -> 
+    [EQ; BEGIN], { state with stack = (SeqBlock, col_pos)::state.stack } 
   | '='   -> [EQ], state
   | "[|"  -> [ARRAY_OPEN], state
   | "|]"  -> [ARRAY_CLOSE], state
