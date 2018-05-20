@@ -162,10 +162,35 @@ complex_expr:
 
 external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
 
+record_decl_field: s = SYMBOL; ta = type_anot { s, ta }
+
+ignore_indent: 
+  | INDENT+; ignore_indent  { }
+  | DEDENT+; ignore_indent  { }
+  | NEWLINE+; ignore_indent { }
+  | { }
+
+record_decl_sep: 
+  | NEWLINE+; INDENT*; DEDENT*; SEMICOL { }
+  | NEWLINE+; INDENT*; DEDENT*          { }
+  | NEWLINE*; SEMICOL                   { }
+
+record_fields:
+ | f = record_decl_field; ignore_indent; RCURLY { [f] }
+ | f = record_decl_field; record_decl_sep; fs = record_fields { f::fs }
+
+record_decl:
+  TYPE; name = SYMBOL; EQ; ignore_indent; LCURLY; ignore_indent;
+  fields = record_fields; NEWLINE*; DEDENT* { RecordType (name, fields) }
+
+type_decl: 
+  | r = record_decl { r }
+
 top_expr:
- | m = module_exp { m }
- | o = open_exp { o }
- | e = complex_expr { Expr e }
- | e = external_expr { e }
+ | m = module_exp    { m          }
+ | o = open_exp      { o          }
+ | e = complex_expr  { Expr e     }
+ | e = external_expr { e          }
+ | t = type_decl     { TypeDecl t }
 
 %%

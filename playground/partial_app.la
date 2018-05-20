@@ -20,6 +20,25 @@ let rec test (fn : unit -> int) cnt =
 external ll_putint     : int -> () 
 external ll_print_line : ()  -> () 
 
+type Point = {
+        x : int 
+        y : int 
+    }
+
+type point1 = 
+    {
+        x : int 
+        y : int 
+    }
+
+type point2 = { x : int; y : int }
+
+type point3 = { x : int; y : int 
+              ; z : int }
+
+type point4 = { x : int; y : int 
+    z : int}
+
 let funA1 x = x
 module ModA = 
     let funA2 x = (funA1 x) + x

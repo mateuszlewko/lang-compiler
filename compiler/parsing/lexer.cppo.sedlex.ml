@@ -134,6 +134,8 @@ and token state buf =
 
   | '(' -> [LPAR], state
   | ')' -> [RPAR], state
+  | '{' -> [LCURLY], state
+  | '}' -> [RCURLY], state
 
   | "let"   -> [LET], state
   | "rec"   -> [REC], state
@@ -148,6 +150,7 @@ and token state buf =
   | "external" -> [EXTERNAL], state
   | "module"   -> [MODULE], state
   | "open"     -> [OPEN], state
+  | "type"     -> [TYPE], state
 
   | '"'   -> [QUOTE], state
   | "->"  -> [ARROW], state
@@ -209,20 +212,20 @@ let parse buf p =
       last_token := t, p, q;
       last_state := state;
 
-      (* printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q); *)
+      printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q);
       flush_all ();
       !last_token
     else
       let [t], ts = List.split_n !pending_tokens 1 in
       pending_tokens := ts;
-      (* printf "token B: %s\n" (show_token (fst3 t)); *)
+      printf "token B: %s\n" (show_token (fst3 t));
       flush_all ();
       t
   in
-  (* let next_token () =
+  let next_token () =
     let t = next_token () in
     printf "token: \027[31m%s\027[0m\n" (show_token (fst3 t));
-    t in *)
+    t in
 
   try MenhirLib.Convert.Simplified.traditional2revised p next_token with
   | LexError (pos, s) -> raise (LexError (pos, s))

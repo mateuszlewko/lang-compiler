@@ -310,8 +310,11 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
          some of them *)
       |> BatMap.merge merge env.opened in
     { env with opened }, []
-  | TypeDecl _        -> failwith "TODO: TypeDecl"
-
+  | TypeDecl td        -> 
+    Lang_parsing.Ast.show_type_declaration td 
+    |> printf "defined type: %s\n";
+    
+    env, []
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 
   let top env expr =

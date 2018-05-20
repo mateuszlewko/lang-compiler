@@ -1,16 +1,17 @@
 open Core
-                     (** type name, (field, type) list *)
-type record_declaration = string * (string * string) list
-[@@deriving show]
-
-type type_declaration =
-  | RecordType of record_declaration
-  [@@deriving show]
 
 (** type a1 t1 -> a2 t2 -> ... -> an an' tn is represented as a list 
        [[a1; t1]; [[a2; t2]; ...; [an; an'; tn]] *)
 type type_annot = string list list
 [@@deriving show]
+
+                   (** record name, (field, type) list *)
+type record_declaration = string * (string * type_annot) list
+[@@deriving show]
+
+type type_declaration =
+  | RecordType of record_declaration
+  [@@deriving show]
 
 (** Type is either Some type, or none which means it's integer *)
 type typed_arg = string * type_annot option
