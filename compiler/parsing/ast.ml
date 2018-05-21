@@ -26,6 +26,7 @@ type expr =
           (** cond   then    elif elif-then      else *)
   | IfExp of expr * expr * (expr * expr) list * expr option
   | Exprs of expr list
+  | RecordLiteral of (string * expr) list
   | FieldGetExp of expr * string
   | RecordWithExp of expr * (string * expr) list
   [@@deriving show]

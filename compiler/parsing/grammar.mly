@@ -152,28 +152,6 @@ field_get_expr:
   | LPAR; e = value_expr; RPAR; DOT; field = SYMBOL 
     { FieldGetExp (e, field) }
 
-simple_expr:  
-  | l = literal                 { LitExp l }
-  | s = nested_sym              { VarExp s }
-  | i = infix_op                { i }
-  | e = field_get_expr          { e }
-  | LPAR; a = application; RPAR { a }
-  | LPAR; e = simple_expr; RPAR { e }
-
-value_expr:
-  | e = simple_expr    { e }
-  | e = field_get_expr { e }
-  | e = application    { e }
-
-complex_expr:
-  | l = letexp; NEWLINE* { l }
-  | e = if_exp; NEWLINE* { e }
-  /* | a = application; NEWLINE* { a } */
-  | s = value_expr; NEWLINE+ { s }
-  | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
-
-external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
-
 record_decl_field: s = SYMBOL; ta = type_anot { s, ta }
 
 ignore_indent: 
@@ -183,9 +161,9 @@ ignore_indent:
   | { }
 
 record_decl_sep: 
-  | NEWLINE+; INDENT*; DEDENT*; SEMICOL { }
+  | NEWLINE+; INDENT*; DEDENT*; SEMICOL; { }
   | NEWLINE+; INDENT*; DEDENT*          { }
-  | NEWLINE*; SEMICOL                   { }
+  | NEWLINE*; SEMICOL; NEWLINE* INDENT*; DEDENT*        { }
 
 record_fields:
  | f = record_decl_field; ignore_indent; RCURLY { [f] }
@@ -194,6 +172,42 @@ record_fields:
 record_decl:
   TYPE; name = SYMBOL; EQ; ignore_indent; LCURLY; ignore_indent;
   fields = record_fields; NEWLINE*; DEDENT* { RecordType (name, fields) }
+
+record_literal_field: 
+  s = SYMBOL; EQ; exp = value_expr
+  { s, exp }
+
+record_literal_fields:
+ | f = record_literal_field; ignore_indent; RCURLY { [f] }
+ | f = record_literal_field; record_decl_sep; 
+   fs = record_literal_fields { f::fs }
+
+record_literal: 
+  LCURLY; ignore_indent; fields = record_literal_fields
+  { RecordLiteral fields }
+
+simple_expr:  
+  | l = literal                 { LitExp l }
+  | s = nested_sym              { VarExp s }
+  | i = infix_op                { i }
+  | e = field_get_expr          { e }
+  | r = record_literal          { r }
+  | LPAR; a = application; RPAR { a }
+  | LPAR; e = simple_expr; RPAR { e }
+
+value_expr:
+  | e = simple_expr    { e }
+  | e = field_get_expr { e }
+  | e = application    { e }
+
+complex_expr:
+  | e = record_literal; NEWLINE* { e }
+  | l = letexp; NEWLINE* { l }
+  | e = if_exp; NEWLINE* { e }
+  | s = value_expr; NEWLINE+ { s }
+  | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
+
+external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
 
 type_decl: 
   | r = record_decl { r }

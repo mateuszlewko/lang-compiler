@@ -239,6 +239,9 @@ let rec expr env =
     printf "field: %s get of: %s\n" field (show_expr e);
     env, (Lit (Int 0), Int)
   | RecordWithExp (e, withs) -> failwith "TODO TypedAst.RecordWithExp"
+  | RecordLiteral fields as rl -> 
+    printf "record literal: %s" (show_expr rl); 
+    env, (Lit (Int 0), Int)
 
 and lit env = 
   function
