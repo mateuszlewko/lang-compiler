@@ -39,9 +39,20 @@ type point3 = { x : int; y : int
 type point4 = { x : int; y : int 
     z : int}
 
+(* 
+
+let a : point1 = { x = 1; y = 2 }
+a.x.y // getter
+{ (fn a).x with 
+    y = 3 } 
+
+*)
+
 let funA1 x = x
 module ModA = 
-    let funA2 x = (funA1 x) + x
+    let funA2 x = 
+        
+        (funA1 x) + x
 
 module Add = 
     let adder5b a b c : int -> int -> int = 

@@ -21,6 +21,10 @@ Parser:
     ❑ proper (improved) parsing @critical 
 
     ✔ record types @done(18-05-21 01:45)
+    ❑ record field get
+    ❑ record literal
+    ❑ record field update
+
     ❑ lambda (fun or =>)
     ❑ mutable var
     ❑ lists

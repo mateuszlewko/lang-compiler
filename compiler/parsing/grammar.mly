@@ -142,6 +142,14 @@ array_lit: ARRAY_OPEN; es = separated_list(SEMICOL, array_elem); ARRAY_CLOSE;
   | b = BOOL { Bool b }
   | ar = array_lit { ar }
 
+field_get_expr:
+  | s = SYMBOL; DOT; field = SYMBOL 
+    { FieldGetExp (VarExp s, field) }
+  | LPAR; e = application; RPAR; DOT; field = SYMBOL 
+    { FieldGetExp (e, field) }
+  | LPAR; e = field_get_expr; RPAR; DOT; field = SYMBOL 
+    { FieldGetExp (e, field) }
+
 simple_expr:  
   | l = literal { LitExp l }
   | s = nested_sym { VarExp s }
