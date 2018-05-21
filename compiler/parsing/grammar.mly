@@ -174,8 +174,8 @@ record_decl:
   fields = record_fields; NEWLINE*; DEDENT* { RecordType (name, fields) }
 
 record_literal_field: 
-  s = SYMBOL; EQ; exp = value_expr
-  { s, exp }
+  | s = SYMBOL; EQ; exp = value_expr { s, exp }
+  | s = SYMBOL { s, VarExp s }
 
 record_literal_fields:
  | f = record_literal_field; ignore_indent; RCURLY { [f] }

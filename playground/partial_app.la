@@ -87,6 +87,14 @@ module Add =
             }
 
         let x3 = { a = fn 4; b= fn 5 + 9  }.a
+       
+        let x2b = 
+            { a = 4 
+              b = 55
+              c
+            }
+
+        let x3b = { a; b= fn 5 + 9; c  }.a
         
         innerAdder
 
