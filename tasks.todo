@@ -21,7 +21,7 @@ Parser:
     ❑ proper (improved) parsing @critical 
 
     ✔ record types @done(18-05-21 01:45)
-    ❑ record field get
+    ✔ record field get @done(18-05-21 21:54)
     ❑ record literal
     ❑ record field update
 
@@ -104,8 +104,8 @@ Codegen:
     // ❑ multi-file programs @low @optional
 
 Optimisations: @optional
-    ❑ Value expression instead of closure conversion and lifting when letexp is value
-    ❑ No closure conversion when no free variable
+    ✔ Value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
+    ❑ No closure conversion when there is no free variables
 
 Bugs:
     ✔ fix nested let @critical @done(18-05-18 00:35)

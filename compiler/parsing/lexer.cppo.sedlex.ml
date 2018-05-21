@@ -45,12 +45,17 @@ let illegal buf c =
   |> failwith buf
 
 (* regular expressions  *)
+let upper_letter = [%sedlex.regexp? 'A'..'Z']
 let letter       = [%sedlex.regexp? 'A'..'Z' | 'a'..'z']
 let digit        = [%sedlex.regexp? '0'..'9']
+
+let module_name  = [%sedlex.regexp? upper_letter, Star (letter | digit)]
+let module_path  = [%sedlex.regexp? Star (module_name, '.')]
 let id_init      = [%sedlex.regexp? letter  | '_']
 let id_cont      = [%sedlex.regexp? id_init | Chars "'" | digit ]
 let id_nest_cont = [%sedlex.regexp? id_init | Chars ".\'" | digit ]
 let id           = [%sedlex.regexp? id_init, Star id_cont ]
+let symbol       = [%sedlex.regexp? module_path, id]
 let id_nest      = [%sedlex.regexp? id_init, Star id_nest_cont ]
 
 let hex        = [%sedlex.regexp? digit | 'a'..'f' | 'A'..'F' ]
@@ -157,6 +162,7 @@ and token state buf =
   | ';'   -> [SEMICOL], state
   | ':'   -> [COLON], state
   | ','   -> [COMMA], state
+  | '.'   -> [DOT], state
   | '='   -> [EQ], state
   | "[|"  -> [ARRAY_OPEN], state
   | "|]"  -> [ARRAY_CLOSE], state
@@ -181,8 +187,8 @@ and token state buf =
 
   | operator -> [OPERATOR (ascii buf)], state
 
-  | id -> [SYMBOL (ascii buf)], state
-  | id_nest -> [NESTED_SYMBOL (ascii buf)], state
+  | id     -> [SYMBOL (ascii buf)], state
+  | symbol -> [NESTED_SYMBOL (ascii buf)], state
 
   | any -> [KWD (ascii buf |> flip String.get 0 )], state
   | _ -> illegal buf (StdChar.chr (next buf))

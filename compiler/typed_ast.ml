@@ -132,6 +132,17 @@ let rec expr env =
                    { env with free_vars }, var
     end
   | LitExp l -> env, lit env l
+  | LetExp (is_rec, (name, ret_t), [], body1, body) -> 
+    if is_rec = true 
+    then failwith "Value cannot be defined with 'rec'";
+
+    let env, body = 
+      let init = Option.value body ~default:[] in 
+      Option.fold body1 ~init ~f:(flip List.cons)
+      |> List.fold_map ~init:env ~f:expr in
+
+    let t = List.last_exn body |> snd in 
+    add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
   | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
     let args, arg_ts = List.unzip args in 
 
@@ -224,6 +235,10 @@ let rec expr env =
 
     let env, cond = expr env cond in 
     env, (If { cond; then_body; else_body }, snd then_body)
+  | FieldGetExp (e, field) -> 
+    printf "field: %s get of: %s\n" field (show_expr e);
+    env, (Lit (Int 0), Int)
+  | RecordWithExp (e, withs) -> failwith "TODO TypedAst.RecordWithExp"
 
 and lit env = 
   function

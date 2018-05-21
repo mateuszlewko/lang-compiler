@@ -20,7 +20,7 @@ let to_exps fst_line rest =
 %token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
-%token QUOTE COMMA COLON SEMICOL
+%token QUOTE COMMA COLON SEMICOL DOT
 %token EQ
 %token INDENT DEDENT NEWLINE EOF
 %token EXTERNAL
@@ -145,21 +145,25 @@ array_lit: ARRAY_OPEN; es = separated_list(SEMICOL, array_elem); ARRAY_CLOSE;
 field_get_expr:
   | s = SYMBOL; DOT; field = SYMBOL 
     { FieldGetExp (VarExp s, field) }
-  | LPAR; e = application; RPAR; DOT; field = SYMBOL 
+  | e = field_get_expr; DOT; field = SYMBOL 
     { FieldGetExp (e, field) }
-  | LPAR; e = field_get_expr; RPAR; DOT; field = SYMBOL 
+  | e = simple_expr; DOT; field = SYMBOL 
+    { FieldGetExp (e, field) }
+  | LPAR; e = value_expr; RPAR; DOT; field = SYMBOL 
     { FieldGetExp (e, field) }
 
 simple_expr:  
-  | l = literal { LitExp l }
-  | s = nested_sym { VarExp s }
-  | i = infix_op { i }
+  | l = literal                 { LitExp l }
+  | s = nested_sym              { VarExp s }
+  | i = infix_op                { i }
+  | e = field_get_expr          { e }
   | LPAR; a = application; RPAR { a }
   | LPAR; e = simple_expr; RPAR { e }
 
 value_expr:
-  | e = simple_expr { e }
-  | e = application { e }
+  | e = simple_expr    { e }
+  | e = field_get_expr { e }
+  | e = application    { e }
 
 complex_expr:
   | l = letexp; NEWLINE* { l }
