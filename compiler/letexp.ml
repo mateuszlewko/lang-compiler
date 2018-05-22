@@ -25,7 +25,7 @@ let closure_t = Lang_types.closure_t
 let define_entry_fn m args name ret_type kind = 
   let arg_names, arg_lang_ts = List.unzip args in
   let arg_ts = List.map arg_lang_ts
-                        ~f:(LT.of_annotation %> LT.to_ollvm) in
+                        ~f:(LT.of_annotation BatMap.empty %> LT.to_ollvm) in
  
   let m, env_args_cnt  = M.local m T.i8 "env_args_cnt" in 
   let m, pass_args_cnt = M.local m T.i8 "pass_args_cnt" in 

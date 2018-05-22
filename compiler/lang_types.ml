@@ -9,8 +9,9 @@ type lang_type =
   | Bool
   | Float 
   | String 
-  | Array of lang_type
-  | Fun of lang_type list
+  | Array  of lang_type
+  | Fun    of lang_type list
+  | Record of (string * lang_type) list
   [@@deriving show]
 
 type t = lang_type
@@ -21,15 +22,22 @@ exception WrongNumberOfApplyArguments
 exception WrongTypeOfApplyArgument
 exception ValueCannotBeApplied 
 
-let of_annotation : A.type_annot option -> _ =
+let of_annotation records =
   let single =
     function
     | ["int"]           -> Int
     | ["bool"]          -> Bool
     | ["int"; "array"]  -> Array Int
     | ["()"] | ["unit"] -> Unit
-    | other             -> BatString.concat " " other
-                           |> UnsupportedType |> raise in
+    | [name]            -> 
+      begin 
+      try BatMap.find name records 
+      with Not_found -> UnsupportedType name |> raise
+      end
+    | other ->
+      BatString.concat " " other
+      |> UnsupportedType |> raise in
+      
   function
   | None     -> Int
   | Some []  -> raise (UnsupportedType "<empty>")

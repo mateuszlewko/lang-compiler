@@ -58,19 +58,21 @@ type bound = LT.t * location
 [@@deriving show]
 type bbb = bound * string 
 [@@deriving show]
+
+type key_type = KType | KVal 
  
-type bindings_map = (string, bound * string) BatMap.t
+type bindings_map = (key_type * string, bound * string) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
-    prefixed  : bindings_map
+    prefixed   : bindings_map
   (** symbols available without any prefix  *)
-  ; opened    : bindings_map
+  ; opened     : bindings_map
   (** current scope (module) prefix *)
-  ; prefix    : string
-  ; free_vars : (int, string * LT.t) BatMultiMap.t
-  ; level     : int 
-  ; extra_fun : (funexp * LT.t) list 
+  ; prefix     : string
+  ; free_vars  : (int, string * LT.t) BatMultiMap.t
+  ; level      : int 
+  ; extra_fun  : (funexp * LT.t) list 
   } 
 
 (** Creates top-level env *)
@@ -86,21 +88,22 @@ let name_in env = (^) env.prefix
 
 (** Adds new binding in current scope *)
 let add env name value =
-    let pref_name = name_in env name in
-    
-    { env with prefixed = BatMap.add pref_name (value, pref_name) env.prefixed 
-             ; opened   = BatMap.add name (value, pref_name) env.opened }
+  let pref_name = name_in env name in
+  
+  { env with 
+    prefixed = BatMap.add (KVal, pref_name) (value, pref_name) env.prefixed 
+  ; opened   = BatMap.add (KVal, name) (value, pref_name) env.opened }
 
 let find env name =
-    try BatMap.find name env.opened 
-    with Not_found -> 
-    try BatMap.find (name_in env name) env.prefixed 
-    with Not_found ->
-      env.opened 
-      |> BatMap.iter (fun s b -> printf "s: %s, b: %s" s (show_bbb b));
+  try BatMap.find (KVal, name) env.opened 
+  with Not_found -> 
+  try BatMap.find (KVal, name_in env name) env.prefixed 
+  with Not_found ->
+    env.opened 
+    |> BatMap.iter (fun (_, s) b -> printf "s: %s, b: %s" s (show_bbb b));
 
-      sprintf "Not found: %s, with prefix: %s\n" name env.prefix 
-      |> failwith
+    sprintf "Not found: %s, with prefix: %s\n" name env.prefix 
+    |> failwith
 
 exception ArrayElementsTypeMismatched
 exception IfBranchesTypeMismatched 
@@ -146,9 +149,9 @@ let rec expr env =
   | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
     let args, arg_ts = List.unzip args in 
 
-    let arg_ts = List.map arg_ts LT.of_annotation in 
+    let arg_ts = List.map arg_ts (LT.of_annotation BatMap.empty) in 
     let args   = List.zip_exn args arg_ts in 
-    let ret_t  = LT.of_annotation ret_t in 
+    let ret_t  = LT.of_annotation BatMap.empty ret_t in 
     let fn_t   = LT.merge arg_ts ret_t in 
     
     let env = { env with level = env.level + 1 } in
@@ -264,9 +267,9 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   let gen_name = name_in env name in 
   let args, arg_ts = List.unzip args in 
 
-  let arg_ts = List.map arg_ts LT.of_annotation in 
+  let arg_ts = List.map arg_ts (LT.of_annotation BatMap.empty) in 
   let args   = List.zip_exn args arg_ts in 
-  let ret_t  = LT.of_annotation ret_t in 
+  let ret_t  = LT.of_annotation BatMap.empty ret_t in 
   let fn_t   = LT.merge arg_ts ret_t in 
   let env    = let env = if is_rec 
                          then add env name (fn_t, Global) 
@@ -292,7 +295,7 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
     funexp env (is_rec, (name, ret_t), args, body1, body)
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
-    let t = LT.of_annotation (Some ta) in 
+    let t = LT.of_annotation BatMap.empty (Some ta) in 
     add env name (t, Global), [Extern ( { name     = name_in env name
                                         ; gen_name = name }
                                       , t )]
@@ -317,15 +320,15 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
       (* All symbols *)
       BatMap.merge merge env.prefixed env.opened
       (* Select symbols that will be opened *)
-      |> BatMap.filter (fun k _ -> starts_with k path)
+      |> BatMap.filter (fun (_, k) _ -> starts_with k path)
       (* |> fun m -> BatMap.iter (fun k _ -> printf "-- o key: %s\n" k) m; m *)
       (* Remove path prefix from selected symbols *)
       |> fun map -> 
         BatMap.foldi 
-          (fun key v new_map ->
+          (fun (k_type, key) v new_map ->
             let path_len = length path in
             let new_name = sub key path_len (length key - path_len) in
-            BatMap.add new_name v new_map)
+            BatMap.add (k_type, new_name) v new_map)
           map BatMap.empty
       (* Merge with previously opened symbols, possibly overwriting
          some of them *)
