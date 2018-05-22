@@ -86,13 +86,22 @@ let empty = { prefixed  = BatMap.empty
 (** Evaluates name in current scope *)
 let name_in env = (^) env.prefix
 
-(** Adds new binding in current scope *)
-let add env name value =
+let add_raw env name key_type value = 
   let pref_name = name_in env name in
   
   { env with 
-    prefixed = BatMap.add (KVal, pref_name) (value, pref_name) env.prefixed 
-  ; opened   = BatMap.add (KVal, name) (value, pref_name) env.opened }
+    prefixed = BatMap.add (key_type, pref_name) (value, pref_name) env.prefixed 
+  ; opened   = BatMap.add (key_type, name) (value, pref_name) env.opened }
+
+(** Adds new binding in current scope *)
+let add env name value      = add_raw env name KVal value 
+let add_type env name value = add_raw env name KType value 
+
+let find_type env name = 
+  try BatMap.find (KVal, name) env.opened |> Some
+  with Not_found -> 
+  try BatMap.find (KVal, name_in env name) env.prefixed |> Some
+  with Not_found -> None
 
 let find env name =
   try BatMap.find (KVal, name) env.opened 
@@ -334,11 +343,13 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
          some of them *)
       |> BatMap.merge merge env.opened in
     { env with opened }, []
-  | TypeDecl td        -> 
-    Lang_parsing.Ast.show_type_declaration td 
-    |> printf "defined type: %s\n";
-    
-    env, []
+  | TypeDecl (RecordType (name, fields))        -> 
+    let get t = LT.of_annotation BatMap.empty (Some t) in  
+    let t     = List.map fields (fun (f_name, ft) -> f_name, get ft) 
+                |> LT.Record in
+                 
+    add_type env name (t, Global), []
+
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 
   let top env expr =
@@ -348,4 +359,4 @@ let of_tops tops =
 
   let env, tops = 
     List.fold_map tops ~init:env ~f:top in 
-  List.concat tops 
+  List.concat tops  

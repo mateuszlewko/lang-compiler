@@ -37,7 +37,7 @@ let of_annotation records =
     | other ->
       BatString.concat " " other
       |> UnsupportedType |> raise in
-      
+
   function
   | None     -> Int
   | Some []  -> raise (UnsupportedType "<empty>")
@@ -90,9 +90,10 @@ let closure_t = let open High_ollvm.Ez.Type in
 let rec to_ollvm = 
   let module T = High_ollvm.Ez.Type in
   function
-  | Int         -> T.i32 
-  | Bool | Unit -> T.i1
-  | Fun _       -> closure_t
-  | Float       -> T.float
-  | Array t     -> T.array 0 (to_ollvm t) |> T.ptr
-  | String      -> T.ptr T.i8
+  | Int           -> T.i32 
+  | Bool | Unit   -> T.i1
+  | Fun _         -> closure_t
+  | Float         -> T.float
+  | Array t       -> T.array 0 (to_ollvm t) |> T.ptr
+  | String        -> T.ptr T.i8
+  | Record fields -> T.structure (List.map fields (snd %> to_ollvm))
