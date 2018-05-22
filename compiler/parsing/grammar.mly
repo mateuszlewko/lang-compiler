@@ -106,8 +106,6 @@ application:
 infix_op:
   | l = value_expr; o = oper; r = value_expr
     { InfixOp (o, Some l, Some r) }
-  /* | l = value_expr; EQ; r = value_expr
-    { InfixOp ("=", Some l, Some r) } */
 
 else_exp: ELSE; exp = value_expr?; NEWLINE*; exps = indented?
           { to_exps exp exps }
@@ -182,14 +180,27 @@ record_literal_fields:
  | f = record_literal_field; record_decl_sep; 
    fs = record_literal_fields { f::fs }
 
-record_literal: 
-  LCURLY; ignore_indent; fields = record_literal_fields
-  { RecordLiteral fields }
 
+/*
+field_and_with:
+  | ignore_indent; fields = record_literal_fields { None, fields }
+  | e = nested_sym; WITH; ignore_indent;
+    fields = record_literal_fields { Some (VarExp e), fields }*/
+
+with_exp: e = value_expr; WITH; ignore_indent { e }
+
+record_literal: 
+| LCURLY; ignore_indent; fields = record_literal_fields
+  { RecordLiteral fields }
+| LCURLY; ignore_indent; w = with_exp; ignore_indent; 
+  fields = record_literal_fields
+  { RecordWithExp (w, fields) }
+
+/*
 record_update: 
   LCURLY; ignore_indent; e = value_expr; ignore_indent; WITH; ignore_indent; 
   fields = record_literal_fields
-  { RecordWithExp (e, fields) }
+  { RecordWithExp (e, fields) }*/
 
 simple_expr:  
   | l = literal                 { LitExp l }
@@ -201,12 +212,10 @@ simple_expr:
   | LPAR; e = simple_expr; RPAR { e }
 
 value_expr:
-  | e = simple_expr    { e }
-  /*| e = field_get_expr { e }*/
-  | e = application    { e }
+  | e = simple_expr { e }
+  | e = application { e }
 
 complex_expr:
-  | e = record_update; NEWLINE* { e }
   | e = record_literal; NEWLINE* { e }
   | l = letexp; NEWLINE* { l }
   | e = if_exp; NEWLINE* { e }

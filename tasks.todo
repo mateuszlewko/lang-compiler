@@ -23,7 +23,7 @@ Parser:
     ✔ record types @done(18-05-21 01:45)
     ✔ record field get @done(18-05-21 21:54)
     ✔ record literal @done(18-05-22 01:53)
-    ❑ record field update @today 
+    ✔ record field update @today @done(18-05-22 18:55)
 
     ❑ lambda (fun or =>)
     ❑ mutable var

@@ -105,7 +105,12 @@ module Add =
         let u2 = 
             { fn b with a = 3; d }
         
-        let u3 =  { fn b with a = 3 }
+        let u3 =  { (fn b) with a = 3 }
+        let u4 =  
+            { 3 + fn b with a = 3 
+                    ;d = fn b + 2 ; 
+                    c
+            }
         
         innerAdder
 
