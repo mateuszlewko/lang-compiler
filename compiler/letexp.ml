@@ -22,7 +22,7 @@ type entry_fn_info =
 
 let closure_t = Lang_types.closure_t 
 
-let define_entry_fn m args name ret_type kind = 
+(* let define_entry_fn m args name ret_type kind = 
   let arg_names, arg_lang_ts = List.unzip args in
   let arg_ts = List.map arg_lang_ts
                         ~f:(LT.of_annotation BatMap.empty %> LT.to_ollvm) in
@@ -46,7 +46,7 @@ let define_entry_fn m args name ret_type kind =
     ; data_ptr      = data_ptr
     ; args          = args 
     ; definition    = def
-    } in m, info  
+    } in m, info   *)
 
 type value_entry_info = 
   { definition : Ez.Block.block list -> Ast.definition

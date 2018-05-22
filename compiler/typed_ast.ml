@@ -103,6 +103,8 @@ let find_type env name =
   try BatMap.find (KVal, name_in env name) env.prefixed |> Some
   with Not_found -> None
 
+let (!->) env = find_type env %> Option.map ~f:(fst %> fst)
+
 let find env name =
   try BatMap.find (KVal, name) env.opened 
   with Not_found -> 
@@ -158,9 +160,9 @@ let rec expr env =
   | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
     let args, arg_ts = List.unzip args in 
 
-    let arg_ts = List.map arg_ts (LT.of_annotation BatMap.empty) in 
+    let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
     let args   = List.zip_exn args arg_ts in 
-    let ret_t  = LT.of_annotation BatMap.empty ret_t in 
+    let ret_t  = LT.of_annotation !-> env ret_t in 
     let fn_t   = LT.merge arg_ts ret_t in 
     
     let env = { env with level = env.level + 1 } in
@@ -276,9 +278,9 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   let gen_name = name_in env name in 
   let args, arg_ts = List.unzip args in 
 
-  let arg_ts = List.map arg_ts (LT.of_annotation BatMap.empty) in 
+  let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
   let args   = List.zip_exn args arg_ts in 
-  let ret_t  = LT.of_annotation BatMap.empty ret_t in 
+  let ret_t  = LT.of_annotation !-> env ret_t in 
   let fn_t   = LT.merge arg_ts ret_t in 
   let env    = let env = if is_rec 
                          then add env name (fn_t, Global) 
@@ -304,7 +306,7 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
     funexp env (is_rec, (name, ret_t), args, body1, body)
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
-    let t = LT.of_annotation BatMap.empty (Some ta) in 
+    let t = LT.of_annotation !-> env (Some ta) in 
     add env name (t, Global), [Extern ( { name     = name_in env name
                                         ; gen_name = name }
                                       , t )]
@@ -344,7 +346,7 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
       |> BatMap.merge merge env.opened in
     { env with opened }, []
   | TypeDecl (RecordType (name, fields))        -> 
-    let get t = LT.of_annotation BatMap.empty (Some t) in  
+    let get t = LT.of_annotation !-> env (Some t) in  
     let t     = List.map fields (fun (f_name, ft) -> f_name, get ft) 
                 |> LT.Record in
                  

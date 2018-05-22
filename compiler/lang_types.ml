@@ -22,7 +22,7 @@ exception WrongNumberOfApplyArguments
 exception WrongTypeOfApplyArgument
 exception ValueCannotBeApplied 
 
-let of_annotation records =
+let of_annotation find_type =
   let single =
     function
     | ["int"]           -> Int
@@ -31,8 +31,9 @@ let of_annotation records =
     | ["()"] | ["unit"] -> Unit
     | [name]            -> 
       begin 
-      try BatMap.find name records 
-      with Not_found -> UnsupportedType name |> raise
+      match find_type name with 
+      | Some t -> t 
+      | None   -> UnsupportedType name |> raise
       end
     | other ->
       BatString.concat " " other
