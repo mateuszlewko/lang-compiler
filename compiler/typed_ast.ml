@@ -35,6 +35,7 @@ and body_expr =
   | App     of expr_t * expr_t list 
   | InfixOp of string * expr_t option * expr_t option 
   | If      of ifexp 
+  | GepLoad of expr_t * int list
   | Exprs   of expr_t list
   [@@deriving show]
 
@@ -250,8 +251,20 @@ let rec expr env =
     let env, cond = expr env cond in 
     env, (If { cond; then_body; else_body }, snd then_body)
   | FieldGetExp (e, field) -> 
-    printf "field: %s get of: %s\n" field (show_expr e);
-    env, (Lit (Int 0), Int)
+    let env, (expr, t) = expr env e in 
+    let fail () = LT.show t 
+                  |> sprintf "Field %s is not defined on type %s.\n" field 
+                  |> failwith in
+    begin
+    match t with 
+    | Record fields -> 
+      begin 
+      match List.findi fields (fun _ (f,_ ) -> f = field) with 
+      | Some (i, (_, field_t)) -> env, (GepLoad ((expr, t), [0; i]), field_t)
+      | None                   -> fail () 
+      end
+    | _             -> fail ()
+    end
   | RecordWithExp (e, withs) as rw -> 
     printf "record update: %s" (show_expr rw); 
     env, (Lit (Int 0), Int)

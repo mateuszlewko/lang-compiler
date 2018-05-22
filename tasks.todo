@@ -76,7 +76,11 @@ Codegen:
     ✔ implement open in typed ast @today @done(18-05-19 16:27)
     ❑ multiple global variables with same name @critical 
 
-    ❑ record types and operations
+    record types and operations:
+        ✔ field get @done(18-05-22 23:52)
+        ❑ field update
+        ❑ record literal
+
     ❑ let-polymorphism
     ❑ simple type inference
    
@@ -102,7 +106,7 @@ Codegen:
     ❑ algebraic types (unions / variants)
 
     ❑ type char @medium
-    // ❑ multi-file programs @low @optional
+    ✘ multi-file programs @low @optional @cancelled(18-05-22 23:31)
 
 Optimisations: @optional
     ✔ Value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
@@ -127,5 +131,5 @@ Other:
     ✔ Tests! @critical @done(18-01-27 03:16)
     ✔ source code compiler @high @today @done(18-01-22 19:53)
     ✔ ast pretty-printer @high @done(18-01-10 01:21)
-    // ❑ interpreter @optional
-    // ❑ handle infix operators of different priority @optional
+    ✘ interpreter @optional @cancelled(18-05-22 23:31)
+    ✘ handle infix operators of different priority @optional @cancelled(18-05-22 23:31)
