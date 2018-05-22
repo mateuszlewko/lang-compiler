@@ -17,7 +17,7 @@ let to_exps fst_line rest =
 %token <string> STRING
 %token <string> OPERATOR
 %token <char> KWD
-%token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN
+%token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN 
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token QUOTE COMMA COLON SEMICOL DOT
@@ -186,6 +186,11 @@ record_literal:
   LCURLY; ignore_indent; fields = record_literal_fields
   { RecordLiteral fields }
 
+record_update: 
+  LCURLY; ignore_indent; e = value_expr; ignore_indent; WITH; ignore_indent; 
+  fields = record_literal_fields
+  { RecordWithExp (e, fields) }
+
 simple_expr:  
   | l = literal                 { LitExp l }
   | s = nested_sym              { VarExp s }
@@ -197,10 +202,11 @@ simple_expr:
 
 value_expr:
   | e = simple_expr    { e }
-  | e = field_get_expr { e }
+  /*| e = field_get_expr { e }*/
   | e = application    { e }
 
 complex_expr:
+  | e = record_update; NEWLINE* { e }
   | e = record_literal; NEWLINE* { e }
   | l = letexp; NEWLINE* { l }
   | e = if_exp; NEWLINE* { e }

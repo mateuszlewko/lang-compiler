@@ -18,12 +18,12 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ✔ correct priority of operators @done(18-01-26 23:17)
 
-    ❑ proper (improved) parsing @critical 
+    ❑ proper (improved) parsing @high 
 
     ✔ record types @done(18-05-21 01:45)
     ✔ record field get @done(18-05-21 21:54)
     ✔ record literal @done(18-05-22 01:53)
-    ❑ record field update
+    ❑ record field update @today 
 
     ❑ lambda (fun or =>)
     ❑ mutable var
@@ -76,19 +76,20 @@ Codegen:
     ✔ implement open in typed ast @today @done(18-05-19 16:27)
     ❑ multiple global variables with same name @critical 
 
-    ❑ top level expressions 
-
-    ❑ record types
+    ❑ record types and operations
     ❑ let-polymorphism
-    ❑ mutually recursive functions
-    ❑ type float @medium
-    ❑ type checking / basic type inference @high
-    ❑ arithmetic operations (float) @medium
-
+    ❑ simple type inference
+   
     ❑ type classes
     ❑ type inference with type classes
 
     ❑ generic arrays
+    ❑ mutually recursive functions
+    ❑ top level expressions 
+    ❑ type float @medium
+    ❑ type checking / basic type inference @high
+    ❑ arithmetic operations (float) @medium
+
     ❑ simple boehm gc
 
     ❑ lambda (fun or =>)

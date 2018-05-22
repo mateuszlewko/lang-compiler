@@ -156,6 +156,7 @@ and token state buf =
   | "module"   -> [MODULE], state
   | "open"     -> [OPEN], state
   | "type"     -> [TYPE], state
+  | "with"     -> [WITH], state
 
   | '"'   -> [QUOTE], state
   | "->"  -> [ARROW], state

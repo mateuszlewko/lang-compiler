@@ -95,6 +95,17 @@ module Add =
             }
 
         let x3b = { a; b= fn 5 + 9; c  }.a
+
+        let u1 = 
+            { r with a = 3
+                 b = 4 + 5
+                 ; c; d = 2
+            }
+
+        let u2 = 
+            { fn b with a = 3; d }
+        
+        let u3 =  { fn b with a = 3 }
         
         innerAdder
 
