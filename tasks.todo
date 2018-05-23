@@ -79,7 +79,7 @@ Codegen:
     record types and operations:
         ✔ field get @done(18-05-22 23:52)
         ❑ field update
-        ❑ record literal
+        ✔ record literal @done(18-05-23 19:12)
 
     ❑ let-polymorphism
     ❑ simple type inference
@@ -105,7 +105,8 @@ Codegen:
     ❑ function keyword or similar (pattern matching)
     ❑ algebraic types (unions / variants)
 
-    ❑ type char @medium
+    ❑ type string @medium @optional 
+    ❑ type char @medium @optional 
     ✘ multi-file programs @low @optional @cancelled(18-05-22 23:31)
 
 Optimisations: @optional

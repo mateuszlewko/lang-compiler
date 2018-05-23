@@ -283,7 +283,7 @@ let rec expr env =
       end
     | _             -> fail ()
     end
-  | RecordWithExp (e, withs) as rw -> 
+  | RecordWithExp (e, withs) -> 
     let env, e = expr env e in 
     let t      = snd e in 
     let e      = Clone e, t in 

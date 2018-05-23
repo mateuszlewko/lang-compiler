@@ -337,6 +337,29 @@ module Codegen = struct
                            name |> failwith in 
     iss, src, env
 
+  let gen_gep_load (env : Env.t) expr e ixs t = 
+    let iss, e, (env : Env.t) = expr env e in 
+    let m, res                = M.local env.m (LT.to_ollvm t) "gep_load" in 
+    let iss = iss @ [ Instr (res <-- gep res ixs); Instr (res <-- load res) ] in
+    iss, res, { env with m }
+
+  let gen_record_lit (env : Env.t) expr fields t = 
+    let ot = LT.to_ollvm t in 
+    let (fields_instrs, env), field_vals = 
+      List.fold_map fields ~init:([], env) 
+        ~f:(fun (all, env) arg ->  
+              let iss, arg, env = expr env arg in
+              (iss @ all, env), arg) in
+
+    let m, rec_ptr = M.local env.m (T.ptr ot) "record_ptr" in 
+    let s          = structure ~packed:true field_vals in 
+    let iss = fields_instrs @ 
+      [ rec_ptr <-- malloc ot  |> Instr 
+      ; store s rec_ptr |> snd |> Instr
+      ] in 
+
+    iss, rec_ptr, { env with m }
+
   let rec gen_expr env = 
     function 
     | TA.SetVar (name, e), _ -> gen_set_var env gen_expr name e 
@@ -355,9 +378,11 @@ module Codegen = struct
     | Value   (name, e)     , t -> gen_value env gen_expr name e t
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
-    | GepLoad (e, ixs)      , t -> failwith "codegen GepLoad TODO"
-    | RecordLit fields      , t -> failwith "codegen RecordLit TODO"
- 
+    | GepLoad (e, ixs)      , t -> gen_gep_load env gen_expr e ixs t
+    | RecordLit fields      , t -> gen_record_lit env gen_expr fields t
+    | Clone e               , t -> failwith "codegen Clone TODO"
+    | GepStore gep_s        , t -> failwith "codegen GetStore TODO"
+
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
     match t with 

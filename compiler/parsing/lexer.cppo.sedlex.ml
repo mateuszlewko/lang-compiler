@@ -229,10 +229,10 @@ let parse buf p =
       flush_all ();
       t
   in
-  let next_token () =
+  (* let next_token () =
     let t = next_token () in
     printf "token: \027[31m%s\027[0m\n" (show_token (fst3 t));
-    t in
+    t in *)
 
   try MenhirLib.Convert.Simplified.traditional2revised p next_token with
   | LexError (pos, s) -> raise (LexError (pos, s))
