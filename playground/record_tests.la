@@ -43,6 +43,9 @@ let top2 : () =
     printn_int (p5.y)
     printn_int (p5.z2 + -2)
     pass_rec p5
+    let p5b : point5 = { p5 with z2 = -1 }
+    pass_rec p5
+    pass_rec p5b
     
 (* let main () =
     (test1 100 2 100) 10 11 *)

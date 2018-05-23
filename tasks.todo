@@ -78,7 +78,7 @@ Codegen:
 
     record types and operations:
         ✔ field get @done(18-05-22 23:52)
-        ❑ field update
+        ✔ field update @done(18-05-23 21:13)
         ✔ record literal @done(18-05-23 19:12)
 
     ❑ let-polymorphism

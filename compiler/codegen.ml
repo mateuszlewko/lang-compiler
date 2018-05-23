@@ -343,6 +343,16 @@ module Codegen = struct
     let iss = iss @ [ Instr (res <-- gep e ixs); Instr (res <-- load res) ] in
     iss, res, { env with m }
 
+  let gen_gep_store (env : Env.t) expr (gep_store : TA.gep_store) t = 
+    let iss_src , src , env = expr env gep_store.src in 
+    let iss_dest, dest, env = expr env gep_store.dest in 
+    let m, ptr = M.local env.m (T.ptr T.opaque) "gep_ptr" in 
+    let iss = iss_src @ iss_dest @
+      [ ptr <-- gep dest gep_store.idx |> Instr
+      ; store src ptr |> snd           |> Instr ] in
+
+    iss, dest, { env with m }
+
   let gen_record_lit (env : Env.t) expr fields t = 
     let ot = LT.to_ollvm ~is_arg:false t in 
     let (fields_instrs, env), field_vals = 
@@ -361,13 +371,20 @@ module Codegen = struct
     iss, rec_ptr, { env with m }
 
   let gen_clone (env : Env.t) expr e t =
-    let iss, src, (env : Env.t) = expr env e in 
+    let iss, src_raw, (env : Env.t) = expr env e in 
     
     let m, dest = M.local env.m (LT.to_ollvm t) "clone_ptr" in
+    let m, src  = M.local m (T.ptr T.i8) "src_ptr" in
+
     let t_raw   = LT.to_ollvm ~is_arg:false t in 
     let iss     = iss @ 
-      [ dest <-- malloc t_raw |> Instr
-      ; memcpy ~src ~dest (t_size t_raw |> i32) |> snd  |> Instr ] in 
+      (List.map ~f:(fun x -> Instr x) 
+       [ dest <-- malloc t_raw                        
+       ; dest <-- bitcast dest (T.ptr T.i8)           
+       ; src  <-- bitcast src_raw (T.ptr  T.i8)          
+       ; memcpy ~src ~dest (t_size t_raw |> i32) |> snd 
+       ; dest <-- bitcast dest (LT.to_ollvm t)        
+       ]) in 
 
     iss, dest, { env with m }
 
@@ -392,7 +409,7 @@ module Codegen = struct
     | GepLoad (e, ixs)      , t -> gen_gep_load env gen_expr e ixs t
     | RecordLit fields      , t -> gen_record_lit env gen_expr fields t
     | Clone e               , t -> gen_clone env gen_expr e t
-    | GepStore gep_s        , t -> failwith "codegen GetStore TODO"
+    | GepStore gep_s        , t -> gen_gep_store env gen_expr gep_s t
 
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
