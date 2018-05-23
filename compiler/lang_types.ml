@@ -88,7 +88,7 @@ let closure_t = let open High_ollvm.Ez.Type in
                   [ ptr (ptr (fn void [])); ptr i8; i8; i8
                   ; i32 ]
 
-let rec to_ollvm = 
+let rec to_ollvm ?(is_arg=true) = 
   let module T = High_ollvm.Ez.Type in
   function
   | Int           -> T.i32 
@@ -99,3 +99,4 @@ let rec to_ollvm =
   | String        -> T.ptr T.i8
   | Record fields -> List.map fields (snd %> to_ollvm)  
                      |> T.structure ~packed:true 
+                     |> (if is_arg then T.ptr else identity)

@@ -344,7 +344,7 @@ module Codegen = struct
     iss, res, { env with m }
 
   let gen_record_lit (env : Env.t) expr fields t = 
-    let ot = LT.to_ollvm t in 
+    let ot = LT.to_ollvm ~is_arg:false t in 
     let (fields_instrs, env), field_vals = 
       List.fold_map fields ~init:([], env) 
         ~f:(fun (all, env) arg ->  
@@ -363,11 +363,11 @@ module Codegen = struct
   let gen_clone (env : Env.t) expr e t =
     let iss, src, (env : Env.t) = expr env e in 
     
-    let t       = LT.to_ollvm t in 
-    let m, dest = M.local env.m t "clone_ptr" in
+    let m, dest = M.local env.m (LT.to_ollvm t) "clone_ptr" in
+    let t_raw   = LT.to_ollvm ~is_arg:false t in 
     let iss     = iss @ 
-      [ dest <-- malloc t |> Instr
-      ; memcpy ~src ~dest (bs_size dest |> i32) |> snd  |> Instr ] in 
+      [ dest <-- malloc t_raw |> Instr
+      ; memcpy ~src ~dest (t_size t_raw |> i32) |> snd  |> Instr ] in 
 
     iss, dest, { env with m }
 

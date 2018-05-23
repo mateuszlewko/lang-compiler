@@ -29,6 +29,10 @@ type point4 = { x : int; y : int
 type point5 = { x : int; y : int ;
     z2 : int}
 
+let pass_rec (r : point5) : () = 
+    printn_int (r.y)
+    printn_int (r.z2 + -2)
+
 let top2 : () = 
     let p2 : point2 = { x = 1; y = 4} 
     let p5 : point5 = 
@@ -38,7 +42,8 @@ let top2 : () =
     printn_int (p2 . y)
     printn_int (p5.y)
     printn_int (p5.z2 + -2)
-
+    pass_rec p5
+    
 (* let main () =
     (test1 100 2 100) 10 11 *)
 
