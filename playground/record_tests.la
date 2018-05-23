@@ -33,6 +33,8 @@ let pass_rec (r : point5) : () =
     printn_int (r.y)
     printn_int (r.z2 + -2)
 
+let adder a b = a + b
+
 let top2 : () = 
     let p2 : point2 = { x = 1; y = 4} 
     let p5 : point5 = 
@@ -43,7 +45,7 @@ let top2 : () =
     printn_int (p5.y)
     printn_int (p5.z2 + -2)
     pass_rec p5
-    let p5b : point5 = { p5 with z2 = -1 }
+    let p5b : point5 = { p5 with z2 = -1; y = adder 5 2 }
     pass_rec p5
     pass_rec p5b
     
