@@ -1,0 +1,69 @@
+external ll_putint     : int -> () 
+external ll_print_line : ()  -> () 
+
+let print_int : int -> () = ll_putint
+let print_nl  : ()  -> () = ll_print_line
+let printn_int x : () = 
+    print_int x 
+    print_nl () 
+
+type Point = {
+        x : int 
+        y : int 
+    }
+
+type point1 = 
+    {
+        x : int 
+        y : int 
+    }
+
+type point2 = { x : int; y : int }
+
+type point3 = { x : int; y : int 
+              ; z : int }
+
+type point4 = { x : int; y : int 
+    z : int}
+
+type point5 = { x : int; y : int ;
+    z2 : int}
+
+let top2 : () = 
+    let p2 : point2 = { x = 1; y = 4} 
+    let p5 : point5 = 
+        { x = 10; y = 1000000 
+          z2 = -10 
+        }
+    printn_int (p2 . y)
+    printn_int (p5.y)
+    printn_int (p5.z2 + -2)
+
+(* let main () =
+    (test1 100 2 100) 10 11 *)
+
+(* OCaml version *)
+(*
+let adder5 a b c d e = a + b + c + d + e 
+
+let adder3 a b c : int -> int -> int = 
+    adder5 a b c
+
+let apply2 which (f3 : int -> int -> int) (g3 : int -> int -> int) () = 
+    if which = 1
+    then (f3 1 2) + (f3 3 10) 
+    else if which = 2 
+    then (f3 1 2) + (f3 3 11)
+    else (f3 1 2) + (f3 3 12)
+
+let rec test (fn : unit -> int) cnt = 
+    if cnt = 0
+    then fn ()
+    else (
+        fn ();
+        test fn (cnt - 1)
+    )
+
+let main  = test (apply2 2 (adder3 5 6 7) (adder3 8 9 10)) 100000000
+
+*)

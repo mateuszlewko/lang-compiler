@@ -97,4 +97,5 @@ let rec to_ollvm =
   | Float         -> T.float
   | Array t       -> T.array 0 (to_ollvm t) |> T.ptr
   | String        -> T.ptr T.i8
-  | Record fields -> T.structure (List.map fields (snd %> to_ollvm))
+  | Record fields -> List.map fields (snd %> to_ollvm)  
+                     |> T.structure ~packed:true 

@@ -176,9 +176,9 @@ module Codegen = struct
       let ret_i     = Ez.Instr.ret ret_v |> Instr in
       let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
       
-      (* printf "\n--- START OF FUN --- \n";
+      printf "\n--- START OF FUN --- \n";
       List.iter blocks (show_block %> printf "block: %s\n");
-      printf "--- END OF FUN --- \n"; *)
+      printf "--- END OF FUN --- \n";
 
       let df        = define fn args blocks in
       let env = { env with m = M.definition m df } in 
@@ -340,7 +340,7 @@ module Codegen = struct
   let gen_gep_load (env : Env.t) expr e ixs t = 
     let iss, e, (env : Env.t) = expr env e in 
     let m, res                = M.local env.m (LT.to_ollvm t) "gep_load" in 
-    let iss = iss @ [ Instr (res <-- gep res ixs); Instr (res <-- load res) ] in
+    let iss = iss @ [ Instr (res <-- gep e ixs); Instr (res <-- load res) ] in
     iss, res, { env with m }
 
   let gen_record_lit (env : Env.t) expr fields t = 
@@ -359,6 +359,17 @@ module Codegen = struct
       ] in 
 
     iss, rec_ptr, { env with m }
+
+  let gen_clone (env : Env.t) expr e t =
+    let iss, src, (env : Env.t) = expr env e in 
+    
+    let t       = LT.to_ollvm t in 
+    let m, dest = M.local env.m t "clone_ptr" in
+    let iss     = iss @ 
+      [ dest <-- malloc t |> Instr
+      ; memcpy ~src ~dest (bs_size dest |> i32) |> snd  |> Instr ] in 
+
+    iss, dest, { env with m }
 
   let rec gen_expr env = 
     function 
@@ -380,7 +391,7 @@ module Codegen = struct
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
     | GepLoad (e, ixs)      , t -> gen_gep_load env gen_expr e ixs t
     | RecordLit fields      , t -> gen_record_lit env gen_expr fields t
-    | Clone e               , t -> failwith "codegen Clone TODO"
+    | Clone e               , t -> gen_clone env gen_expr e t
     | GepStore gep_s        , t -> failwith "codegen GetStore TODO"
 
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
