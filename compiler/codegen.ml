@@ -355,7 +355,9 @@ module Codegen = struct
     | Value   (name, e)     , t -> gen_value env gen_expr name e t
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
-
+    | GepLoad (e, ixs)      , t -> failwith "codegen GepLoad TODO"
+    | RecordLit fields      , t -> failwith "codegen RecordLit TODO"
+ 
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
     match t with 

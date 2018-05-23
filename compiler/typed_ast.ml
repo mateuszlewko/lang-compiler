@@ -20,6 +20,12 @@ and ifexp =
   ; then_body : expr_t
   ; else_body : expr_t }
 
+and gep_store = 
+  { src  : expr_t 
+  ; dest : expr_t
+  ; idx  : int list 
+  }
+
 and literal =
   | Int    of int
   | String of string
@@ -28,15 +34,18 @@ and literal =
   | Unit
 
 and body_expr = 
-  | Var     of string 
-  | SetVar  of string * expr_t
-  | Lit     of literal
-  | Value   of string * expr_t
-  | App     of expr_t * expr_t list 
-  | InfixOp of string * expr_t option * expr_t option 
-  | If      of ifexp 
-  | GepLoad of expr_t * int list
-  | Exprs   of expr_t list
+  | Var       of string 
+  | SetVar    of string * expr_t
+  | Lit       of literal
+  | Value     of string * expr_t
+  | App       of expr_t * expr_t list 
+  | InfixOp   of string * expr_t option * expr_t option 
+  | If        of ifexp 
+  | GepLoad   of expr_t * int list
+  | Clone     of expr_t
+  | GepStore  of gep_store
+  | RecordLit of expr_t list
+  | Exprs     of expr_t list
   [@@deriving show]
 
 and expr_t = body_expr * LT.t
@@ -60,9 +69,10 @@ type bound = LT.t * location
 type bbb = bound * string 
 [@@deriving show]
 
-type key_type = KType | KVal 
+type key = Type of string | Val of string | Fields of (string * LT.t) BatSet.t
+(* [@@deriving show] *)
  
-type bindings_map = (key_type * string, bound * string) BatMap.t
+type bindings_map = (key, bound * string) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
@@ -87,32 +97,40 @@ let empty = { prefixed  = BatMap.empty
 (** Evaluates name in current scope *)
 let name_in env = (^) env.prefix
 
-let add_raw env name key_type value = 
+let add_raw env name (key_type : string -> key) value = 
   let pref_name = name_in env name in
   
   { env with 
-    prefixed = BatMap.add (key_type, pref_name) (value, pref_name) env.prefixed 
-  ; opened   = BatMap.add (key_type, name) (value, pref_name) env.opened }
+    prefixed = BatMap.add (key_type pref_name) (value, pref_name) env.prefixed 
+  ; opened   = BatMap.add (key_type name) (value, pref_name) env.opened }
 
 (** Adds new binding in current scope *)
-let add env name value      = add_raw env name KVal value 
-let add_type env name value = add_raw env name KType value 
+let add env name value      = add_raw env name (fun x -> Val x) value
+let add_type env name value = add_raw env name (fun x -> Type x) value
 
 let find_type env name = 
-  try BatMap.find (KVal, name) env.opened |> Some
+  try BatMap.find (Type name) env.opened |> Some
   with Not_found -> 
-  try BatMap.find (KVal, name_in env name) env.prefixed |> Some
+  try BatMap.find (Type (name_in env name)) env.prefixed |> Some
+  with Not_found -> None
+
+(* TODO: Don't duplicate this code *)
+let find_fields env fields = 
+  try BatMap.find (Fields fields) env.opened |> Some
+  with Not_found -> 
+  try BatMap.find (Fields fields) env.prefixed |> Some
   with Not_found -> None
 
 let (!->) env = find_type env %> Option.map ~f:(fst %> fst)
 
 let find env name =
-  try BatMap.find (KVal, name) env.opened 
+  try BatMap.find (Val name) env.opened 
   with Not_found -> 
-  try BatMap.find (KVal, name_in env name) env.prefixed 
+  try BatMap.find (Val (name_in env name)) env.prefixed 
   with Not_found ->
     env.opened 
-    |> BatMap.iter (fun (_, s) b -> printf "s: %s, b: %s" s (show_bbb b));
+    |> BatMap.iter (fun k b -> printf "s: %s, b: %s" ("show_key k") 
+                                 (show_bbb b));
 
     sprintf "Not found: %s, with prefix: %s\n" name env.prefix 
     |> failwith
@@ -266,12 +284,44 @@ let rec expr env =
     | _             -> fail ()
     end
   | RecordWithExp (e, withs) as rw -> 
-    printf "record update: %s" (show_expr rw); 
-    env, (Lit (Int 0), Int)
+    let env, e = expr env e in 
+    let t      = snd e in 
+    let e      = Clone e, t in 
+    begin 
+    match t with 
+    | Record fields -> 
+      let set (env, e) field with_e =  
+        match List.findi fields (fun _ (f, ft) -> f = field) with 
+        | None        -> failwith "Field not found.\n"
+        | Some (i, _) -> 
+          let env, with_e = expr env with_e in 
+          let ft          = snd (List.nth_exn fields i) in
+          
+          if snd with_e <> ft 
+          then sprintf "Expression in field %s assignment has incorrect type, \
+                        expected: %s, instead of: %s.\n" 
+                        field (LT.show ft) (LT.show (snd with_e)) |> failwith;
+          env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
+        
+      failwith ""
+    | other         -> sprintf "Expression preceding with must be a record, \
+                                not: %s.\n" (LT.show t) |> failwith
+    end                         
+    (* printf "record update: %s" (show_expr rw); 
+    env, (Lit (Int 0), Int) *)
 
   | RecordLiteral fields as rl -> 
-    printf "record literal: %s" (show_expr rl); 
-    env, (Lit (Int 0), Int)
+    (* TODO: sort fields by index *)
+    let env, fs = List.fold_map fields env (fun env (_, f) -> expr env f) in
+    let r       = RecordLit fs in
+    let t       = List.zip_exn (List.map fields fst) (List.map fs snd)
+                  |> BatSet.of_list |> find_fields env in 
+    match t with 
+    | Some ((t, Global), _) -> env, (r, t)
+    | _                     ->
+      sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
+      |> failwith
+    
 
 and lit env = 
   function
@@ -344,25 +394,33 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
       (* All symbols *)
       BatMap.merge merge env.prefixed env.opened
       (* Select symbols that will be opened *)
-      |> BatMap.filter (fun (_, k) _ -> starts_with k path)
+      |> BatMap.filter (function | Type s | Val s -> starts_with s path |> const
+                                 | Fields _       -> const true)
       (* |> fun m -> BatMap.iter (fun k _ -> printf "-- o key: %s\n" k) m; m *)
       (* Remove path prefix from selected symbols *)
       |> fun map -> 
         BatMap.foldi 
-          (fun (k_type, key) v new_map ->
-            let path_len = length path in
-            let new_name = sub key path_len (length key - path_len) in
-            BatMap.add (k_type, new_name) v new_map)
+          (fun key v new_map ->
+            let add (k_type : string -> key) (key : string) = 
+              let path_len = length path in
+              let new_name = sub key path_len (length key - path_len) in
+              BatMap.add (k_type new_name) v new_map in
+            match key with 
+            | Type key -> add (fun x -> Type x) key 
+            | Val key  -> add (fun x -> Val x) key 
+            | other    -> BatMap.add other v new_map
+          )
           map BatMap.empty
       (* Merge with previously opened symbols, possibly overwriting
          some of them *)
       |> BatMap.merge merge env.opened in
     { env with opened }, []
   | TypeDecl (RecordType (name, fields))        -> 
-    let get t = LT.of_annotation !-> env (Some t) in  
-    let t     = List.map fields (fun (f_name, ft) -> f_name, get ft) 
-                |> LT.Record in
-                 
+    let get t  = LT.of_annotation !-> env (Some t) in  
+    let fields = List.map fields (fun (f_name, ft) -> f_name, get ft) in 
+    let t      = LT.Record fields in
+    let env    = add_raw env name (const (Fields (BatSet.of_list fields))) 
+                   (t, Global) in 
     add_type env name (t, Global), []
 
 let of_tops tops = 

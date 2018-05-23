@@ -11,7 +11,7 @@ type lang_type =
   | String 
   | Array  of lang_type
   | Fun    of lang_type list
-  | Record of (string * lang_type) list
+  | Record of (string * lang_type) list (* TODO: possibly store record name *)
   [@@deriving show]
 
 type t = lang_type
