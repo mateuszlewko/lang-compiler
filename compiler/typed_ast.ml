@@ -290,7 +290,7 @@ let rec expr env =
     begin 
     match t with 
     | Record fields -> 
-      let set (env, e) field with_e =  
+      let set (env, e) (field, with_e) =  
         match List.findi fields (fun _ (f, ft) -> f = field) with 
         | None        -> failwith "Field not found.\n"
         | Some (i, _) -> 
@@ -302,13 +302,10 @@ let rec expr env =
                         expected: %s, instead of: %s.\n" 
                         field (LT.show ft) (LT.show (snd with_e)) |> failwith;
           env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
-        
-      failwith ""
+      List.fold withs ~init:(env, e) ~f:set
     | other         -> sprintf "Expression preceding with must be a record, \
                                 not: %s.\n" (LT.show t) |> failwith
-    end                         
-    (* printf "record update: %s" (show_expr rw); 
-    env, (Lit (Int 0), Int) *)
+    end                        
 
   | RecordLiteral fields as rl -> 
     (* TODO: sort fields by index *)
