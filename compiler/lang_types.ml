@@ -9,6 +9,7 @@ type lang_type =
   | Bool
   | Float 
   | String 
+  | Ptr    of string
   | Array  of lang_type
   | Fun    of lang_type list
   | Record of (string * lang_type) list (* TODO: possibly store record name *)
@@ -97,6 +98,7 @@ let rec to_ollvm ?(is_arg=true) =
   | Float         -> T.float
   | Array t       -> T.array 0 (to_ollvm t) |> T.ptr
   | String        -> T.ptr T.i8
+  | Ptr _         -> T.ptr T.i8
   | Record fields -> List.map fields (snd %> to_ollvm)  
                      |> T.structure ~packed:true 
                      |> (if is_arg then T.ptr else identity)

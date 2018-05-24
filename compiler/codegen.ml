@@ -303,7 +303,7 @@ module Codegen = struct
    
     let sink = 
       [(fun next -> block sink_b [ res <-- phi [ then_res, post_then_b
-                                             ; else_res, post_else_b ]
+                                               ; else_res, post_else_b ]
                                  ; br1 next ]) 
        |> Cont |> Block] in 
     
@@ -362,12 +362,29 @@ module Codegen = struct
               (iss @ all, env), arg) in
 
     let m, rec_ptr = M.local env.m (T.ptr ot) "record_ptr" in 
-    let s          = structure ~packed:true field_vals in 
+    let is_ptr = function Ast.TYPE_Pointer _ -> true | _ -> false in 
+    let ptrs, field_vals = 
+      List.fold_mapi field_vals ~init:[] 
+                                ~f:(fun i ptrs (ft, _ as f) -> 
+                                      if is_ptr ft
+                                      then (f, i)::ptrs, null_t ft
+                                      else ptrs   , f) in 
+
+    let s = structure ~packed:true field_vals in 
     let iss = fields_instrs @ 
       [ rec_ptr <-- malloc ot  |> Instr 
       ; store s rec_ptr |> snd |> Instr
       ] in 
 
+    let m, isss = 
+      List.fold_map ptrs ~init:m 
+        ~f:(fun m (ptr, i) -> 
+          let m, dest = M.tmp m in 
+          let iss = [ dest <-- struct_gep rec_ptr i |> Instr 
+                    ; store ptr dest |> snd         |> Instr ] in 
+          m, iss) in 
+
+    let iss = iss @ List.concat isss in 
     iss, rec_ptr, { env with m }
 
   let gen_clone (env : Env.t) expr e t =
@@ -378,13 +395,13 @@ module Codegen = struct
 
     let t_raw   = LT.to_ollvm ~is_arg:false t in 
     let iss     = iss @ 
-      (List.map ~f:(fun x -> Instr x) 
-       [ dest <-- malloc t_raw                        
-       ; dest <-- bitcast dest (T.ptr T.i8)           
-       ; src  <-- bitcast src_raw (T.ptr  T.i8)          
-       ; memcpy ~src ~dest (t_size t_raw |> i32) |> snd 
-       ; dest <-- bitcast dest (LT.to_ollvm t)        
-       ]) in 
+      List.map ~f:(fun x -> Instr x) 
+        [ dest <-- malloc t_raw                        
+        ; dest <-- bitcast dest (T.ptr T.i8)           
+        ; src  <-- bitcast src_raw (T.ptr  T.i8)          
+        ; memcpy ~src ~dest (t_size t_raw |> i32) |> snd 
+        ; dest <-- bitcast dest (LT.to_ollvm t)        
+        ] in 
 
     iss, dest, { env with m }
 

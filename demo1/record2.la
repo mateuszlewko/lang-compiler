@@ -1,0 +1,56 @@
+module Prelude = 
+    external ll_putint     : int -> () 
+    external ll_print_line : ()  -> () 
+
+    let print_int : int -> () = ll_putint
+    let print_nl  : ()  -> () = ll_print_line
+    let printn_int x : () = 
+        print_int x 
+        print_nl () 
+
+open Prelude
+
+type simple  = { a : int; b : int    }
+type complex = { n : int; s : simple }
+
+let rec next_fib (curr : complex) n : complex = 
+    let succ_fib () : complex =
+        let s : simple = 
+            {  curr.s with a = curr.s.b
+                        b = curr.s.a + curr.s.b 
+            }
+
+        { curr with n = curr.n + 1; s }
+
+    if n = 0 
+    then curr
+    else next_fib (succ_fib ()) (n - 1)
+        
+
+let fib1 : complex = 
+    let s : simple = { a = 0; b = 1}
+    { n = 1; s = s }
+
+let _ : () =     
+    let res : complex = next_fib fib1 4
+    printn_int res.n
+    print_nl ()
+    printn_int res.s.a
+    printn_int res.s.b
+    
+    print_nl ()
+    print_nl ()
+    
+    let res2 : complex = next_fib res 4
+
+    printn_int res2.n
+    print_nl ()
+    printn_int res2.s.a
+    printn_int res2.s.b
+
+    print_nl () 
+    print_nl ()
+    printn_int res.n
+    print_nl ()
+    printn_int res.s.a
+    printn_int res.s.b

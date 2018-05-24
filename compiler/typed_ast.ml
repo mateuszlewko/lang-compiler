@@ -413,18 +413,28 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
       |> BatMap.merge merge env.opened in
     { env with opened }, []
   | TypeDecl (RecordType (name, fields))        -> 
+    (* let full_name = name_in env name in
+    let env    = add_type env name (LT.Ptr full_name, Global) in *)
     let get t  = LT.of_annotation !-> env (Some t) in  
-    let fields = List.map fields (fun (f_name, ft) -> f_name, get ft) in 
+    let fields = List.map fields (fun (f_name, ft) -> f_name, get ft) in
     let t      = LT.Record fields in
-    let env    = add_raw env name (const (Fields (BatSet.of_list fields))) 
+    let env    = add_raw env name (const (Fields (BatSet.of_list fields)))
                    (t, Global) in 
+    (* let fields = List.map fields (
+                   function | f_name, LT.Ptr t_name
+                              when t_name = full_name -> 
+                                printf "replaced field: %s\n" 
+                                f_name, t
+                            | other                   -> other) in 
+    let t      = LT.Record fields in *)
+
     add_type env name (t, Global), []
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 
   let top env expr =
     let env, res = top env expr in 
-    let extra_fun = List.map env.extra_fun (fun (f, t) -> Fun (f, t)) in 
+    let extra_fun = List.rev_map env.extra_fun (fun (f, t) -> Fun (f, t)) in 
     { env with extra_fun = [] }, extra_fun @ res in 
 
   let env, tops = 

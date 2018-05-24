@@ -51,19 +51,6 @@ a.x.y // getter
 
 *)
 
-let funA1 x = x
-
-module ModA = 
-    let funA2 y = 
-        let x = 3
-        let z0 = (x x).d
-        let z1 = (x.x).d
-        let z2 = x.x.d
-        let z3 = X.A.d.d
-        let z4 = (fn (a + 5) x) . d . g
-
-        (funA1 y) + y
-
 module Add = 
     let adder5b a b c : int -> int -> int = 
         let innerAdder d e = 
