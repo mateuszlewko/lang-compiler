@@ -26,7 +26,6 @@ let rec next_fib (curr : complex) n : complex =
     then curr
     else next_fib (succ_fib ()) (n - 1)
         
-
 let fib1 : complex = 
     let s : simple = { a = 0; b = 1}
     { n = 1; s = s }
