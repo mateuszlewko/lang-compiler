@@ -340,14 +340,16 @@ and lit env =
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
+(* and real_funexp env is_rec name ret_t args arg_ts body =  *)
+
 and funexp env (is_rec, (name, ret_t), args, body1, body) =
-  let gen_name = name_in env name in 
   let args, arg_ts = List.unzip args in 
 
   let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
   let args   = List.zip_exn args arg_ts in 
   let ret_t  = LT.of_annotation !-> env ret_t in 
   let fn_t   = LT.merge arg_ts ret_t in 
+
   let env    = let env = if is_rec 
                          then add env name (fn_t, Global) 
                          else env in 
@@ -363,6 +365,7 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
 
+  let gen_name = name_in env name in 
   add env name (fn_t, Global), [Fun ({ name = gen_name; gen_name; is_rec
                                      ; args; body }, fn_t)]
 
