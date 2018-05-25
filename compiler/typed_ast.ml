@@ -69,7 +69,13 @@ type bound = LT.t * location
 type bbb = bound * string 
 [@@deriving show]
 
-type key = Type of string | Val of string | Fields of (string * LT.t) BatSet.t
+type fun_arg_type = Generic of string | Concrete of LT.t
+
+type key = 
+  | Type       of string 
+  | Val        of string 
+  | Fields     of (string * LT.t) BatSet.t
+  | GenericFun of string * fun_arg_type list
 (* [@@deriving show] *)
  
 type bindings_map = (key, bound * string) BatMap.t

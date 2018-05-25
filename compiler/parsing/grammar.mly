@@ -32,16 +32,10 @@ let to_exps fst_line rest =
 %left LEQ GEQ EQ LE GE NEQ 
 %left PLUS MINUS
 %left DIV MULT
-/* %nonassoc UMINUS */
 
-/* %start <Ast.expr> top_let */
 %start <Ast.program> program
 
 %%
-
-/* ending:
-  | EOF {}
-  | NEWLINE {} */
 
 program: NEWLINE*; es = top_expr+; NEWLINE*; EOF { Prog (es) }
 
@@ -51,7 +45,6 @@ empty_line:
 
 single_type_anot:
   | UNIT { "()" }
-  /* | i = INT { string_of_int i } */
   | ts = SYMBOL { ts }
 
 nested_sym:
@@ -179,7 +172,6 @@ record_literal_fields:
  | f = record_literal_field; ignore_indent; RCURLY { [f] }
  | f = record_literal_field; record_decl_sep; 
    fs = record_literal_fields { f::fs }
-
 
 /*
 field_and_with:
