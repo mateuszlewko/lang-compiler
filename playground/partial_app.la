@@ -16,6 +16,8 @@ let _ : () =
     pn ()
     pn ()
     pn ()
+    let fn (x : 'a) : 'a = x
+    
     (* let  *)
     just_call print_add 2 3 
     ()

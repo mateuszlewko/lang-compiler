@@ -51,7 +51,7 @@ let digit        = [%sedlex.regexp? '0'..'9']
 
 let module_name  = [%sedlex.regexp? upper_letter, Star (letter | digit)]
 let module_path  = [%sedlex.regexp? Star (module_name, '.')]
-let id_init      = [%sedlex.regexp? letter  | '_']
+let id_init      = [%sedlex.regexp? letter  | '_' | "'"]
 let id_cont      = [%sedlex.regexp? id_init | Chars "'" | digit ]
 let id_nest_cont = [%sedlex.regexp? id_init | Chars ".\'" | digit ]
 let id           = [%sedlex.regexp? id_init, Star id_cont ]

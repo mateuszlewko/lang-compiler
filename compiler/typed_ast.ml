@@ -1,104 +1,10 @@
 open Lang_parsing.Ast
 open Core
 open BatPervasives
+include Typed_ast_def 
 
 module LT = Lang_types
 module A  = Lang_parsing.Ast
-
-type arg = string * LT.t
-[@@deriving show]
-
-type funexp = 
-  { name     : string
-  ; gen_name : string
-  ; is_rec   : bool 
-  ; args     : arg list
-  ; body     : expr_t list }
-
-and ifexp = 
-  { cond      : expr_t 
-  ; then_body : expr_t
-  ; else_body : expr_t }
-
-and gep_store = 
-  { src  : expr_t 
-  ; dest : expr_t
-  ; idx  : int list 
-  }
-
-and literal =
-  | Int    of int
-  | String of string
-  | Bool   of bool
-  | Array  of expr_t list
-  | Unit
-
-and body_expr = 
-  | Var       of string 
-  | SetVar    of string * expr_t
-  | Lit       of literal
-  | Value     of string * expr_t
-  | App       of expr_t * expr_t list 
-  | InfixOp   of string * expr_t option * expr_t option 
-  | If        of ifexp 
-  | GepLoad   of expr_t * int list
-  | Clone     of expr_t
-  | GepStore  of gep_store
-  | RecordLit of expr_t list
-  | Exprs     of expr_t list
-  [@@deriving show]
-
-and expr_t = body_expr * LT.t
-[@@deriving show]
-
-type extern = { name : string; gen_name : string }
-[@@deriving show]
-
-type top = 
-  | Expr   of expr_t
-  | Fun    of funexp * LT.t
-  | Extern of extern * LT.t
-  | Module of string * top list
-  | Open   of string
-  [@@deriving show]
-
-type location = AtLevel of int | Global 
-[@@deriving show]
-type bound = LT.t * location
-[@@deriving show]
-type bbb = bound * string 
-[@@deriving show]
-
-type fun_arg_type = Generic of string | Concrete of LT.t
-
-type key = 
-  | Type       of string 
-  | Val        of string 
-  | Fields     of (string * LT.t) BatSet.t
-  | GenericFun of string * fun_arg_type list
-(* [@@deriving show] *)
- 
-type bindings_map = (key, bound * string) BatMap.t
-
-type environment = { 
-  (** symbols accessible with prefix *)
-    prefixed   : bindings_map
-  (** symbols available without any prefix  *)
-  ; opened     : bindings_map
-  (** current scope (module) prefix *)
-  ; prefix     : string
-  ; free_vars  : (int, string * LT.t) BatMultiMap.t
-  ; level      : int 
-  ; extra_fun  : (funexp * LT.t) list 
-  } 
-
-(** Creates top-level env *)
-let empty = { prefixed  = BatMap.empty
-            ; opened    = BatMap.empty
-            ; prefix    = "." 
-            ; free_vars = BatMultiMap.empty
-            ; level     = 0 
-            ; extra_fun = [] }
 
 (** Evaluates name in current scope *)
 let name_in env = (^) env.prefix
@@ -235,8 +141,9 @@ let rec expr env =
     let env, args   = args1 @ (Option.value args2 ~default:[]) 
                       |> List.fold_map ~init:env ~f:expr in 
     let env, callee = expr env callee in 
-
-    env, (App (callee, args), LT.apply (snd callee) (List.map args snd))
+    
+    let e = LT.apply (snd callee) (List.map args snd) (App (callee, args)) in 
+    env, e
   | Exprs es ->
     let rec map env acc = 
       function
@@ -261,7 +168,8 @@ let rec expr env =
     let Some (env, lhs) = map lhs ~f:(expr env) in 
     let Some (env, rhs) = map rhs ~f:(expr env) in 
 
-    env, (InfixOp (name, Some lhs, Some rhs), LT.apply op_t arg_ts)
+    let e = LT.apply op_t arg_ts (InfixOp (name, Some lhs, Some rhs)) in 
+    env, e
   | IfExp (cond, then_, elifs, else_) ->
     let env, then_body = expr env then_ in 
     let env, else_body = 
@@ -382,10 +290,10 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
   | Module (name, tops) -> 
     let parent_prefix = env.prefix in 
     let parent_opened = env.opened in 
-    let env         = { env with prefix = env.prefix ^ name ^ "." } in 
-    let env, tops   = List.fold_map tops ~init:env ~f:top in
-    let env         = { env with prefix = parent_prefix
-                               ; opened = parent_opened } in
+    let env           = { env with prefix = env.prefix ^ name ^ "." } in 
+    let env, tops     = List.fold_map tops ~init:env ~f:top in
+    let env           = { env with prefix = parent_prefix
+                                 ; opened = parent_opened } in
     env, List.concat tops
   | Open path          -> 
     let merge key l r = 
