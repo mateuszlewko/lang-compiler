@@ -120,6 +120,7 @@ module Codegen = struct
     | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
 
+
       printf "fun name: %s\n" name; 
       List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
 
@@ -207,7 +208,7 @@ module Codegen = struct
     let env      = gen_let env expr new_fun new_ts in
 
     let m, g_val = M.global_val env.m (ret_t, Ast.VALUE_Null) gen_name in 
-    let env      = Env.add { env with m } name (GVar (g_val, ts)) in 
+    let env      = Env.add { env with m } name (GlobalVar (g_val, ts)) in 
 
     let instrs = ( TA.SetVar ( name
                                   , ( App ( 
@@ -267,8 +268,8 @@ module Codegen = struct
           Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
         let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
         instrs, typed res, { env with m }
-      | Val  (v, _) -> unknown_apply env [] v 
-      | GVar (v, _) -> 
+      | Val       (v, _) -> unknown_apply env [] v 
+      | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
         unknown_apply { env with m } [g <-- load v |> Instr] g 
       end
@@ -331,7 +332,7 @@ module Codegen = struct
     let iss, src, env = expr env e in 
     let iss = 
       match Env.find env name with 
-      | Val (dest, _) | GVar (dest, _) -> 
+      | Val (dest, _) | GlobalVar (dest, _) -> 
         iss @ [ Instr (store src dest |> snd) ]
       | Fun _         -> sprintf "setting value to fun: %s is not supported"
                            name |> failwith in 
@@ -405,21 +406,21 @@ module Codegen = struct
 
     iss, dest, { env with m }
 
+  let gen_var env expr var v t = 
+    match Env.find env v with 
+    | Fun f                -> expr env (TA.App (var, []), t)
+    | GlobalVar (g_var, _) -> 
+      let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
+      [g <-- load g_var |> Instr], g, { env with m }
+    | Val b           -> [], fst b, env 
+
   let rec gen_expr env = 
     function 
-    | TA.SetVar (name, e), _ -> gen_set_var env gen_expr name e 
-    | (TA.Var v, t) as var   -> 
-      begin 
-      match Env.find env v with 
-      | Fun f           -> gen_expr env (TA.App (var, []), t)
-      | GVar (g_var, _) -> 
-        let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
-        [g <-- load g_var |> Instr], g, { env with m }
-      | Val b           -> [], fst b, env 
-      end 
-    | Lit    l, _ -> gen_literal env gen_expr l 
-    | If ifexp, _ -> gen_if env gen_expr ifexp 
-    | Exprs es, _ -> gen_exprs env gen_expr es 
+    | TA.SetVar (name, e)   , _ -> gen_set_var env gen_expr name e 
+    | (TA.Var v, t) as var      -> gen_var env gen_expr var v t 
+    | Lit    l              , _ -> gen_literal env gen_expr l 
+    | If ifexp              , _ -> gen_if env gen_expr ifexp 
+    | Exprs es              , _ -> gen_exprs env gen_expr es 
     | Value   (name, e)     , t -> gen_value env gen_expr name e t
     | App     (callee, args), t -> gen_apply env gen_expr callee args t 
     | InfixOp (op, lhs, rhs), _ -> gen_op env gen_expr lhs rhs op
@@ -427,6 +428,7 @@ module Codegen = struct
     | RecordLit fields      , t -> gen_record_lit env gen_expr fields t
     | Clone e               , t -> gen_clone env gen_expr e t
     | GepStore gep_s        , t -> gen_gep_store env gen_expr gep_s t
+    | Substitute (subs, e)  , t -> failwith "TODO Substitute"
 
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
