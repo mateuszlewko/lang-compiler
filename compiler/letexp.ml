@@ -22,32 +22,6 @@ type entry_fn_info =
 
 let closure_t = Lang_types.closure_t 
 
-(* let define_entry_fn m args name ret_type kind = 
-  let arg_names, arg_lang_ts = List.unzip args in
-  let arg_ts = List.map arg_lang_ts
-                        ~f:(LT.of_annotation BatMap.empty %> LT.to_ollvm) in
- 
-  let m, env_args_cnt  = M.local m T.i8 "env_args_cnt" in 
-  let m, pass_args_cnt = M.local m T.i8 "pass_args_cnt" in 
-  let m, data_ptr      = M.local m (T.ptr T.i8) "data_ptr" in 
-  let m, args          = List.zip_exn arg_ts arg_names |> M.batch_locals m in
-
-  let name       =
-    (match kind with 
-     | `ReturnsValue -> "lang.entry.value."
-     | `ReturnsFn    -> "lang.entry.fn."
-    ) ^ name in 
-  
-  let m, fn    = M.global m ret_type name in 
-  let def      = define fn (env_args_cnt::pass_args_cnt::data_ptr::args) in
-  let info     = 
-    { env_args_cnt  = env_args_cnt
-    ; pass_args_cnt = pass_args_cnt
-    ; data_ptr      = data_ptr
-    ; args          = args 
-    ; definition    = def
-    } in m, info   *)
-
 type value_entry_info = 
   { definition : Ez.Block.block list -> Ast.definition
   ; data_ptr   : Ez.Value.t 
@@ -281,15 +255,6 @@ let closure_entry_body m arity pref_args raw_fn info =
                        ; block then_b then_instrs
                        ; block else_b else_instrs ]
 [@@@warning "+8"]
-
-(* 
-
-define i32 @main() {
-instrs1:
-  ret i32 0
-} 
-
-*)
 
 let sum_by lst fn = List.fold lst ~init:0 ~f:(fun s x -> s + fn x)
 let size_of_args args = sum_by args bs_size 
