@@ -51,22 +51,24 @@ let merge ts =
   | last_t        -> Fun (ts @ [last_t])
   end %> value_if_not_function
 
-let rec replace old_t new_t =
+let rec replacements old_t new_t =
   match old_t, new_t with 
-  | Fun [t]           , other                -> replace t other 
-  | old               , Fun [other]          -> replace old other
+  | Fun [t]           , other                -> replacements t other 
+  | old               , Fun [other]          -> replacements old other
   | Generic _ as old_t, new_t                
   | (Fun _ as old_t)  , (Generic _ as new_t) -> [old_t, new_t]
   | Fun ts            , Fun new_ts           -> 
     let min_len = min (List.length ts  - 1) (List.length new_ts - 1) in 
     let ts    , ret_t    = List.split_n ts min_len in 
     let new_ts, ret_newt = List.split_n new_ts min_len in 
-    (List.map2_exn ts new_ts replace
-     |> List.concat) @ replace (Fun ret_t) (Fun ret_newt) 
+    (List.map2_exn ts new_ts replacements
+     |> List.concat) @ replacements (Fun ret_t) (Fun ret_newt) 
   | old_t             , new_t                ->
     if old_t = new_t 
     then []
-    else (printf "here\n"; raise WrongTypeOfApplyArgument)
+    else (
+      printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
+      raise WrongTypeOfApplyArgument)
 
 let apply fn_t arg_ts = 
   let no_substitution t e = e, t in 
@@ -78,9 +80,13 @@ let apply fn_t arg_ts =
     let before, after = List.split_n ts cnt in 
     
     let substitution t = 
-      match List.map2_exn before arg_ts replace |> List.concat with 
+      match List.map2_exn before arg_ts replacements |> List.concat with 
       | []   -> no_substitution t 
-      | subs -> fun expr -> TAD.Substitute (subs, (expr, t)), t in 
+      | subs -> 
+        let t = List.find subs (fst %> (=) t) 
+                |> Option.map ~f:snd |> Option.value ~default:t in 
+
+        fun expr -> TAD.Substitute (subs, (expr, t)), t in 
 
     begin 
     match List.exists2 before arg_ts (<>) with 

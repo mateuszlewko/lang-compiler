@@ -156,12 +156,14 @@ module Codegen = struct
                           ~f:(fun env v (name, t) -> 
                                 Env.add env name (Val (v, t))) in 
   
-    let iss, values = 
-      List.folding_map body ~init:(body_env) 
+    let body_env, (iss, values) = 
+      List.fold_map body ~init:(body_env) 
         ~f:(fun env e -> 
               let iss, vals, env = expr env e in 
               env, (iss, vals))
-      |> List.unzip  in 
+      |> fun (body_env, lists) -> body_env, List.unzip lists in 
+    
+    let env = { env with m = body_env.m } in 
   
     let iss       = List.concat iss in 
     let ret_v     = List.last_exn values in 
@@ -177,6 +179,10 @@ module Codegen = struct
 
     (* printf "add %s to env.m\n" name; *)
     add_this_fn env, f_binding
+  
+  let convert_types map ts = 
+    List.map ts (fun t -> BatMap.find_default t t map)
+
   let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
     | LT.Fun ts as fn_t -> 
@@ -184,14 +190,28 @@ module Codegen = struct
       let args, arg_ts = List.unzip ta_args in 
 
       if List.exists arg_ts LT.is_generic 
-      then 
-        let poli map = 
-          let arg_ts = List.map arg_ts (fun t -> BatMap.find_default t t map) in 
+      then begin
+        printf "Exists generic\n";
+
+        let poli env map = 
+          printf "Calling poli!\n";
+
+          let ts   = convert_types map ts in 
+          let fn_t = LT.Fun ts in 
+
+          (* let arg_ts = List.map arg_ts (fun t -> 
+              printf "converting type: %s\n" (LT.show t);
+              let x = BatMap.find_default t t map in 
+              printf "got: %s\n" (LT.show x);
+              x) in  *)
+
+          let arg_ts = convert_types map arg_ts in
           let args   = List.zip_exn args arg_ts in 
-          gen_let_raw env expr { funexp with args } fn_t ts |> snd in 
+          gen_let_raw env expr { funexp with args } fn_t ts in 
 
         let gf = { Env.poli; mono = BatMap.empty } in 
         Env.add env name (GenericFun gf)
+        end
       else gen_let_raw env expr funexp fn_t ts |> fst
 
     | other -> sprintf "TODO let-value for: %s" funexp.name |> failwith
@@ -230,10 +250,15 @@ module Codegen = struct
   let insert_type t (_, v) = t, v 
 
   let monomorphize (env : Env.t) (generic_fun : Env.generic_fun) = 
-    let fb = generic_fun.poli env.substitutions in 
-    env, fb
+    printf "doing mono\n";
+    Env.show_substitutions (BatMap.bindings env.substitutions)
+    |> printf "subs: %s";
+
+    generic_fun.poli env env.substitutions
 
   let gen_apply (env : Env.t) expr callee args app_t = 
+    let [app_t] = convert_types env.substitutions [app_t] in 
+
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
         ~f:(fun (all, env) arg ->  
@@ -243,7 +268,7 @@ module Codegen = struct
     printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
     List.iter args (Ez.Value.show %> printf "arg val: %s\n");
 
-    let typed = insert_type (LT.to_ollvm app_t) in 
+    let typed t = insert_type (LT.to_ollvm app_t) t in 
 
     let unknown_apply (env : Env.t) iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
@@ -266,11 +291,16 @@ module Codegen = struct
       instrs, typed res, { env with m } in
     let open Env in 
     let of_fun_binding name env { Env.fn = (fn, fn_t); fns_arr; arity } = 
-      printf "fn named: %s, has type: %s" name (LT.show fn_t); 
+      printf "fn named: %s, has type: %s\n" name (LT.show fn_t); 
       let fn_arg_ts = match fn_t with 
                       | Fun ts -> List.take ts (List.length ts - 1)   
                                   |> List.map ~f:LT.to_ollvm 
                       | _      -> [] in
+
+
+      printf "-- DEFS START --\n";
+      List.iter env.m.m_module.m_definitions (fst %> printf "def: %s\n");
+      printf "-- DEFS END --\n";
 
       let m, instrs, res = 
         Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
@@ -281,7 +311,9 @@ module Codegen = struct
     | TA.Var name, t -> begin 
       match Env.find env name with
       | Fun        fb    -> of_fun_binding name env fb
-      | GenericFun gf    -> monomorphize env gf |> uncurry (of_fun_binding name)
+      | GenericFun gf    -> 
+        printf "HERE1\n";
+        monomorphize env gf |> uncurry (of_fun_binding name)
       | Val       (v, _) -> unknown_apply env [] v 
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
@@ -431,7 +463,8 @@ module Codegen = struct
       let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
       [g <-- load g_var |> Instr], g, { env with m }
     | Val b           -> [], fst b, env 
-    | GenericFun gf   -> let env, _ = monomorphize env gf in 
+    | GenericFun gf   -> printf "HERE2\n";
+                         let env, _ = monomorphize env gf in 
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 

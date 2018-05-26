@@ -2,32 +2,36 @@ open High_ollvm
 
 module LT = Lang_types
 
-type bound        = Ez.Value.t * Lang_types.t 
-type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
-type generic_fun  = { poli : (LT.t, LT.t) BatMap.t -> fun_binding
-                    ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
-
-type binding = 
-  | Fun        of fun_binding 
-  | Val        of bound 
-  | GlobalVar  of bound
-  | GenericFun of generic_fun 
-
-type bindings_map = (string, binding) BatMap.t
-
 exception SymbolNotFound of string
 
 module V = Ez.Value
 module M = Ez.Module
 
-type environment = 
+type substitutions = (LT.t * LT.t) list 
+[@@deriving show]
+
+type bound        = Ez.Value.t * Lang_types.t 
+type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
+
+type generic_fun  = { poli : t -> (LT.t, LT.t) BatMap.t -> t * fun_binding
+                    ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
+
+and binding = 
+  | Fun        of fun_binding 
+  | Val        of bound 
+  | GlobalVar  of bound
+  | GenericFun of generic_fun 
+
+and bindings_map = (string, binding) BatMap.t
+
+and environment = 
   { bindings      : bindings_map
   ; substitutions : (LT.t, LT.t) BatMap.t
   (** low-level module *)
   ; m             : M.t
   } 
 
-type t = environment
+and t = environment
 
 open BatMap.Infix
 
