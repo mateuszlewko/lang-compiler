@@ -138,10 +138,10 @@ module Codegen = struct
     let m, fns_arr = 
       if List.length ret > 1 || is_fun (List.hd ret)
       then (* returns closure *)
-        Letexp.closure_entry_fns m name full_args args_cnt fn 
+        Letexp.closure_entry_fns m gen_name full_args args_cnt fn 
       else (* returns value *)
         let ret = List.hd_exn ret |> LT.to_ollvm in 
-        Letexp.value_entry_fns m name ret full_args fn in 
+        Letexp.value_entry_fns m gen_name ret full_args fn in 
 
     let env = { env with m } in
     let f_binding = { Env.fn = (fn, fn_t)
@@ -153,8 +153,8 @@ module Codegen = struct
     let body_env : Env.t = 
       (if is_rec then add_this_fn env else env)
       |> fun env -> List.fold2_exn args fn_args_named ~init:env 
-                          ~f:(fun env v (name, t) -> 
-                                Env.add env name (Val (v, t))) in 
+                          ~f:(fun env v (arg_name, t) -> 
+                                Env.add env arg_name (Val (v, t))) in 
   
     let body_env, (iss, values) = 
       List.fold_map body ~init:(body_env) 
@@ -178,7 +178,7 @@ module Codegen = struct
     let env = { env with m = M.definition m df } in 
 
     (* printf "add %s to env.m\n" name; *)
-    add_this_fn env, f_binding
+    env, f_binding
   
   let convert_types map ts = 
     List.map ts (fun t -> BatMap.find_default t t map)
@@ -207,12 +207,25 @@ module Codegen = struct
 
           let arg_ts = convert_types map arg_ts in
           let args   = List.zip_exn args arg_ts in 
-          gen_let_raw env expr { funexp with args } fn_t ts in 
+          let rem_invalid c = 
+            if Char.is_alpha c || c = '.' || c = '_' 
+            then String.of_char c 
+            else if c = ' ' then "_"
+            else "" in
+                                                 
+          let gen_name = funexp.gen_name ^ "." ^
+                         (List.map arg_ts (LT.show %> sprintf "%s") 
+                          |> BatString.concat "-" 
+                          |> BatString.replace_chars rem_invalid) in 
+
+          gen_let_raw env expr { funexp with args; gen_name } fn_t ts in 
 
         let gf = { Env.poli; mono = BatMap.empty } in 
         Env.add env name (GenericFun gf)
         end
-      else gen_let_raw env expr funexp fn_t ts |> fst
+      else 
+        let env, fb = gen_let_raw env expr funexp fn_t ts in
+        Env.add env funexp.name (Env.Fun fb)
 
     | other -> sprintf "TODO let-value for: %s" funexp.name |> failwith
 

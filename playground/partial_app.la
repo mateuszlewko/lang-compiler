@@ -20,7 +20,7 @@ type point3 = { x : int; y : int; z : int }
 let p3Get (p : point3) = p.z 
 let p2Get (p : point2) = p.x 
 
-let printAnd (x : 'a) (getter : 'a -> int) =
+let printAnd (x : 'a) (getter : 'a -> int) : () =
     ll_putint (getter x)
     pn ()
 
@@ -33,9 +33,10 @@ let _ : () =
     just_call print_add 2 3 
     pn ()
     ll_putint (id 3)
+    pn ()
 
-    (* printAnd { x = 1; y = 2 } p2Get *)
-    (* printAnd { x = 3; y = 4; z = 5 } p3Get *)
+    printAnd { x = 1; y = 2 } p2Get
+    printAnd { x = 3; y = 4; z = 5 } p3Get
 
     pn ()
     ()
