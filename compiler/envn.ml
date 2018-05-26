@@ -21,9 +21,10 @@ module V = Ez.Value
 module M = Ez.Module
 
 type environment = 
-  { bindings : bindings_map
+  { bindings      : bindings_map
+  ; substitutions : (LT.t, LT.t) BatMap.t
   (** low-level module *)
-  ; m        : M.t
+  ; m             : M.t
   } 
 
 type t = environment
@@ -31,8 +32,9 @@ type t = environment
 open BatMap.Infix
 
 (** Creates top-level env *)
-let empty = { bindings = BatMap.empty
-            ; m        = M.empty }
+let empty = { bindings      = BatMap.empty
+            ; substitutions = BatMap.empty
+            ; m             = M.empty }
 
 (** Evaluates name in current scope *)
 (* let name_in env = (^) env.prefix *)

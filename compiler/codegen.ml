@@ -424,6 +424,12 @@ module Codegen = struct
     | GenericFun gf   -> let env, _ = monomorphize gf in 
                          expr env (TA.App (var, []), t)
 
+  let gen_substitute (env : Env.t) expr subs e t = 
+    let substitutions = List.fold subs ~init:env.substitutions 
+                          ~f:(fun m (u, v) -> BatMap.add u v m) in 
+
+    expr { env with substitutions } e 
+
   let rec gen_expr env = 
     function 
     | TA.SetVar (name, e)   , _ -> gen_set_var env gen_expr name e 
@@ -438,7 +444,7 @@ module Codegen = struct
     | RecordLit fields      , t -> gen_record_lit env gen_expr fields t
     | Clone e               , t -> gen_clone env gen_expr e t
     | GepStore gep_s        , t -> gen_gep_store env gen_expr gep_s t
-    | Substitute (subs, e)  , t -> failwith "TODO Substitute"
+    | Substitute (subs, e)  , t -> gen_substitute env gen_expr subs e t
 
   [@@@warning "-8"]
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
