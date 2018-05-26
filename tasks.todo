@@ -81,8 +81,10 @@ Codegen:
         ✔ field update @done(18-05-23 21:13)
         ✔ record literal @done(18-05-23 19:12)
 
-    ❑ let-polymorphism
-    ❑ simple type inference
+    ✔ let-polymorphism @done(18-05-26 23:24)
+    ❑ generics in return return type (for example in case of partial application)
+
+    ❑ simple type inference (with let-polymorphism)
    
     ❑ type classes
     ❑ type inference with type classes

@@ -56,7 +56,7 @@ let rec replacements old_t new_t =
   | Fun [t]           , other                -> replacements t other 
   | old               , Fun [other]          -> replacements old other
   | Generic _ as old_t, new_t                
-  | (Fun _ as new_t)  , (Generic _ as old_t) -> [old_t, new_t]
+  | new_t             , (Generic _ as old_t) -> [old_t, new_t]
   | Fun ts            , Fun new_ts           -> 
     let min_len = min (List.length ts  - 1) (List.length new_ts - 1) in 
     let ts    , ret_t    = List.split_n ts min_len in 
@@ -69,6 +69,10 @@ let rec replacements old_t new_t =
     else (
       printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
       raise WrongTypeOfApplyArgument)
+
+
+type _substitutions = (t * t) list 
+[@@deriving show]
 
 let apply fn_t arg_ts = 
   let no_substitution t e = e, t in 
@@ -83,9 +87,12 @@ let apply fn_t arg_ts =
       match List.map2_exn before arg_ts replacements 
             |> List.concat 
             |> List.dedup_and_sort 
+            |> List.filter ~f:(uncurry (<>))
       with 
       | []   -> no_substitution t 
       | subs -> 
+        show__substitutions subs |> printf "adding subs: %s\n";
+
         let t = List.find subs (fst %> (=) t) 
                 |> Option.map ~f:snd |> Option.value ~default:t in 
 

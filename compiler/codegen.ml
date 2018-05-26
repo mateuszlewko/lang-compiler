@@ -483,9 +483,11 @@ module Codegen = struct
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 
-    let subs = List.filter subs (fun (u, v) -> u <> v) in 
     Env.show_substitutions subs
-    |> printf "NEW subs here: %s\n";
+    |> printf "NEW subs here before: %s\n";
+    let subs = List.filter subs (uncurry (<>)) in 
+    Env.show_substitutions subs
+    |> printf "NEW subs here after: %s\n";
 
     let substitutions = List.fold subs ~init:env.substitutions 
                           ~f:(fun m (u, v) -> BatMap.add u v m) in 
@@ -552,7 +554,7 @@ module Codegen = struct
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
     let tops = TA.of_tops top_lvl_exprs in 
-    (* List.iter tops (TA.show_top %> printf "top: %s\n"); *)
+    List.iter tops (TA.show_top %> printf "top: %s\n");
 
     let env, main_exprs = List.fold_map tops ~init:Env.empty ~f:gen_top in  
     let env             = List.concat main_exprs |> gen_main env in 
