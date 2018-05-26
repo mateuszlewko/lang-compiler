@@ -9,7 +9,6 @@ module Codegen = struct
   open High_ollvm.Ez.Instr
   open High_ollvm.Ez.Block
   open High_ollvm
-  (* open Lang_types *)
 
   module Env = Envn (* temporary *)
   module M   = High_ollvm.Ez.Module
@@ -156,7 +155,7 @@ module Codegen = struct
       let env = { env with m } in
       let add_this_fn env = 
         Env.add env name (Fun { fn    = (fn, fn_t)
-                              ; arr   = fns_arr
+                              ; fns_arr
                               ; arity = args_cnt }) in
 
       let body_env : Env.t = 
@@ -222,6 +221,8 @@ module Codegen = struct
 
   let insert_type t (_, v) = t, v 
 
+  let monomorphize generic_fun = failwith "TODO monomorphize"
+
   let gen_apply (env : Env.t) expr callee args app_t = 
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
@@ -253,21 +254,24 @@ module Codegen = struct
       let instrs  = arg_instrs @ iss @ app_iss @ blocks in 
       
       instrs, typed res, { env with m } in
+    let open Env in 
+    let of_fun_binding name env { Env.fn = (fn, fn_t); fns_arr; arity } = 
+      printf "fn named: %s, has type: %s" name (LT.show fn_t); 
+      let fn_arg_ts = match fn_t with 
+                      | Fun ts -> List.take ts (List.length ts - 1)   
+                                  |> List.map ~f:LT.to_ollvm 
+                      | _      -> [] in
+
+      let m, instrs, res = 
+        Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
+      let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
+      instrs, typed res, { env with m } in 
 
     match callee with 
     | TA.Var name, t -> begin 
       match Env.find env name with
-      | Fun ({fn = (fn, fn_t); arr = fns_arr; arity}) -> 
-        printf "fn named: %s, has type: %s" name (LT.show fn_t); 
-        let fn_arg_ts = match fn_t with 
-                        | Fun ts -> List.take ts (List.length ts - 1)   
-                                    |> List.map ~f:LT.to_ollvm 
-                        | _      -> [] in
-
-        let m, instrs, res = 
-          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-        let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
-        instrs, typed res, { env with m }
+      | Fun        fb    -> of_fun_binding name env fb
+      | GenericFun gf    -> monomorphize gf |> uncurry (of_fun_binding name)
       | Val       (v, _) -> unknown_apply env [] v 
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
@@ -331,11 +335,15 @@ module Codegen = struct
   let gen_set_var env expr name e = 
     let iss, src, env = expr env e in 
     let iss = 
+      let fail s = sprintf "setting value to %s: %s is not supported" s name 
+                   |> failwith in 
+
       match Env.find env name with 
       | Val (dest, _) | GlobalVar (dest, _) -> 
         iss @ [ Instr (store src dest |> snd) ]
-      | Fun _         -> sprintf "setting value to fun: %s is not supported"
-                           name |> failwith in 
+      | Fun _         -> fail "fun"
+      | GenericFun _  -> fail "generic fun" in
+
     iss, src, env
 
   let gen_gep_load (env : Env.t) expr e ixs t = 
@@ -413,6 +421,8 @@ module Codegen = struct
       let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
       [g <-- load g_var |> Instr], g, { env with m }
     | Val b           -> [], fst b, env 
+    | GenericFun gf   -> let env, _ = monomorphize gf in 
+                         expr env (TA.App (var, []), t)
 
   let rec gen_expr env = 
     function 
@@ -430,6 +440,7 @@ module Codegen = struct
     | GepStore gep_s        , t -> gen_gep_store env gen_expr gep_s t
     | Substitute (subs, e)  , t -> failwith "TODO Substitute"
 
+  [@@@warning "-8"]
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =
     let open TA in 
     match t with 
@@ -443,7 +454,7 @@ module Codegen = struct
       let m        = declare fn arg_ts |> M.declaration m in 
       let ext_name = name ^ ".external" in
       let env      = Env.add { env with m } ext_name 
-                        (Fun { fn = fn, fn_t; arr = null; arity }) in 
+                        (Fun { fn = fn, fn_t; fns_arr = null; arity }) in 
       
       let args       = List.mapi ast_arg_ts (fun i t -> string_of_int i, t) in 
       let apply_args = List.map args (fun (a, t)     -> Var a, t) in 
@@ -452,7 +463,8 @@ module Codegen = struct
       gen_top env (TA.Fun ({ name = name; is_rec = false; args; body
                             ; gen_name = name ^ ".ext_wrapped" }, fn_t))
     | other  -> failwith "external values not supported"
-    
+  [@@@warning "+8"]
+
   let gen_main env main_exprs =
     let funexp = 
       { TA.name = "<main>"; gen_name = "main"; is_rec = false

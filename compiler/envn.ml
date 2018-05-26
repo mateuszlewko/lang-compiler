@@ -1,9 +1,9 @@
 open High_ollvm
 
-module LT = Lang_types_def
+module LT = Lang_types
 
 type bound        = Ez.Value.t * Lang_types.t 
-type fun_binding  = { fn : bound; arr : Ez.Value.t; arity : int }
+type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
 type generic_fun  = { poli : (LT.t, LT.t) BatMap.t -> fun_binding
                     ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
 
