@@ -119,6 +119,7 @@ Optimisations: @optional
 Bugs:
     ❑ fix if-else codegen (something with env) @critical 
     ❑ fix nested functions in type annotation @critical
+    ❑ function redefinitions 
     ✔ fix nested let @critical @done(18-05-18 00:35)
         ✔ closure conversion @today @done(18-05-18 00:35)
         ✔ lambda lifting @today @done(18-05-18 00:35)

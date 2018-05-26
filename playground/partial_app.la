@@ -13,6 +13,7 @@ let just_call (fn : int -> int -> int) x y =
     fn x y
 
 let id (x : 'a) : 'a = x
+(* let id2 (x : 'a) : 'a = x *)
 
 type point2 = { x : int; y : int }
 type point3 = { x : int; y : int; z : int }
@@ -29,11 +30,11 @@ let printAnd (x : 'a) (getter : 'a -> int) : 'a =
 let compose (f : 'a -> 'b) (g : 'b -> 'c) (a : 'a) : 'c = 
     g (f (a))
 
-let test1 (x : int) (p : point2) : () = 
-    let getPrint (get : 'a -> int) (arg: 'a) : () = 
-        ll_putint (get arg)
-        pn () 
+let getPrint (get : 'a -> int) (arg: 'a) : () = 
+    ll_putint (get arg)
+    pn () 
 
+let test1 (x : int) (p : point2) : () = 
     getPrint id x 
     getPrint p2Get p 
 
