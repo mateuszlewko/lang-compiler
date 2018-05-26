@@ -12,14 +12,17 @@ let print_add x y =
 let just_call (fn : int -> int -> int) x y =
     fn x y
 
+let id (x : 'a) : 'a = x
+
 let _ : () =
     pn ()
     pn ()
     pn ()
-    let fn (x : 'a) : 'a = x
     
     (* let  *)
     just_call print_add 2 3 
+    id 3
+    pn ()
     ()
 
 

@@ -105,6 +105,12 @@ let closure_t = let open High_ollvm.Ez.Type in
                   [ ptr (ptr (fn void [])); ptr i8; i8; i8
                   ; i32 ]
 
+let rec is_generic = 
+  function 
+  | Generic _ -> true 
+  | Fun ts    -> List.exists ts is_generic 
+  | _         -> false
+
 let rec to_ollvm ?(is_arg=true) = 
   let module T = High_ollvm.Ez.Type in
   function

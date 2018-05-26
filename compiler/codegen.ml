@@ -18,12 +18,6 @@ module Codegen = struct
 
   let unsupp ?(name="") str = sprintf "Unsupported %s: %s" name str |> failwith
 
-  (* type result = 
-    { env   : Env.environment
-    ; value : Ez.Value.t
-    ; t     : LT.t
-    } [@@deriving fields] *)
-
   type block_type = 
     | Simple of Ez.Block.block 
     | Cont   of (Ez.Value.t -> Ez.Block.block)
@@ -114,79 +108,93 @@ module Codegen = struct
     | _, _ ->
       failwith "Operator is missing operands"
   
+  let gen_let_raw (env : Env.t) expr funexp fn_t ts = 
+    let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
+
+    printf "fun name: %s\n" name; 
+    List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
+
+    let args_cnt = List.length ta_args in 
+    let ret      = List.drop ts args_cnt in 
+    let is_fun   = function Some LT.Fun _ -> true | _ -> false in
+    
+    let ret_t = if List.length ret > 1 || is_fun (List.hd ret)
+                then Letexp.closure_t else LT.to_ollvm (List.hd_exn ret) in
+    
+    let m, fn = M.global env.m ret_t gen_name in
+    let to_local t = LT.to_ollvm t, "" in 
+    let fn_args    = List.take ts (List.length ts - 1) in
+    let fn_args_named = 
+      List.mapi fn_args (fun i a -> if i < args_cnt 
+                                    then fst (List.nth_exn ta_args i), a
+                                    else "", a) in 
+    let typed_args = List.map fn_args to_local in 
+    let m, args = M.batch_locals m typed_args in
+    
+    let full_args =
+      let ts = List.take ts (List.length ts - 1) in 
+      List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
+  
+    let m, fns_arr = 
+      if List.length ret > 1 || is_fun (List.hd ret)
+      then (* returns closure *)
+        Letexp.closure_entry_fns m name full_args args_cnt fn 
+      else (* returns value *)
+        let ret = List.hd_exn ret |> LT.to_ollvm in 
+        Letexp.value_entry_fns m name ret full_args fn in 
+
+    let env = { env with m } in
+    let f_binding = { Env.fn = (fn, fn_t)
+                    ; fns_arr
+                    ; arity  = args_cnt } in 
+
+    let add_this_fn env = Env.add env name (Fun f_binding) in
+
+    let body_env : Env.t = 
+      (if is_rec then add_this_fn env else env)
+      |> fun env -> List.fold2_exn args fn_args_named ~init:env 
+                          ~f:(fun env v (name, t) -> 
+                                Env.add env name (Val (v, t))) in 
+  
+    let iss, values = 
+      List.folding_map body ~init:(body_env) 
+        ~f:(fun env e -> 
+              let iss, vals, env = expr env e in 
+              env, (iss, vals))
+      |> List.unzip  in 
+  
+    let iss       = List.concat iss in 
+    let ret_v     = List.last_exn values in 
+    let ret_i     = Ez.Instr.ret ret_v |> Instr in
+    let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
+    
+    printf "\n--- START OF FUN --- \n";
+    List.iter blocks (show_block %> printf "block: %s\n");
+    printf "--- END OF FUN --- \n";
+
+    let df        = define fn args blocks in
+    let env = { env with m = M.definition m df } in 
+
+    (* printf "add %s to env.m\n" name; *)
+    add_this_fn env, f_binding
   let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
     | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
+      let args, arg_ts = List.unzip ta_args in 
 
+      if List.exists arg_ts LT.is_generic 
+      then 
+        let poli map = 
+          let arg_ts = List.map arg_ts (fun t -> BatMap.find_default t t map) in 
+          let args   = List.zip_exn args arg_ts in 
+          gen_let_raw env expr { funexp with args } fn_t ts |> snd in 
 
-      printf "fun name: %s\n" name; 
-      List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
+        let gf = { Env.poli; mono = BatMap.empty } in 
+        Env.add env name (GenericFun gf)
+      else gen_let_raw env expr funexp fn_t ts |> fst
 
-      let args_cnt = List.length ta_args in 
-      let ret      = List.drop ts args_cnt in 
-      let is_fun = function Some LT.Fun _ -> true | _ -> false in
-      
-      let ret_t = if List.length ret > 1 || is_fun (List.hd ret)
-                  then Letexp.closure_t else LT.to_ollvm (List.hd_exn ret) in
-      
-      let m, fn = M.global env.m ret_t gen_name in
-      let to_local t = LT.to_ollvm t, "" in 
-      let fn_args    = List.take ts (List.length ts - 1) in
-      let fn_args_named = 
-        List.mapi fn_args (fun i a -> if i < args_cnt 
-                                      then fst (List.nth_exn ta_args i), a
-                                      else "", a) in 
-      let typed_args = List.map fn_args to_local in 
-      let m, args = M.batch_locals m typed_args in
-      
-      let full_args =
-        let ts = List.take ts (List.length ts - 1) in 
-        List.mapi ts (fun i t -> LT.to_ollvm t, sprintf "arg-%d" i) in 
-    
-      let m, fns_arr = 
-        if List.length ret > 1 || is_fun (List.hd ret)
-        then (* returns closure *)
-          Letexp.closure_entry_fns m name full_args args_cnt fn 
-        else (* returns value *)
-          let ret = List.hd_exn ret |> LT.to_ollvm in 
-          Letexp.value_entry_fns m name ret full_args fn in 
-
-      let env = { env with m } in
-      let add_this_fn env = 
-        Env.add env name (Fun { fn    = (fn, fn_t)
-                              ; fns_arr
-                              ; arity = args_cnt }) in
-
-      let body_env : Env.t = 
-        (if is_rec then add_this_fn env else env)
-        |> fun env -> List.fold2_exn args fn_args_named ~init:env 
-                           ~f:(fun env v (name, t) -> 
-                                  Env.add env name (Val (v, t))) in 
-    
-      let iss, values = 
-        List.folding_map body ~init:(body_env) 
-          ~f:(fun env e -> 
-                let iss, vals, env = expr env e in 
-                env, (iss, vals))
-        |> List.unzip  in 
-    
-      let iss       = List.concat iss in 
-      let ret_v     = List.last_exn values in 
-      let ret_i     = Ez.Instr.ret ret_v |> Instr in
-      let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
-      
-      printf "\n--- START OF FUN --- \n";
-      List.iter blocks (show_block %> printf "block: %s\n");
-      printf "--- END OF FUN --- \n";
-
-      let df        = define fn args blocks in
-      let env = { env with m = M.definition m df } in 
-
-      (* printf "add %s to env.m\n" name; *)
-      add_this_fn env
     | other -> sprintf "TODO let-value for: %s" funexp.name |> failwith
-
 
   let gen_top_value (env : Env.t) expr funexp ts = 
     let { TA.name; gen_name; is_rec; body; _ } = funexp in 
@@ -221,7 +229,9 @@ module Codegen = struct
 
   let insert_type t (_, v) = t, v 
 
-  let monomorphize generic_fun = failwith "TODO monomorphize"
+  let monomorphize (env : Env.t) (generic_fun : Env.generic_fun) = 
+    let fb = generic_fun.poli env.substitutions in 
+    env, fb
 
   let gen_apply (env : Env.t) expr callee args app_t = 
     let (arg_instrs, env), args = 
@@ -271,7 +281,7 @@ module Codegen = struct
     | TA.Var name, t -> begin 
       match Env.find env name with
       | Fun        fb    -> of_fun_binding name env fb
-      | GenericFun gf    -> monomorphize gf |> uncurry (of_fun_binding name)
+      | GenericFun gf    -> monomorphize env gf |> uncurry (of_fun_binding name)
       | Val       (v, _) -> unknown_apply env [] v 
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
@@ -421,7 +431,7 @@ module Codegen = struct
       let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
       [g <-- load g_var |> Instr], g, { env with m }
     | Val b           -> [], fst b, env 
-    | GenericFun gf   -> let env, _ = monomorphize gf in 
+    | GenericFun gf   -> let env, _ = monomorphize env gf in 
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 
