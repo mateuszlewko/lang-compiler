@@ -265,11 +265,13 @@ module Codegen = struct
   let monomorphize (env : Env.t) (generic_fun : Env.generic_fun) = 
     printf "doing mono\n";
     Env.show_substitutions (BatMap.bindings env.substitutions)
-    |> printf "subs: %s";
+    |> printf "subs: %s\n";
 
     generic_fun.poli env env.substitutions
 
   let gen_apply (env : Env.t) expr callee args app_t = 
+    Env.show_substitutions (BatMap.bindings env.substitutions)
+    |> printf "subs here: %s\n";
     let [app_t] = convert_types env.substitutions [app_t] in 
 
     let (arg_instrs, env), args = 
@@ -481,6 +483,10 @@ module Codegen = struct
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 
+    let subs = List.filter subs (fun (u, v) -> u <> v) in 
+    Env.show_substitutions subs
+    |> printf "NEW subs here: %s\n";
+
     let substitutions = List.fold subs ~init:env.substitutions 
                           ~f:(fun m (u, v) -> BatMap.add u v m) in 
 

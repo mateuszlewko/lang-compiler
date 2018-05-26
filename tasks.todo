@@ -97,13 +97,14 @@ Codegen:
     ❑ simple boehm gc
 
     ❑ lambda (fun or =>)
-    ❑ mutable var
-    ❑ lists
     ❑ tuples
     ❑ tuples pattern matching
+    ❑ algebraic types (unions / variants)
     ❑ match (...) with (...)
     ❑ function keyword or similar (pattern matching)
-    ❑ algebraic types (unions / variants)
+    ❑ lists
+
+    ❑ mutable var
 
     ❑ type string @medium @optional 
     ❑ type char @medium @optional 

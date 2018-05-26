@@ -18,11 +18,16 @@ type point2 = { x : int; y : int }
 type point3 = { x : int; y : int; z : int }
 
 let p3Get (p : point3) = p.z 
+let p3GetZ (p : point3) = p.z 
 let p2Get (p : point2) = p.x 
 
-let printAnd (x : 'a) (getter : 'a -> int) : () =
+let printAnd (x : 'a) (getter : 'a -> int) : 'a =
     ll_putint (getter x)
     pn ()
+    x
+
+let compose (f : 'a -> 'b) (g : 'b -> 'c) (a : 'a) : 'c = 
+    g (f (a))
 
 let _ : () =
     pn ()
@@ -35,10 +40,26 @@ let _ : () =
     ll_putint (id 3)
     pn ()
 
-    printAnd { x = 1; y = 2 } p2Get
+    let x : point2 = printAnd { x = 1; y = 2 } p2Get
+    ll_putint x.x 
+    pn ()
+
+    let p3 : point3 = { x = 3; y = 4; z = 5 }
+
     printAnd { x = 3; y = 4; z = 5 } p3Get
 
+    let add5 x = x + 5
+
     pn ()
+    let res = compose p3GetZ add5 p3 
+    ll_putint res 
+    pn ()
+    
+    let res = compose p2Get add5 { x = 1; y = 2 }
+    ll_putint res 
+    pn ()
+
+
     ()
 
 
