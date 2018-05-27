@@ -25,6 +25,10 @@ Parser:
     ✔ record literal @done(18-05-22 01:53)
     ✔ record field update @today @done(18-05-22 18:55)
 
+    type classes:
+        ❑ type class declaration 
+        ❑ type class annotation 
+        
     ❑ lambda (fun or =>)
     ❑ mutable var
     ❑ lists
@@ -92,19 +96,18 @@ Codegen:
     ❑ generic arrays
     ❑ mutually recursive functions
     ❑ top level expressions 
-    ❑ type float @medium
-    ❑ type checking / basic type inference @high
+    ❑ float type with literals @medium
     ❑ arithmetic operations (float) @medium
 
     ❑ simple boehm gc
 
+    ❑ algebraic types (unions / variants)
+    ❑ match (...) with (...) expression
+    ❑ lists
     ❑ lambda (fun or =>)
     ❑ tuples
     ❑ tuples pattern matching
-    ❑ algebraic types (unions / variants)
-    ❑ match (...) with (...)
     ❑ function keyword or similar (pattern matching)
-    ❑ lists
 
     ❑ mutable var
 
@@ -115,11 +118,12 @@ Codegen:
 Optimisations: @optional
     ✔ Value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
     ❑ No closure conversion when there is no free variables
+    ❑ unboxed structures
 
 Bugs:
     ❑ fix if-else codegen (something with env) @critical 
     ❑ fix nested functions in type annotation @critical
-    ❑ function redefinitions 
+    ❑ function redefinitions detected in llvmgateway
     ✔ fix nested let @critical @done(18-05-18 00:35)
         ✔ closure conversion @today @done(18-05-18 00:35)
         ✔ lambda lifting @today @done(18-05-18 00:35)
