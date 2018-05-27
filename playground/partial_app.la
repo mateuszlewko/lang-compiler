@@ -9,6 +9,33 @@ let print_add x y =
     ll_putint (sum -1)
     s  
 
+type 'a : (Eq, Ord, Showable) is Enum with 
+    succ  : 'a -> 'a
+    isEnd : 'a -> Bool 
+
+type 'a is Print with 
+    print : 'a -> ()
+
+instance Print Int where 
+    let print i = ll_putint i 
+
+impl Print for Int with 
+    let print i = ll_putint i 
+
+class Enum ('a : Eq, Ord, Showable) where 
+    succ  : 'a -> 'a
+    isEnd : 'a -> Bool 
+
+class (Eq 'a, Ord 'a, Showable 'a) => Enum 'a where
+    succ  : 'a -> 'a
+    isEnd : 'a -> Bool 
+
+let rec range (first : 'a) (last : 'a) : 'a list
+    where 'a : (Enum, Eq), 'b : Enum =
+    if first = last 
+    then [] 
+    else first :: range (succ first) last 
+
 let just_call (fn : int -> int -> int) x y =
     fn x y
 

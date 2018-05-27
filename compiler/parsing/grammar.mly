@@ -18,6 +18,7 @@ let to_exps fst_line rest =
 %token <string> OPERATOR
 %token <char> KWD
 %token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN 
+%token CLASS INSTANCE WITH
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token QUOTE COMMA COLON SEMICOL DOT
@@ -57,24 +58,17 @@ typed_var:
   | s = UNIT; { "()", Some [["()"]]  }
   | LPAR; s = SYMBOL; t = type_anot?; RPAR { s, t }
   | s = SYMBOL; { s, None }
-  /* | LPAR; t = option(typed_var); RPAR { t } */
 
 module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
             { Module (s, es) }
 
 open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 
-/* top_let:
-  | NEWLINE; e = top_let { e }
-  | e = letexp; NEWLINE? { e } */
-
 letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
     rett = type_anot?; EQ; e = value_expr?;
     NEWLINE*; es = indented?
     { LetExp (is_rec, (n, rett), vs, e, es) }
-
-/* indent_cont: NEWLINE+; e = indented { e } */
 
 application:
   | s = simple_expr; es1 = simple_expr+
@@ -173,12 +167,6 @@ record_literal_fields:
  | f = record_literal_field; record_decl_sep; 
    fs = record_literal_fields { f::fs }
 
-/*
-field_and_with:
-  | ignore_indent; fields = record_literal_fields { None, fields }
-  | e = nested_sym; WITH; ignore_indent;
-    fields = record_literal_fields { Some (VarExp e), fields }*/
-
 with_exp: e = value_expr; WITH; ignore_indent { e }
 
 record_literal: 
@@ -187,12 +175,6 @@ record_literal:
 | LCURLY; ignore_indent; w = with_exp; ignore_indent; 
   fields = record_literal_fields
   { RecordWithExp (w, fields) }
-
-/*
-record_update: 
-  LCURLY; ignore_indent; e = value_expr; ignore_indent; WITH; ignore_indent; 
-  fields = record_literal_fields
-  { RecordWithExp (e, fields) }*/
 
 simple_expr:  
   | l = literal                 { LitExp l }

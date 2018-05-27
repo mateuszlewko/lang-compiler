@@ -24,6 +24,12 @@ type class_declaration =
   ; definitions    : (string * type_annotation) list 
   } [@@deriving show]
 
+let class_instance = 
+  { class_name : string 
+  ; type_name  : string 
+  ; impls      : string list  
+  } 
+
 (** Type is either Some type, or none which means it's integer *)
 type typed_arg = string * type_annotation option
 [@@deriving show]
@@ -58,6 +64,7 @@ type top_level =
   | Extern   of string * type_annotation
   | TypeDecl of type_declaration
   | Class    of class_declaration
+  | Instance of class_instance
   | Module   of string * top_level list
   | Open     of string
   [@@deriving show]

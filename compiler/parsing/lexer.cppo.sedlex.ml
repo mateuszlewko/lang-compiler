@@ -153,6 +153,9 @@ and token state buf =
   | "false" -> [BOOL false], state
 
   | "external" -> [EXTERNAL], state
+  | "class"    -> [CLASS], state
+  | "instance" -> [INSTANCE], state
+  | "where"    -> [WHERE], state
   | "module"   -> [MODULE], state
   | "open"     -> [OPEN], state
   | "type"     -> [TYPE], state
