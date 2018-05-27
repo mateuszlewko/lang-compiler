@@ -6,7 +6,7 @@ open Core
 type basic_type = Single of string list | Fun of basic_type list 
 type type_annotation = 
   { basic   : basic_type 
-  ; classes : string list 
+  ; classes : (string * string list) list 
   } [@@deriving show]
 
                    (** record name, (field, type) list *)
@@ -17,18 +17,12 @@ type type_declaration =
   | RecordType of record_declaration
   [@@deriving show]
 
-type class_declaration =
+and class_declaration =
   { name           : string 
   ; type_name      : string 
   ; parent_classes : string list  
-  ; definitions    : (string * type_annotation) list 
+  ; declarations   : (string * type_annotation) list 
   } [@@deriving show]
-
-let class_instance = 
-  { class_name : string 
-  ; type_name  : string 
-  ; impls      : string list  
-  } 
 
 (** Type is either Some type, or none which means it's integer *)
 type typed_arg = string * type_annotation option
@@ -37,18 +31,35 @@ type typed_arg = string * type_annotation option
 type expr =
   | VarExp  of string
   | LitExp  of literal
-  (* TODO: simplify LetExp *)
-  | LetExp  of bool * typed_arg * typed_arg list * expr option * expr list option
-  (* TODO: simplify AppExp *)
-  | AppExp  of expr * expr list * expr list option
+  | LetExp  of letexp 
+  | AppExp  of expr * expr list
   | InfixOp of string * expr option * expr option
-          (** cond   then    elif elif-then      else *)
-  | IfExp         of expr * expr * (expr * expr) list * expr option
+  | IfExp         of ifexp
   | Exprs         of expr list
   | RecordLiteral of (string * expr) list
   | FieldGetExp   of expr * string
   | RecordWithExp of expr * (string * expr) list
   [@@deriving show]
+
+and ifexp = 
+  { cond : expr 
+  ; then : expr 
+  ; elif : expr * expr list 
+  ; else : expr option 
+  } [@@deriving show]
+
+and letexp = 
+  { name  : string 
+  ; args  : typed_arg list 
+  ; ret_t : type_annotation option 
+  ; body  : expr list 
+  } [@@deriving show]
+
+and class_instance =                                                                               │
+  { class_name  : string                                                                            │
+  ; type_name   : string                                                                            │
+  ; definitions : letexp list                                                                       │
+  } [@@deriving show]
 
 and literal =
   | Int    of int

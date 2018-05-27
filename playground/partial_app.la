@@ -9,9 +9,18 @@ let print_add x y =
     ll_putint (sum -1)
     s  
 
-type 'a : (Eq, Ord, Showable) is Enum with 
+type 'a : (Eq, Ord, Show) is Enum with 
     succ  : 'a -> 'a
     isEnd : 'a -> Bool 
+
+class<'a : Eq, Ord, Show, 'b : Eq, Cmp> Enum  where 
+    succ  : 'a -> 'a
+    isEnd : 'a -> Bool 
+
+class 'a : Ord => 
+
+class Enum 'a : Ord where 
+    
 
 type 'a is Print with 
     print : 'a -> ()
@@ -22,11 +31,11 @@ instance Print Int where
 impl Print for Int with 
     let print i = ll_putint i 
 
-class Enum ('a : Eq, Ord, Showable) where 
+class Enum ('a : Eq, Ord, Show) where 
     succ  : 'a -> 'a
     isEnd : 'a -> Bool 
 
-class (Eq 'a, Ord 'a, Showable 'a) => Enum 'a where
+class (Eq 'a, Ord 'a, Show 'a) => Enum 'a where
     succ  : 'a -> 'a
     isEnd : 'a -> Bool 
 

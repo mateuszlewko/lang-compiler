@@ -176,6 +176,29 @@ record_literal:
   fields = record_literal_fields
   { RecordWithExp (w, fields) }
 
+class_type:
+  | LPAR; s = SYMBOL; COLON; parents = separated_list(COMMA, SYMBOL) RPAR; WHERE
+    { s, parents }
+  | s = SYMBOL; COLON; p1 = SYMBOL WHERE { s, [p1] }
+  | s = SYMBOL WHERE { s, [] }
+
+class_method_decl: s = SYMBOL; t = type_anot { s, t }
+
+more_methods: 
+  | NEWLINE; INDENT; ms = separated_list(NEWLINE, class_method_decl); DEDENT 
+    NEWLINE { ms }
+  | NEWLINE { [] }
+
+class_declaration:
+  CLASS; name = SYMBOL; t = class_type; d1 = class_method_decl?;
+  ms = more_methods { 
+    let type_name, parent_classes = t in 
+    let declarations = match d1 with 
+                       | Some d1 -> d1::ms | None _ -> ms in 
+                       
+    { name; type_name; parent_classes; declarations } 
+  }
+
 simple_expr:  
   | l = literal                 { LitExp l }
   | s = nested_sym              { VarExp s }
