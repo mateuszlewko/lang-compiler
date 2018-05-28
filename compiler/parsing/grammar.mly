@@ -18,7 +18,7 @@ let to_exps fst_line rest =
 %token <string> OPERATOR
 %token <char> KWD
 %token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN 
-%token CLASS INSTANCE WITH
+%token CLASS INSTANCE WHERE WHEN
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token QUOTE COMMA COLON SEMICOL DOT
@@ -45,14 +45,31 @@ empty_line:
   | INDENT; empty_line*; DEDENT { }
 
 single_type_anot:
-  | UNIT { "()" }
-  | ts = SYMBOL { ts }
+  | UNIT        { "()" }
+  | ts = SYMBOL { ts   }
 
 nested_sym:
   | s = NESTED_SYMBOL { s }
   | s = SYMBOL { s }
 
-type_anot: COLON; t = separated_list(ARROW, single_type_anot+) { t }
+basic_type_anot: 
+  | s = single_type_anot+                       { Single s }
+  | ts = separated_list(ARROW, basic_type_anot) { Fun ts   }
+  | LPAR; t = basic_type_anot; RPAR             { t        }
+
+single_classes_anot: 
+  | t = basic_type_anot; COLON; c = SYMBOL { t, [c] }
+  | t = basic_type_anot; COLON; LPAR; cs = separated_list(COMMA, SYMBOL); RPAR
+    { t, cs }
+  
+classes_anots:
+  | WHEN; cs = separated_list(COMMA, single_classes_anot) { cs }
+  | { [] }
+
+raw_type_anot: 
+  basic = basic_type_anot; classes = classes_anots { { basic; classes } }
+  
+type_anot: COLON; raw_type_anot { t }
 
 typed_var:
   | s = UNIT; { "()", Some [["()"]]  }
@@ -68,7 +85,7 @@ letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
     rett = type_anot?; EQ; e = value_expr?;
     NEWLINE*; es = indented?
-    { LetExp (is_rec, (n, rett), vs, e, es) }
+    { (is_rec, (n, rett), vs, e, es) }
 
 application:
   | s = simple_expr; es1 = simple_expr+
@@ -185,9 +202,9 @@ class_type:
 class_method_decl: s = SYMBOL; t = type_anot { s, t }
 
 more_methods: 
-  | NEWLINE; INDENT; ms = separated_list(NEWLINE, class_method_decl); DEDENT 
-    NEWLINE { ms }
-  | NEWLINE { [] }
+  | NEWLINE+; INDENT; ms = separated_list(NEWLINE+, class_method_decl); DEDENT 
+    NEWLINE+ { ms }
+  | NEWLINE+ { [] }
 
 class_declaration:
   CLASS; name = SYMBOL; t = class_type; d1 = class_method_decl?;
@@ -198,6 +215,11 @@ class_declaration:
                        
     { name; type_name; parent_classes; declarations } 
   }
+
+class_instance: 
+  INSTANCE; class_name = SYMBOL; type_name = raw_type_anot; WHERE;
+  NEWLINE+; INDENT; definitions = letexp+; DEDENT
+  { { class_name; type_name; definitions } }
 
 simple_expr:  
   | l = literal                 { LitExp l }
@@ -213,11 +235,11 @@ value_expr:
   | e = application { e }
 
 complex_expr:
-  | e = record_literal; NEWLINE* { e }
-  | l = letexp; NEWLINE* { l }
-  | e = if_exp; NEWLINE* { e }
-  | s = value_expr; NEWLINE+ { s }
-  | LPAR; e = complex_expr; RPAR; NEWLINE* { e }
+  | e = record_literal; NEWLINE*           { e        }
+  | l = letexp; NEWLINE*                   { LetExp l }
+  | e = if_exp; NEWLINE*                   { e        }
+  | s = value_expr; NEWLINE+               { s        }
+  | LPAR; e = complex_expr; RPAR; NEWLINE* { e        }
 
 external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
 
@@ -225,10 +247,12 @@ type_decl:
   | r = record_decl { r }
 
 top_expr:
- | m = module_exp    { m          }
- | o = open_exp      { o          }
- | e = complex_expr  { Expr e     }
- | e = external_expr { e          }
- | t = type_decl     { TypeDecl t }
+ | m = module_exp        { m          }
+ | o = open_exp          { o          }
+ | e = complex_expr      { Expr e     }
+ | e = external_expr     { e          }
+ | t = type_decl         { TypeDecl t }
+ | c = class_declaration { Class c    }
+ | i = class_instance    { Instance i }
 
 %%

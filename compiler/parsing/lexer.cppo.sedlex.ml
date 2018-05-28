@@ -156,6 +156,7 @@ and token state buf =
   | "class"    -> [CLASS], state
   | "instance" -> [INSTANCE], state
   | "where"    -> [WHERE], state
+  | "when"     -> [WHEN], state
   | "module"   -> [MODULE], state
   | "open"     -> [OPEN], state
   | "type"     -> [TYPE], state

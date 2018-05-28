@@ -33,6 +33,7 @@ type expr =
   | LitExp  of literal
   | LetExp  of letexp 
   | AppExp  of expr * expr list
+  (* TODO: remove option from infix op *)
   | InfixOp of string * expr option * expr option
   | IfExp         of ifexp
   | Exprs         of expr list
