@@ -53,9 +53,11 @@ nested_sym:
   | s = SYMBOL { s }
 
 basic_type_anot: 
-  | s = single_type_anot+                       { Single s }
-  | ts = separated_list(ARROW, basic_type_anot) { Fun ts   }
-  | LPAR; t = basic_type_anot; RPAR             { t        }
+  | s = single_type_anot+ { Single s }
+  | t1 = basic_type_anot; ARROW; 
+    ts = separated_nonempty_list(ARROW, basic_type_anot) 
+    { Fun (t1::ts) }
+  | LPAR; t = basic_type_anot; RPAR { t }
 
 single_classes_anot: 
   | t = basic_type_anot; COLON; c = SYMBOL { t, [c] }
@@ -68,11 +70,11 @@ classes_anots:
 
 raw_type_anot: 
   basic = basic_type_anot; classes = classes_anots { { basic; classes } }
-  
-type_anot: COLON; raw_type_anot { t }
+
+type_anot: COLON; t = raw_type_anot { t }
 
 typed_var:
-  | s = UNIT; { "()", Some [["()"]]  }
+  | s = UNIT; { "()", Some { basic = Single ["()"]; classes = [] } }
   | LPAR; s = SYMBOL; t = type_anot?; RPAR { s, t }
   | s = SYMBOL; { s, None }
 
@@ -88,9 +90,7 @@ letexp:
     { (is_rec, (n, rett), vs, e, es) }
 
 application:
-  | s = simple_expr; es1 = simple_expr+
-    /* es2 = indent_cont?; */
-    { AppExp (s, es1, None) }
+  | s = simple_expr; es1 = simple_expr+ { AppExp (s, es1) }
 
 %inline oper:
   | AND { "&&" }
@@ -121,7 +121,10 @@ elif_exp: ELIF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
 if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
         NEWLINE*; true_exps = indented? NEWLINE*; elif_exps = elif_exp*; 
         else_ex = else_exp?; NEWLINE? 
-        { IfExp (cond, to_exps true_ex true_exps, elif_exps, else_ex) }
+        { IfExp { cond 
+                ; then_ = to_exps true_ex true_exps
+                ; elif  = elif_exps
+                ; else_ = else_ex } }
 
 %inline indented: INDENT; es = complex_expr+; DEDENT { es }
 
@@ -211,15 +214,15 @@ class_declaration:
   ms = more_methods { 
     let type_name, parent_classes = t in 
     let declarations = match d1 with 
-                       | Some d1 -> d1::ms | None _ -> ms in 
+                       | Some d1 -> d1::ms | None -> ms in 
                        
     { name; type_name; parent_classes; declarations } 
   }
 
 class_instance: 
-  INSTANCE; class_name = SYMBOL; type_name = raw_type_anot; WHERE;
+  INSTANCE; class_name = SYMBOL; type_ = raw_type_anot; WHERE;
   NEWLINE+; INDENT; definitions = letexp+; DEDENT
-  { { class_name; type_name; definitions } }
+  { { class_name; type_; definitions } }
 
 simple_expr:  
   | l = literal                 { LitExp l }

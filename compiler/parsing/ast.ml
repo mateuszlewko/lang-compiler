@@ -1,16 +1,18 @@
 open Core
 
-(** type a1 t1 -> a2 t2 -> ... -> an an' tn is represented as a list 
+(** type a1 t1 -> a2 t2 -> ... -> an an' tn is represented as a list
        [[a1; t1]; [[a2; t2]; ...; [an; an'; tn]] *)
 
-type basic_type = Single of string list | Fun of basic_type list 
-type type_annotation = 
-  { basic   : basic_type 
-  ; classes : (string * string list) list 
+type basic_type = Single of string list | Fun of basic_type list
+[@@deriving show]
+
+type type_annotation =
+  { basic   : basic_type
+  ; classes : (basic_type * string list) list
   } [@@deriving show]
 
                    (** record name, (field, type) list *)
-type record_declaration = string * (string * type_annot) list
+type record_declaration = string * (string * type_annotation) list
 [@@deriving show]
 
 type type_declaration =
@@ -18,10 +20,10 @@ type type_declaration =
   [@@deriving show]
 
 and class_declaration =
-  { name           : string 
-  ; type_name      : string 
-  ; parent_classes : string list  
-  ; declarations   : (string * type_annotation) list 
+  { name           : string
+  ; type_name      : string
+  ; parent_classes : string list
+  ; declarations   : (string * type_annotation) list
   } [@@deriving show]
 
 (** Type is either Some type, or none which means it's integer *)
@@ -31,7 +33,7 @@ type typed_arg = string * type_annotation option
 type expr =
   | VarExp  of string
   | LitExp  of literal
-  | LetExp  of letexp 
+  | LetExp  of letexp
   | AppExp  of expr * expr list
   (* TODO: remove option from infix op *)
   | InfixOp of string * expr option * expr option
@@ -42,24 +44,24 @@ type expr =
   | RecordWithExp of expr * (string * expr) list
   [@@deriving show]
 
-and ifexp = 
-  { cond : expr 
-  ; then : expr 
-  ; elif : expr * expr list 
-  ; else : expr option 
+and ifexp =
+  { cond  : expr
+  ; then_ : expr
+  ; elif  : expr * expr list
+  ; else_ : expr option
   } [@@deriving show]
 
-and letexp = 
-  { name  : string 
-  ; args  : typed_arg list 
-  ; ret_t : type_annotation option 
-  ; body  : expr list 
+and letexp =
+  { name  : string
+  ; args  : typed_arg list
+  ; ret_t : type_annotation option
+  ; body  : expr list
   } [@@deriving show]
 
-and class_instance =                                                                               │
-  { class_name  : string                                                                            │
-  ; type_name   : string                                                                            │
-  ; definitions : letexp list                                                                       │
+and class_instance =
+  { class_name  : string
+  ; type_       : type_annotation
+  ; definitions : letexp list
   } [@@deriving show]
 
 and literal =
