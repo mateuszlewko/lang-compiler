@@ -116,13 +116,13 @@ Codegen:
     ✘ multi-file programs @low @optional @cancelled(18-05-22 23:31)
 
 Optimisations: @optional
-    ✔ Value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
-    ❑ No closure conversion when there is no free variables
+    ✔ value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
+    ❑ no closure conversion when there is no free variables
     ❑ unboxed structures
 
 Bugs:
     ❑ fix if-else codegen (something with env) @critical 
-    ❑ fix nested functions in type annotation @critical
+    ✔ fix nested functions in type annotation @critical @done(18-05-30 01:51)
     ❑ function redefinitions detected in llvmgateway
     ✔ fix nested let @critical @done(18-05-18 00:35)
         ✔ closure conversion @today @done(18-05-18 00:35)
