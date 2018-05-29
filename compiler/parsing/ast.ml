@@ -1,8 +1,5 @@
 open Core
 
-(** type a1 t1 -> a2 t2 -> ... -> an an' tn is represented as a list
-       [[a1; t1]; [[a2; t2]; ...; [an; an'; tn]] *)
-
 type basic_type = Single of string list | Fun of basic_type list
 [@@deriving show]
 
@@ -11,7 +8,7 @@ type type_annotation =
   ; classes : (basic_type * string list) list
   } [@@deriving show]
 
-                   (** record name, (field, type) list *)
+                  (** record name, (field  , field type) list *)
 type record_declaration = string * (string * type_annotation) list
 [@@deriving show]
 

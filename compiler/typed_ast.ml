@@ -293,8 +293,10 @@ and funexp env name is_rec args ret_t body =
       (* All symbols *)
       BatMap.merge merge env.prefixed env.opened
       (* Select symbols that will be opened *)
-      |> BatMap.filter (function | Type s | Val s -> starts_with s path |> const
-                                 | Fields _       -> const true)
+      |> BatMap.filter (function 
+                        | Type s | Val s | GenericFun (s, _) -> 
+                          starts_with s path |> const
+                        | Fields _                           -> const true)
       (* |> fun m -> BatMap.iter (fun k _ -> printf "-- o key: %s\n" k) m; m *)
       (* Remove path prefix from selected symbols *)
       |> fun map -> 
@@ -331,6 +333,8 @@ and funexp env name is_rec args ret_t body =
     let t      = LT.Record fields in *)
 
     add_type env name (t, Global), []
+  | Class c    -> failwith "TODO typed_ast: Class"
+  | Instance o -> failwith "TODO typed_ast: Instance"
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 

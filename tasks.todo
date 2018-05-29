@@ -26,8 +26,8 @@ Parser:
     ✔ record field update @today @done(18-05-22 18:55)
 
     type classes:
-        ❑ type class declaration @today  
-        ❑ type class annotation @today 
+        ✔ type class declaration @today @done(18-05-30 01:50)
+        ✔ type class annotation @today @done(18-05-30 01:50)
         
     ❑ lambda (fun or =>)
     ❑ mutable var

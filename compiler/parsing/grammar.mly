@@ -71,14 +71,19 @@ classes_anots:
   | { [] }
 
 raw_type_anot: 
-  basic = basic_type_anot; classes = classes_anots { { basic; classes } }
+  basic = basic_type_anot; classes = classes_anots 
+  { { basic; classes } }
 
 type_anot: COLON; t = raw_type_anot { t }
 
+raw_type_anot_no_classes: basic = basic_type_anot { { basic; classes = [] } }
+
+type_anot_no_classes: COLON; t = raw_type_anot_no_classes { t }
+
 typed_var:
-  | s = UNIT; { "()", Some { basic = Single ["()"]; classes = [] } }
+  | s = UNIT { "()", Some { basic = Single ["()"]; classes = [] } }
   | LPAR; s = SYMBOL; t = type_anot?; RPAR { s, t }
-  | s = SYMBOL; { s, None }
+  | s = SYMBOL { s, None }
 
 module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
             { Module (s, es) }
@@ -204,17 +209,16 @@ class_type:
   | s = SYMBOL; COLON; p1 = SYMBOL WHERE { s, [p1] }
   | s = SYMBOL WHERE { s, [] }
 
-class_method_decl: s = SYMBOL; t = type_anot { s, t }
+class_method_decl: s = SYMBOL; t = type_anot; NEWLINE+ { s, t }
 
-more_methods: 
-  | NEWLINE+; INDENT; ms = separated_list(NEWLINE+, class_method_decl); DEDENT 
-    NEWLINE+ { ms }
-  | NEWLINE+ { [] }
+more_methods: NEWLINE+; INDENT; ms = list(class_method_decl); NEWLINE*; 
+              DEDENT { ms }
 
 class_declaration:
   CLASS; name = SYMBOL; t = class_type; d1 = class_method_decl?;
-  ms = more_methods { 
-    let type_name, parent_classes = t in 
+  ms = more_methods?
+  { let type_name, parent_classes = t in 
+    let ms = Option.value ms ~default:[] in 
     let declarations = match d1 with 
                        | Some d1 -> d1::ms | None -> ms in 
                        
@@ -246,7 +250,8 @@ complex_expr:
   | s = value_expr; NEWLINE+               { s        }
   | LPAR; e = complex_expr; RPAR; NEWLINE* { e        }
 
-external_expr: EXTERNAL; s = SYMBOL; t = type_anot; NEWLINE+ { Extern (s, t) }
+external_expr: EXTERNAL; s = SYMBOL; t = type_anot_no_classes; 
+               NEWLINE+ { Extern (s, t) }
 
 type_decl: 
   | r = record_decl { r }
