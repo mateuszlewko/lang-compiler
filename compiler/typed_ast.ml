@@ -77,18 +77,15 @@ let rec expr env =
                    { env with free_vars }, var
     end
   | LitExp l -> env, lit env l
-  | LetExp (is_rec, (name, ret_t), [], body1, body) -> 
+  | LetExp { name; is_rec; args = []; ret_t; body } -> 
     if is_rec = true 
     then failwith "Value cannot be defined with 'rec'";
 
-    let env, body = 
-      let init = Option.value body ~default:[] in 
-      Option.fold body1 ~init ~f:(flip List.cons)
-      |> List.fold_map ~init:env ~f:expr in
+    let env, body = List.fold_map body ~init:env ~f:expr in
 
     let t = List.last_exn body |> snd in 
     add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
-  | LetExp (is_rec, (name, ret_t), args, body1, body) -> 
+  | LetExp { name; is_rec; args; ret_t; body }  -> 
     let args, arg_ts = List.unzip args in 
 
     let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
@@ -104,10 +101,7 @@ let rec expr env =
               List.fold args ~init:env 
                              ~f:(fun env (a, t) -> add env a (t, lvl)) in 
     
-    let env, body = 
-      let init = Option.value body ~default:[] in 
-      Option.fold body1 ~init ~f:(flip List.cons)
-      |> List.fold_map ~init:env ~f:expr in
+    let env, body = List.fold_map body ~init:env ~f:expr in
 
     let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
                        |> List.map ~f:snd in 
@@ -137,9 +131,8 @@ let rec expr env =
 
     env, (fn_with_env, fn_t)
 
-  | AppExp (callee, args1, args2) -> 
-    let env, args   = args1 @ (Option.value args2 ~default:[]) 
-                      |> List.fold_map ~init:env ~f:expr in 
+  | AppExp (callee, args) -> 
+    let env, args   = List.fold_map args ~init:env ~f:expr in 
     let env, callee = expr env callee in 
     
     let e = LT.apply (snd callee) (List.map args snd) (App (callee, args)) in 
@@ -159,23 +152,18 @@ let rec expr env =
     if loc <> Global 
     then sprintf "Non global operator: %s is not supported." name |> failwith;
 
-    let open Option in 
-    let env, arg_ts = to_list lhs @ to_list rhs 
-                      |> List.fold_map ~init:env ~f:(expr) in 
-    let arg_ts = List.map arg_ts snd in 
+    let env, lhs = expr env lhs in 
+    let env, rhs = expr env rhs in 
+    let arg_ts   = List.map [lhs; rhs] snd in 
 
-    (* TODO: Handle cases when one of operands is missing *)
-    let Some (env, lhs) = map lhs ~f:(expr env) in 
-    let Some (env, rhs) = map rhs ~f:(expr env) in 
-
-    let e = LT.apply op_t arg_ts (InfixOp (name, Some lhs, Some rhs)) in 
+    let e = LT.apply op_t arg_ts (InfixOp (name, lhs, rhs)) in 
     env, e
-  | IfExp (cond, then_, elifs, else_) ->
+  | IfExp { cond; then_; elifs; else_ } ->
     let env, then_body = expr env then_ in 
     let env, else_body = 
       match elifs with 
       | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr env
-      | (cond, body)::es -> expr env (IfExp (cond, body, es, else_)) in
+      | (cond, then_)::elifs -> expr env (IfExp {cond; then_; elifs; else_}) in
    
     if snd then_body <> snd else_body 
     then raise IfBranchesTypeMismatched;
@@ -250,7 +238,7 @@ and lit env =
 
 (* and real_funexp env is_rec name ret_t args arg_ts body =  *)
 
-and funexp env (is_rec, (name, ret_t), args, body1, body) =
+and funexp env name is_rec args ret_t body =
   let args, arg_ts = List.unzip args in 
 
   let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
@@ -266,10 +254,7 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
                                    add env a (t, AtLevel env.level)) in 
   
   let env = { env with level = env.level + 1} in 
-  let env, body = 
-    let init = Option.value body ~default:[] in 
-    Option.fold body1 ~init ~f:(flip List.cons)
-    |> List.fold_map ~init:env ~f:expr in
+  let env, body = List.fold_map body ~init:env ~f:expr in
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
 
@@ -279,8 +264,8 @@ and funexp env (is_rec, (name, ret_t), args, body1, body) =
 
  and top env =
   function 
-  | A.Expr (LetExp (is_rec, (name, ret_t), args, body1, body)) ->
-    funexp env (is_rec, (name, ret_t), args, body1, body)
+  | A.Expr (LetExp { name; is_rec; args; ret_t; body }) ->
+    funexp env name is_rec args ret_t body
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
     let t = LT.of_annotation !-> env (Some ta) in 

@@ -1,13 +1,15 @@
 %{
 open Core
 open Ast
+open BatPervasives
 
-let to_exps fst_line rest = 
+let merge_multiline fst_line rest = 
   let exps = Option.value rest ~default:[] in
-  let exps = match fst_line with 
-                  | None   -> exps 
-                  | Some e -> e::exps
-  in Exprs exps
+  match fst_line with 
+  | None   -> exps 
+  | Some e -> e::exps
+
+let to_exps fst_line rest = merge_multiline fst_line rest |> (fun x -> Exprs x)
 %}
 
 %token <string> SYMBOL
@@ -84,10 +86,10 @@ module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
 open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 
 letexp:
-  | LET; is_rec = boption(REC); n = SYMBOL; vs = typed_var*;
-    rett = type_anot?; EQ; e = value_expr?;
+  | LET; is_rec = boption(REC); n = SYMBOL; args = typed_var*;
+    ret_t = type_anot?; EQ; e = value_expr?;
     NEWLINE*; es = indented?
-    { (is_rec, (n, rett), vs, e, es) }
+    { { name = n; is_rec; ret_t; args; body = merge_multiline e es } }
 
 application:
   | s = simple_expr; es1 = simple_expr+ { AppExp (s, es1) }
@@ -109,7 +111,7 @@ application:
 
 infix_op:
   | l = value_expr; o = oper; r = value_expr
-    { InfixOp (o, Some l, Some r) }
+    { InfixOp (o, l, r) }
 
 else_exp: ELSE; exp = value_expr?; NEWLINE*; exps = indented?
           { to_exps exp exps }
@@ -123,7 +125,7 @@ if_exp: IF; cond = value_expr; NEWLINE*; THEN; true_ex = value_expr?;
         else_ex = else_exp?; NEWLINE? 
         { IfExp { cond 
                 ; then_ = to_exps true_ex true_exps
-                ; elif  = elif_exps
+                ; elifs = elif_exps
                 ; else_ = else_ex } }
 
 %inline indented: INDENT; es = complex_expr+; DEDENT { es }

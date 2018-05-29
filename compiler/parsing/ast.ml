@@ -31,12 +31,11 @@ type typed_arg = string * type_annotation option
 [@@deriving show]
 
 type expr =
-  | VarExp  of string
-  | LitExp  of literal
-  | LetExp  of letexp
-  | AppExp  of expr * expr list
-  (* TODO: remove option from infix op *)
-  | InfixOp of string * expr option * expr option
+  | VarExp        of string
+  | LitExp        of literal
+  | LetExp        of letexp
+  | AppExp        of expr * expr list
+  | InfixOp       of string * expr * expr
   | IfExp         of ifexp
   | Exprs         of expr list
   | RecordLiteral of (string * expr) list
@@ -47,15 +46,16 @@ type expr =
 and ifexp =
   { cond  : expr
   ; then_ : expr
-  ; elif  : expr * expr list
+  ; elifs : (expr * expr) list
   ; else_ : expr option
   } [@@deriving show]
 
 and letexp =
-  { name  : string
-  ; args  : typed_arg list
-  ; ret_t : type_annotation option
-  ; body  : expr list
+  { name   : string
+  ; is_rec : bool
+  ; args   : typed_arg list
+  ; ret_t  : type_annotation option
+  ; body   : expr list
   } [@@deriving show]
 
 and class_instance =

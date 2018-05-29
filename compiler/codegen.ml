@@ -80,34 +80,30 @@ module Codegen = struct
     | other         -> unsupp ~name:"literal" (TA.show_literal other)
 
   let gen_op (env : Envn.t) expr lhs rhs op = 
-    match lhs, rhs with
-    | Some lhs, Some rhs ->
-      let res1, lhs, env = expr env lhs in
-      let res2, rhs, env = expr env rhs in
-      let res   = res1 @ res2 in 
-      let m, v  = M.tmp env.m in
-      
-      (match op with
-      (* operators returning int *)
-      | ".+"   -> add  lhs rhs
-      | ".-"   -> sub  lhs rhs
-      | ".*"   -> mul  lhs rhs
-      | "./"   -> sdiv lhs rhs
-      (* operators returning bool *)
-      | ".="   -> eq   lhs rhs
-      | ".<"   -> slt  lhs rhs
-      | ".<="  -> sle  lhs rhs
-      | ".>"   -> sgt  lhs rhs
-      | ".>="  -> sge  lhs rhs
-      | ".<>"  -> ne   lhs rhs
-      | ".&&"  -> and_ lhs rhs
-      | ".||"  -> or_  lhs rhs
-      (* raise when operator is unknown *)
-      | other -> unsupp ~name:"operator" other)
-      |> fun op_res -> res @ [Instr (v <-- op_res)], v, { env with m }
-    | _, _ ->
-      failwith "Operator is missing operands"
-  
+    let res1, lhs, env = expr env lhs in
+    let res2, rhs, env = expr env rhs in
+    let res   = res1 @ res2 in 
+    let m, v  = M.tmp env.m in
+    
+    (match op with
+    (* operators returning int *)
+    | ".+"   -> add  lhs rhs
+    | ".-"   -> sub  lhs rhs
+    | ".*"   -> mul  lhs rhs
+    | "./"   -> sdiv lhs rhs
+    (* operators returning bool *)
+    | ".="   -> eq   lhs rhs
+    | ".<"   -> slt  lhs rhs
+    | ".<="  -> sle  lhs rhs
+    | ".>"   -> sgt  lhs rhs
+    | ".>="  -> sge  lhs rhs
+    | ".<>"  -> ne   lhs rhs
+    | ".&&"  -> and_ lhs rhs
+    | ".||"  -> or_  lhs rhs
+    (* raise when operator is unknown *)
+    | other -> unsupp ~name:"operator" other)
+    |> fun op_res -> res @ [Instr (v <-- op_res)], v, { env with m }
+    
   let gen_let_raw (env : Env.t) expr funexp fn_t ts = 
     let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
 

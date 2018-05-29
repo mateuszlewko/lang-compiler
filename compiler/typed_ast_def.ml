@@ -34,7 +34,7 @@ and body_expr =
   | Lit        of literal
   | Value      of string * expr_t
   | App        of expr_t * expr_t list 
-  | InfixOp    of string * expr_t option * expr_t option 
+  | InfixOp    of string * expr_t * expr_t 
   | If         of ifexp 
   | GepLoad    of expr_t * int list
   | Clone      of expr_t

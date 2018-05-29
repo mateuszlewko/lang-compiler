@@ -13,29 +13,30 @@ exception WrongNumberOfApplyArguments
 exception WrongTypeOfApplyArgument
 exception ValueCannotBeApplied 
 
-let of_annotation find_type =
-  let single =
+let of_annotation find_type annotation =
+  let rec of_basic =
     function
-    | ["int"]           -> Int
-    | ["bool"]          -> Bool
-    | ["int"; "array"]  -> Array Int
-    | ["()"] | ["unit"] -> Unit
-    | [t] when BatString.starts_with t "'" -> Generic t
-    | [name]            -> 
+    | A.Fun []                   -> raise (UnsupportedType "<empty>")
+    | Fun [t]                    -> of_basic t
+    | Fun ts                     -> Fun (List.map ts of_basic)
+    | Single ["int"]             -> Int
+    | Single ["bool"]            -> Bool
+    | Single ["int"; "array"]    -> Array Int
+    | Single (["()"] | ["unit"]) -> Unit
+    | Single [t] when BatString.starts_with t "'" -> Generic t
+    | Single [name]              -> 
       begin 
       match find_type name with 
       | Some t -> t 
       | None   -> UnsupportedType name |> raise
       end
-    | other ->
+    | Single other ->
       BatString.concat " " other
       |> UnsupportedType |> raise in
 
-  function
-  | None     -> Int
-  | Some []  -> raise (UnsupportedType "<empty>")
-  | Some [t] -> single t
-  | Some ts  -> List.map ts single |> Fun
+  match annotation with 
+  | Some { A.basic; _ } -> of_basic basic 
+  | None                -> Int
 
 let value_if_not_function = 
   function
