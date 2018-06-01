@@ -133,8 +133,11 @@ let rec expr env =
 
   | AppExp (callee, args) -> 
     let env, args   = List.fold_map args ~init:env ~f:expr in 
+    printf "callee: %s\n" (Lang_parsing.Ast.show_expr callee);
     let env, callee = expr env callee in 
+    printf "callee_t: %s\n" (show_expr_t callee);
     
+
     let e = LT.apply (snd callee) (List.map args snd) (App (callee, args)) in 
     env, e
   | Exprs es ->

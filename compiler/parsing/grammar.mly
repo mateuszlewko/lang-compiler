@@ -46,19 +46,21 @@ empty_line:
   | NEWLINE                     { }
   | INDENT; empty_line*; DEDENT { }
 
-single_type_anot:
+single_type_elem:
   | UNIT        { "()" }
   | ts = SYMBOL { ts   }
+
+single_type_anot: s = single_type_elem+ { Single s }
 
 nested_sym:
   | s = NESTED_SYMBOL { s }
   | s = SYMBOL { s }
 
 basic_type_anot: 
-  | s = single_type_anot+ { Single s }
-  | t1 = basic_type_anot; ARROW; 
-    ts = separated_nonempty_list(ARROW, basic_type_anot) 
+  | t1 = single_type_anot; ARROW; 
+    ts = separated_nonempty_list(ARROW, single_type_anot) 
     { Fun (t1::ts) }
+  | s = single_type_anot            { s }
   | LPAR; t = basic_type_anot; RPAR { t }
 
 single_classes_anot: 
