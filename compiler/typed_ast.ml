@@ -238,7 +238,7 @@ and lit env =
 
 (* and real_funexp env is_rec name ret_t args arg_ts body =  *)
 
-and funexp env name is_rec args ret_t body =
+and funexp_raw env { name; is_rec; args; ret_t; body } =
   let args, arg_ts = List.unzip args in 
 
   let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
@@ -259,13 +259,17 @@ and funexp env name is_rec args ret_t body =
                      ; free_vars = BatMultiMap.empty } in 
 
   let gen_name = name_in env name in 
-  add env name (fn_t, Global), [Fun ({ name = gen_name; gen_name; is_rec
-                                     ; args; body }, fn_t)]
+  let f        = { name = gen_name; gen_name; is_rec; args; body } in 
+  add env name (fn_t, Global), f, fn_t
+
+and funexp env let_exp = 
+  let env, f, fn_t = funexp_raw env let_exp in 
+  env, [Fun (f, fn_t)]
 
  and top env =
   function 
-  | A.Expr (LetExp { name; is_rec; args; ret_t; body }) ->
-    funexp env name is_rec args ret_t body
+  | A.Expr (LetExp e) ->
+    funexp env e
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
     let t = LT.of_annotation !-> env (Some ta) in 
@@ -294,7 +298,7 @@ and funexp env name is_rec args ret_t body =
       BatMap.merge merge env.prefixed env.opened
       (* Select symbols that will be opened *)
       |> BatMap.filter (function 
-                        | Type s | Val s | GenericFun (s, _) -> 
+                        | Type s | Val s (*| GenericFun (s, _)*) -> 
                           starts_with s path |> const
                         | Fields _                           -> const true)
       (* |> fun m -> BatMap.iter (fun k _ -> printf "-- o key: %s\n" k) m; m *)
@@ -333,8 +337,22 @@ and funexp env name is_rec args ret_t body =
     let t      = LT.Record fields in *)
 
     add_type env name (t, Global), []
-  | Class c    -> failwith "TODO typed_ast: Class"
-  | Instance o -> failwith "TODO typed_ast: Instance"
+  | Class { declarations; _ }    -> 
+    let env = 
+    List.fold declarations ~init:env 
+      ~f:(fun env (name, t) -> 
+            add env name (LT.of_annotation !-> env (Some t), Global)) in 
+    env, [Class (List.map declarations fst)]
+  | Instance { class_name; definitions; _ } -> 
+    let parent_env     = env in 
+    (* create funexps representing methods in class *)
+    let funexp env e = let env, f, _ = funexp_raw env e in env, f in 
+    let env, funexps = List.fold_map definitions ~init:env ~f:funexp in 
+    (* replace opened and prefixed symbols with ones from parent_env  *)
+    let env = { env with prefixed = parent_env.prefixed
+                       ; opened   = parent_env.opened } in 
+
+    env, [Instance (class_name, funexps)]
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 

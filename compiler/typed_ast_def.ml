@@ -51,11 +51,13 @@ type extern = { name : string; gen_name : string }
 [@@deriving show]
 
 type top = 
-  | Expr   of expr_t
-  | Fun    of funexp * t
-  | Extern of extern * t
-  | Module of string * top list
-  | Open   of string
+  | Expr     of expr_t
+  | Fun      of funexp * t
+  | Class    of string list
+  | Instance of string * funexp list
+  | Extern   of extern * t
+  | Module   of string * top list
+  | Open     of string
   [@@deriving show]
 
 type location = AtLevel of int | Global 
@@ -71,7 +73,7 @@ type key =
   | Type       of string 
   | Val        of string 
   | Fields     of (string * t) BatSet.t
-  | GenericFun of string * fun_arg_type list
+  (* | GenericFun of string * fun_arg_type list *)
 (* [@@deriving show] *)
  
 type bindings_map = (key, bound * string) BatMap.t

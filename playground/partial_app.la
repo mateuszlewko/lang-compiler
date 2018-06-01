@@ -61,6 +61,13 @@ instance Enum int where
         if i = 0 then i 
         else succ (i - 1)
 
+let cmp1 (x : 'a) (y : 'a) : int when 'a : Eq = 
+    if x = y 
+    then 0 
+    else 1
+
+let cmp2 x y = x = y
+
 let rec range (first : 'a) (last : 'a) : 'a when 'a : (Enum, Eq), 'b : Enum =
     if first = last 
     then [| |]

@@ -537,14 +537,22 @@ module Codegen = struct
       ; args = ["_", Unit]; body = main_exprs @ [ TA.Lit (Int 0), LT.Int ] } in  
     gen_let env gen_expr funexp (Fun [Unit; Int])
 
+  let gen_class env declarations = failwith "TODO gen_class"
+  (* add bindings member_name -> class *)
+
+  let gen_instance env expr name definitions = failwith "TODO gen_instance"
+  (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
+
   let rec gen_top env =
     let open TA in 
     function 
     | Fun ({TA.args = []; _} as funexp, t) -> 
       let main_expr, env = gen_top_value env gen_expr funexp t in 
       env, [main_expr]
-    | Fun (funexp, t)  -> gen_let env gen_expr funexp t, []
-    | Extern (extern, t) -> gen_extern env gen_top extern t    
+    | Instance (name, defs) -> gen_instance env gen_expr name defs
+    | Class declarations    -> gen_class env declarations, []
+    | Fun (funexp, t)       -> gen_let env gen_expr funexp t, []
+    | Extern (extern, t)    -> gen_extern env gen_top extern t    
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 
