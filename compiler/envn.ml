@@ -27,9 +27,10 @@ and bindings_map = (string, binding) BatMap.t
 
 and environment = 
   { bindings      : bindings_map
+  (** inferred type substitutions *)
   ; substitutions : (LT.t, LT.t) BatMap.t
-  (* TODO: Added implemented type in key *)
-  ; classes       : (string * string, binding) BatMap.t
+  (** methods of all class instances in a current scope *)
+  ; classes       : (string * LT.t * string, binding) BatMap.t
   (** low-level module *)
   ; m             : M.t
   } 

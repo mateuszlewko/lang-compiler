@@ -157,6 +157,8 @@ let rec expr env =
     let env, rhs = expr env rhs in 
     let arg_ts   = List.map [lhs; rhs] snd in 
 
+    printf "doing op: %s\n" name;
+
     let e = LT.apply op_t arg_ts (InfixOp (name, lhs, rhs)) in 
     env, e
   | IfExp { cond; then_; elifs; else_ } ->
@@ -337,17 +339,17 @@ and funexp env let_exp =
       ~f:(fun env (name, t) -> 
             add env name (LT.of_annotation !-> env (Some t), Global)) in 
     env, [Class (name, List.map declarations (fst %> name_in env))]
-  | Instance { class_name; definitions; _ } -> 
+  | Instance { class_name; definitions; type_ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
     let funexp env e = let env, f, t = funexp_raw env e in env, (f, t) in 
     let env, funexps = List.fold_map definitions ~init:env ~f:funexp in 
     (* replace opened and prefixed symbols with ones from parent_env  *)
-    let env = { env with prefixed = parent_env.prefixed
-                       ; opened   = parent_env.opened } in 
+    let env    = { env with prefixed = parent_env.prefixed
+                          ; opened   = parent_env.opened } in 
+    let impl_t = LT.of_annotation !-> env (Some type_) in 
 
-    (* TODO: add implemented type *)
-    env, [Instance (class_name, funexps)]
+    env, [Instance (class_name, impl_t, funexps)]
 
 let of_tops tops = 
   let env = empty |> add_builtin_ops in 

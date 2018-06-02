@@ -78,7 +78,7 @@ Codegen:
     ✔ top level values (defined with let) with side effects @today @done(18-05-19 01:15)
     ✔ implement modules @today @done(18-05-19 03:01)
     ✔ implement open in typed ast @today @done(18-05-19 16:27)
-    ❑ multiple global variables with same name @critical 
+    ❑ multiple global variables with same name @critical @today 
 
     record types and operations:
         ✔ field get @done(18-05-22 23:52)
@@ -86,12 +86,12 @@ Codegen:
         ✔ record literal @done(18-05-23 19:12)
 
     ✔ let-polymorphism @done(18-05-26 23:24)
-    ❑ generics in return return type (for example in case of partial application)
+    ❑ generics in return return type (for example in case of partial application) @today 
 
-    ❑ simple type inference (with let-polymorphism)
+    ❑ simple type inference (with let-polymorphism) @today 
    
-    ❑ type classes
-    ❑ type inference with type classes
+    ❑ type classes @today 
+    ❑ type inference with type classes @today 
 
     ❑ generic arrays
     ❑ mutually recursive functions
@@ -121,7 +121,7 @@ Optimisations: @optional
     ❑ unboxed structures
 
 Bugs:
-    ❑ fix if-else codegen (something with env) @critical 
+    ❑ fix if-else codegen (something with env) @critical @today 
     ✔ fix nested functions in type annotation @critical @done(18-05-30 01:51)
     ❑ function redefinitions detected in llvmgateway
     ✔ fix nested let @critical @done(18-05-18 00:35)

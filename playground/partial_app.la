@@ -76,20 +76,24 @@ let not (b : bool) : bool =
     then false 
     else true
 
+instance Eq bool where
+    let eq (a : bool) (b : bool) : bool =
+        if (a && b) || ((not a) && (not b)) 
+        then true 
+        else false 
+
 instance Eq int where
     let eq a b : bool = a = b 
 
 instance Lt int where 
     let lt a b : bool = a < b 
 
-(* instance Eq bool where
-    let eq (a : bool) (b : bool) : bool = a = b
 
-instance Lt bool where 
+(* instance Lt bool where 
     let lt (a : bool) (b : bool) : bool = a < b  *)
 
 let leq (l : 'a) (r : 'a) : bool when 'a : (Eq, Lt) =
-    if (eq l r) || (lt l r)
+    if (eq l r) 
     then true 
     else false
 

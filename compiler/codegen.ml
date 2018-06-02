@@ -331,9 +331,10 @@ module Codegen = struct
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
         unknown_apply { env with m } [g <-- load v |> Instr] g 
       | Class c ->
-        try BatMap.find (c, name) env.classes |> extract_found name t 
-        with Not_found -> sprintf "Class %s with member %s not found.\n" c name
-                          |> failwith
+        try BatMap.find (c, t, name) env.classes |> extract_found name t 
+        with Not_found -> sprintf "Instance of class %s  for type %s \
+                                   with member %s not found.\n" 
+                                   c (LT.show t) name |> failwith
       in 
 
     match callee with 
@@ -551,11 +552,11 @@ module Codegen = struct
             printf "adding class binding %s -> %s\n" f name;
             Env.add env f (Env.Class name))
 
-  let gen_instance env expr class_name definitions = 
+  let gen_instance env expr class_name impl_t definitions = 
     (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
     let add env (def, t) = 
       let b, env = gen_let env expr def t in 
-      env, ((class_name, def.name), b)
+      env, ((class_name, t, def.name), b)
       in 
 
     let inner_env, defs = List.fold_map definitions ~init:env ~f:add in 
@@ -570,7 +571,7 @@ module Codegen = struct
     | Fun ({TA.args = []; _} as funexp, t) -> 
       let main_expr, env = gen_top_value env gen_expr funexp t in 
       env, [main_expr]
-    | Instance (name, defs)      -> gen_instance env gen_expr name defs, []
+    | Instance (name, t, defs)   -> gen_instance env gen_expr name t defs, []
     | Class (name, declarations) -> gen_class env name declarations, []
     | Fun (funexp, t)            -> gen_let env gen_expr funexp t |> snd, []
     | Extern (extern, t)         -> gen_extern env gen_top extern t    

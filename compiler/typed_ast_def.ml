@@ -54,7 +54,7 @@ type top =
   | Expr     of expr_t
   | Fun      of funexp * t
   | Class    of string * string list
-  | Instance of string * (funexp * t) list
+  | Instance of string * t * (funexp * t) list
   | Extern   of extern * t
   | Module   of string * top list
   | Open     of string
