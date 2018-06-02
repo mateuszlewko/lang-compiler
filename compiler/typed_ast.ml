@@ -329,13 +329,6 @@ and funexp env let_exp =
     let t      = LT.Record fields in
     let env    = add_raw env name (const (Fields (BatSet.of_list fields)))
                    (t, Global) in 
-    (* let fields = List.map fields (
-                   function | f_name, LT.Ptr t_name
-                              when t_name = full_name -> 
-                                printf "replaced field: %s\n" 
-                                f_name, t
-                            | other                   -> other) in 
-    let t      = LT.Record fields in *)
 
     add_type env name (t, Global), []
   | Class { declarations; name; _ }    -> 
@@ -353,6 +346,7 @@ and funexp env let_exp =
     let env = { env with prefixed = parent_env.prefixed
                        ; opened   = parent_env.opened } in 
 
+    (* TODO: add implemented type *)
     env, [Instance (class_name, funexps)]
 
 let of_tops tops = 
