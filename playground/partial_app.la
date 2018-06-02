@@ -95,12 +95,25 @@ let leq (l : 'a) (r : 'a) : bool when 'a : (Eq, Lt) =
 
 let leq_int l r : bool = leq l r 
 
+let p_bool (b : bool) : () =
+    if b 
+    then ll_putint 1
+    else ll_putint 0
+    pn ()
+
+let _ : () = 
+    p_bool (leq_int 1 2)
+    p_bool (leq_int 1 1)
+    p_bool (leq_int 121 9)
+    pn ()
+
+
 (* 
 let rec range (first : 'a) (last : 'a) : 'a when 'a : (Enum, Eq), 'b : Enum =
     if first = last 
     then [| |]
     else first + range (succ first) last  *)
-
+(* 
 let just_call (fn : int -> int -> int) x y =
     fn x y
 
@@ -162,7 +175,7 @@ let _ : () =
     pn ()
 
 
-    ()
+    () *)
 
 
 (* let main () =

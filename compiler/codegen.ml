@@ -217,12 +217,13 @@ module Codegen = struct
 
           gen_let_raw env expr { funexp with args; gen_name } fn_t ts in 
 
-        let gf = { Env.poli; mono = BatMap.empty } in 
-        Env.add env name (GenericFun gf)
+        let gf = Env.GenericFun { Env.poli; mono = BatMap.empty } in 
+        gf, Env.add env name gf 
         end
       else 
         let env, fb = gen_let_raw env expr funexp fn_t ts in
-        Env.add env funexp.name (Env.Fun fb)
+        let b       = Env.Fun fb in
+        b, Env.add env funexp.name b
 
     | other -> sprintf "TODO let-value for: %s" funexp.name |> failwith
 
@@ -242,7 +243,7 @@ module Codegen = struct
     let new_name = name ^ tpv in 
     let new_fun  = { funexp with args; name     = new_name
                                      ; gen_name = gen_name ^ tpv } in
-    let env      = gen_let env expr new_fun new_ts in
+    let env      = gen_let env expr new_fun new_ts |> snd in
 
     let m, g_val = M.global_val env.m (ret_t, Ast.VALUE_Null) gen_name in 
     let env      = Env.add { env with m } name (GlobalVar (g_val, ts)) in 
@@ -319,9 +320,8 @@ module Codegen = struct
       let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
       instrs, typed res, { env with m } in 
 
-    match callee with 
-    | TA.Var name, t -> begin 
-      match Env.find env name with
+    let rec extract_found name t =
+      function
       | Fun        fb    -> of_fun_binding name env fb
       | GenericFun gf    -> 
         printf "HERE1\n";
@@ -330,10 +330,16 @@ module Codegen = struct
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
         unknown_apply { env with m } [g <-- load v |> Instr] g 
-      end
-    | v -> 
-      let iss, callee, env = expr env v in 
-      unknown_apply env iss callee 
+      | Class c ->
+        try BatMap.find (c, name) env.classes |> extract_found name t 
+        with Not_found -> sprintf "Class %s with member %s not found.\n" c name
+                          |> failwith
+      in 
+
+    match callee with 
+    | TA.Var name, t -> extract_found name t (Env.find env name)
+    | v              -> let iss, callee, env = expr env v in 
+                        unknown_apply env iss callee 
 
   let gen_if (env : Env.t) expr (ifexp : TA.ifexp) = 
     let cond_iss, cond_res, env = expr env ifexp.cond in 
@@ -536,13 +542,27 @@ module Codegen = struct
     let funexp = 
       { TA.name = "<main>"; gen_name = "main"; is_rec = false
       ; args = ["_", Unit]; body = main_exprs @ [ TA.Lit (Int 0), LT.Int ] } in  
-    gen_let env gen_expr funexp (Fun [Unit; Int])
+    gen_let env gen_expr funexp (Fun [Unit; Int]) |> snd
 
-  let gen_class env declarations = failwith "TODO gen_class"
-  (* add bindings member_name -> class *)
+  let gen_class env name declarations = 
+    (* add bindings member_name -> class *)
+    List.fold declarations ~init:env 
+      ~f:(fun env f -> 
+            printf "adding class binding %s -> %s\n" f name;
+            Env.add env f (Env.Class name))
 
-  let gen_instance env expr name definitions = failwith "TODO gen_instance"
-  (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
+  let gen_instance env expr class_name definitions = 
+    (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
+    let add env (def, t) = 
+      let b, env = gen_let env expr def t in 
+      env, ((class_name, def.name), b)
+      in 
+
+    let inner_env, defs = List.fold_map definitions ~init:env ~f:add in 
+    let classes         = List.fold defs ~init:env.classes 
+                            ~f:(fun cs (k, v) -> BatMap.add k v cs) in 
+    
+    { env with m = inner_env.m; classes }
 
   let rec gen_top env =
     let open TA in 
@@ -550,10 +570,10 @@ module Codegen = struct
     | Fun ({TA.args = []; _} as funexp, t) -> 
       let main_expr, env = gen_top_value env gen_expr funexp t in 
       env, [main_expr]
-    | Instance (name, defs) -> gen_instance env gen_expr name defs
-    | Class declarations    -> gen_class env declarations, []
-    | Fun (funexp, t)       -> gen_let env gen_expr funexp t, []
-    | Extern (extern, t)    -> gen_extern env gen_top extern t    
+    | Instance (name, defs)      -> gen_instance env gen_expr name defs, []
+    | Class (name, declarations) -> gen_class env name declarations, []
+    | Fun (funexp, t)            -> gen_let env gen_expr funexp t |> snd, []
+    | Extern (extern, t)         -> gen_extern env gen_top extern t    
     | other -> sprintf "NOT SUPPORTED top of: %s" (TA.show_top other)
                |> failwith
 

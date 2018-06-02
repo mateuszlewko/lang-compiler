@@ -53,8 +53,8 @@ type extern = { name : string; gen_name : string }
 type top = 
   | Expr     of expr_t
   | Fun      of funexp * t
-  | Class    of string list
-  | Instance of string * funexp list
+  | Class    of string * string list
+  | Instance of string * (funexp * t) list
   | Extern   of extern * t
   | Module   of string * top list
   | Open     of string

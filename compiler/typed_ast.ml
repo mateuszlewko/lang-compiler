@@ -136,8 +136,6 @@ let rec expr env =
     printf "callee: %s\n" (Lang_parsing.Ast.show_expr callee);
     let env, callee = expr env callee in 
     printf "callee_t: %s\n" (show_expr_t callee);
-    
-
     let e = LT.apply (snd callee) (List.map args snd) (App (callee, args)) in 
     env, e
   | Exprs es ->
@@ -340,16 +338,16 @@ and funexp env let_exp =
     let t      = LT.Record fields in *)
 
     add_type env name (t, Global), []
-  | Class { declarations; _ }    -> 
+  | Class { declarations; name; _ }    -> 
     let env = 
     List.fold declarations ~init:env 
       ~f:(fun env (name, t) -> 
             add env name (LT.of_annotation !-> env (Some t), Global)) in 
-    env, [Class (List.map declarations fst)]
+    env, [Class (name, List.map declarations (fst %> name_in env))]
   | Instance { class_name; definitions; _ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
-    let funexp env e = let env, f, _ = funexp_raw env e in env, f in 
+    let funexp env e = let env, f, t = funexp_raw env e in env, (f, t) in 
     let env, funexps = List.fold_map definitions ~init:env ~f:funexp in 
     (* replace opened and prefixed symbols with ones from parent_env  *)
     let env = { env with prefixed = parent_env.prefixed

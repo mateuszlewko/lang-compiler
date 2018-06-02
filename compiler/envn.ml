@@ -21,12 +21,14 @@ and binding =
   | Val        of bound 
   | GlobalVar  of bound
   | GenericFun of generic_fun 
+  | Class      of string
 
 and bindings_map = (string, binding) BatMap.t
 
 and environment = 
   { bindings      : bindings_map
   ; substitutions : (LT.t, LT.t) BatMap.t
+  ; classes       : (string * string, binding) BatMap.t
   (** low-level module *)
   ; m             : M.t
   } 
@@ -38,6 +40,7 @@ open BatMap.Infix
 (** Creates top-level env *)
 let empty = { bindings      = BatMap.empty
             ; substitutions = BatMap.empty
+            ; classes       = BatMap.empty
             ; m             = M.empty }
 
 (** Evaluates name in current scope *)
