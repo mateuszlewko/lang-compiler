@@ -178,7 +178,11 @@ module Codegen = struct
     env, f_binding
   
   let convert_types map ts = 
-    List.map ts (fun t -> BatMap.find_default t t map)
+    List.map ts (fun t -> match LT.find_concrete_lt map t with 
+                          | Some t -> t
+                          | None   -> sprintf "Couldn't find concrete type \
+                                               for: %s.\n" (LT.show t) 
+                                      |> failwith)
 
   let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
@@ -192,6 +196,8 @@ module Codegen = struct
 
         let poli env map = 
           printf "Calling poli!\n";
+          printf "trying to convert types for call to: %s.\n" funexp.name;
+          List.iter ts (LT.show %> printf "fn t: %s\n");
 
           let ts   = convert_types map ts in 
           let fn_t = LT.Fun ts in 

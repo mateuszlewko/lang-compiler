@@ -6,9 +6,6 @@ include Typed_ast_def
 module LT = Lang_types
 module A  = Lang_parsing.Ast
 
-(** Evaluates name in current scope *)
-let name_in env = (^) env.prefix
-
 let add_raw env name (key_type : string -> key) value = 
   let pref_name = name_in env name in
   
@@ -20,11 +17,11 @@ let add_raw env name (key_type : string -> key) value =
 let add env name value      = add_raw env name (fun x -> Val x) value
 let add_type env name value = add_raw env name (fun x -> Type x) value
 
-let find_type env name = 
+(* let find_type env name = 
   try BatMap.find (Type name) env.opened |> Some
   with Not_found -> 
   try BatMap.find (Type (name_in env name)) env.prefixed |> Some
-  with Not_found -> None
+  with Not_found -> None *)
 
 (* TODO: Don't duplicate this code *)
 let find_fields env fields = 
@@ -33,7 +30,7 @@ let find_fields env fields =
   try BatMap.find (Fields fields) env.prefixed |> Some
   with Not_found -> None
 
-let (!->) env = find_type env %> Option.map ~f:(fst %> fst)
+(* let (!->) env = find_type env %> Option.map ~f:(fst %> fst) *)
 
 let find env name =
   try BatMap.find (Val name) env.opened 
@@ -86,12 +83,12 @@ let rec expr env =
     let t = List.last_exn body |> snd in 
     add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
   | LetExp { name; is_rec; args; ret_t; body }  -> 
-    let args, arg_ts = List.unzip args in 
+    let args_names, arg_ts = List.unzip args in 
 
-    let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
-    let args   = List.zip_exn args arg_ts in 
-    let ret_t  = LT.of_annotation !-> env ret_t in 
-    let fn_t   = LT.merge arg_ts ret_t in 
+    let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+    let args        = List.zip_exn args_names arg_ts in 
+    let env, ret_t  = LT.of_annotation env ret_t in 
+    let fn_t        = LT.merge arg_ts ret_t in 
     
     let env = { env with level = env.level + 1 } in
     let lvl = AtLevel env.level in 
@@ -106,8 +103,25 @@ let rec expr env =
     let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
                        |> List.map ~f:snd in 
 
-    let extra_arg_ts = List.map extra_args snd in
- 
+    (* apply unbound type to concrete *)
+    let env = 
+      match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
+      | []   -> env 
+      | subs -> let substitutions = List.fold subs ~init:env.substitutions 
+                                    ~f:(fun m (u, v) -> BatMap.add u v m) in 
+              { env with substitutions } in 
+
+    let try_concrete t = LT.find_concrete_lt env.substitutions t 
+                        |> Option.value ~default:t in 
+
+    let fn_t = match fn_t with 
+              | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
+              | other     -> other in 
+
+    let extra_arg_ts = List.map extra_args (snd %> try_concrete) in
+    let args         = List.zip_exn args_names (List.map arg_ts try_concrete) in 
+    let extra_args   = List.zip_exn (List.map extra_args fst) extra_arg_ts in 
+
     let global_fn_t = LT.merge extra_arg_ts fn_t in
     let g_name      = name ^ ".lifted" in
     let global_fn   = 
@@ -116,6 +130,7 @@ let rec expr env =
       List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
       { name = g_name; gen_name = g_name; is_rec; args; body }, global_fn_t in
+
     let env         = { env with extra_fun = global_fn::env.extra_fun } in
  
     let fn_with_env  = 
@@ -136,7 +151,9 @@ let rec expr env =
     printf "callee: %s\n" (Lang_parsing.Ast.show_expr callee);
     let env, callee = expr env callee in 
     printf "callee_t: %s\n" (show_expr_t callee);
-    let e = LT.apply (snd callee) (List.map args snd) (App (callee, args)) in 
+    let env, e = 
+      LT.apply env (snd callee) (List.map args snd) (App (callee, args)) in 
+
     env, e
   | Exprs es ->
     let rec map env acc = 
@@ -159,9 +176,10 @@ let rec expr env =
 
     printf "doing op: %s\n" name;
 
-    let e = LT.apply op_t arg_ts (InfixOp (name, lhs, rhs)) in 
+    let env, e = LT.apply env op_t arg_ts (InfixOp (name, lhs, rhs)) in 
     env, e
   | IfExp { cond; then_; elifs; else_ } ->
+    let env, cond      = expr env cond in 
     let env, then_body = expr env then_ in 
     let env, else_body = 
       match elifs with 
@@ -171,7 +189,6 @@ let rec expr env =
     if snd then_body <> snd else_body 
     then raise IfBranchesTypeMismatched;
 
-    let env, cond = expr env cond in 
     env, (If { cond; then_body; else_body }, snd then_body)
   | FieldGetExp (e, field) -> 
     let env, (expr, t) = expr env e in 
@@ -239,27 +256,49 @@ and lit env =
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
-(* and real_funexp env is_rec name ret_t args arg_ts body =  *)
-
 and funexp_raw env { name; is_rec; args; ret_t; body } =
-  let args, arg_ts = List.unzip args in 
+  let args_names, arg_ts = List.unzip args in 
 
-  let arg_ts = List.map arg_ts (LT.of_annotation !-> env) in 
-  let args   = List.zip_exn args arg_ts in 
-  let ret_t  = LT.of_annotation !-> env ret_t in 
-  let fn_t   = LT.merge arg_ts ret_t in 
+  (* TODO: This code is duplicated *)
+  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+  let args        = List.zip_exn args_names arg_ts in 
+  let env, ret_t  = LT.of_annotation env ret_t in 
+  let fn_t        = LT.merge arg_ts ret_t in 
 
-  let env    = let env = if is_rec 
-                         then add env name (fn_t, Global) 
-                         else env in 
-               List.fold args ~init:env 
-                              ~f:(fun env (a, t) -> 
-                                   add env a (t, AtLevel env.level)) in 
+  let env = if is_rec then add env name (fn_t, Global) else env in 
+  let env = List.fold args ~init:env 
+                           ~f:(fun env (a, t) -> 
+                                add env a (t, AtLevel env.level)) in 
   
   let env = { env with level = env.level + 1} in 
   let env, body = List.fold_map body ~init:env ~f:expr in
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
+
+  printf "FUN name: %s\n" name; 
+
+  LT.show__substitutions (BatMap.bindings env.substitutions)
+  |> printf "inner funexp subs: %s\n";
+
+  (* TODO: Duplicated code *)
+  let env = 
+    match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
+    | []   -> env 
+    | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
+              let substitutions = List.fold subs ~init:env.substitutions 
+                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+              { env with substitutions } in 
+
+  let try_concrete t = LT.find_concrete_lt env.substitutions t 
+                       |> Option.value ~default:t in 
+                       
+  let fn_t = match fn_t with 
+             | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
+             | other     -> other in 
+
+  printf "final fn_t: %s\n" (LT.show fn_t);
+
+  let args = List.zip_exn args_names (List.map arg_ts try_concrete) in 
 
   let gen_name = name_in env name in 
   let f        = { name = gen_name; gen_name; is_rec; args; body } in 
@@ -275,7 +314,7 @@ and funexp env let_exp =
     funexp env e
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
-    let t = LT.of_annotation !-> env (Some ta) in 
+    let env, t = LT.of_annotation env (Some ta) in 
     add env name (t, Global), [Extern ( { name     = name_in env name
                                         ; gen_name = name }
                                       , t )]
@@ -326,18 +365,23 @@ and funexp env let_exp =
   | TypeDecl (RecordType (name, fields))        -> 
     (* let full_name = name_in env name in
     let env    = add_type env name (LT.Ptr full_name, Global) in *)
-    let get t  = LT.of_annotation !-> env (Some t) in  
-    let fields = List.map fields (fun (f_name, ft) -> f_name, get ft) in
-    let t      = LT.Record fields in
-    let env    = add_raw env name (const (Fields (BatSet.of_list fields)))
-                   (t, Global) in 
+    let get t  = LT.of_annotation env (Some t) in  
+    let env, fields = 
+      List.fold_map fields ~init:env ~f:(fun env (f_name, ft) -> 
+                                           let env, t = get ft in 
+                                           env, (f_name, t)) in
+
+    let t   = LT.Record fields in
+    let env = add_raw env name (const (Fields (BatSet.of_list fields)))
+              (t, Global) in 
 
     add_type env name (t, Global), []
   | Class { declarations; name; type_name }    -> 
     let env = 
     List.fold declarations ~init:env 
       ~f:(fun env (name, t) -> 
-            add env name (LT.of_annotation !-> env (Some t), Global)) in 
+            let env, t = LT.of_annotation env (Some t) in 
+            add env name (t, Global)) in 
 
     (* let class_t = Some { basic = A.Single [type_name]; classes = [] } 
                   |> LT.of_annotation !-> env  in  *)
@@ -349,9 +393,10 @@ and funexp env let_exp =
     let funexp env e = let env, f, t = funexp_raw env e in env, (f, t) in 
     let env, funexps = List.fold_map definitions ~init:env ~f:funexp in 
     (* replace opened and prefixed symbols with ones from parent_env  *)
-    let env    = { env with prefixed = parent_env.prefixed
-                          ; opened   = parent_env.opened } in 
-    let impl_t = LT.of_annotation !-> env (Some type_) in 
+    let env = { env with prefixed = parent_env.prefixed
+                       ; opened   = parent_env.opened } in 
+    
+    let env, impl_t = LT.of_annotation env (Some type_) in 
 
     printf "Adding instance for type: %s\n" (LT.show impl_t);
 

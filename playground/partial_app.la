@@ -5,9 +5,10 @@ let pn () : () = ll_print_line ()
 
 let print_add x y = 
     let sum p = x + y - p
-    let s = sum -1 
-    ll_putint (sum -1)
-    s  
+    let s = sum -1
+    ll_putint s
+    s 
+
 (* 
 type 'a : (Eq, Ord, Show) is Enum with 
     succ  : 'a -> 'a
@@ -77,19 +78,19 @@ let not (b : bool) : bool =
     else true
 
 instance Lt bool where 
-    let lt (a : bool) (b : bool) : bool = 
+    let lt a b = 
         if (not a) && b 
         then true 
         else false
 
 instance Eq int where
-    let eq a b : bool = a = b 
+    let eq a b = a = b 
 
 instance Lt int where 
-    let lt a b : bool = a < b 
+    let lt a b = a < b 
 
 instance Eq bool where
-    let eq (a : bool) (b : bool) : bool =
+    let eq a b =
         if (a && b) || ((not a) && (not b)) 
         then true 
         else false 
@@ -110,18 +111,23 @@ let p_bool (b : bool) : () =
     pn ()
 
 let _ : () = 
-    p_bool (leq_int 1 2)
-    p_bool (leq_int 1 1)
-    p_bool (leq_int 121 9)
-    pn ()
+    p_bool (leq 1 2)
+    p_bool (leq 1 1)
+    p_bool (leq 121 9)
+    pn () 
     pn () 
 
-    p_bool (leq_bool false true)
-    p_bool (leq_bool true true)
-    p_bool (leq_bool false false)
-    p_bool (leq_bool true false)
+    p_bool (leq false true)
+    p_bool (leq true true)
+    p_bool (leq false false)
+    p_bool (leq true false)
+    pn ()
     pn ()
 
+    p_bool (leq 1 2)
+    p_bool (leq 1 1)
+    p_bool (leq 121 9)
+    pn () 
 
 (* 
 let rec range (first : 'a) (last : 'a) : 'a when 'a : (Enum, Eq), 'b : Enum =

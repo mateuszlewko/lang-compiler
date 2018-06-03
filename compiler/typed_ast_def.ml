@@ -1,4 +1,5 @@
 open Lang_types_def
+open Core 
 
 type arg = string * t
 [@@deriving show]
@@ -73,27 +74,36 @@ type key =
   | Type       of string 
   | Val        of string 
   | Fields     of (string * t) BatSet.t
-  (* | GenericFun of string * fun_arg_type list *)
-(* [@@deriving show] *)
- 
+  
 type bindings_map = (key, bound * string) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
-    prefixed   : bindings_map
+    prefixed      : bindings_map
   (** symbols available without any prefix  *)
-  ; opened     : bindings_map
+  ; opened        : bindings_map
   (** current scope (module) prefix *)
-  ; prefix     : string
-  ; free_vars  : (int, string * t) BatMultiMap.t
-  ; level      : int 
-  ; extra_fun  : (funexp * t) list 
+  ; last_var      : int
+  ; substitutions : (t, t) BatMap.t
+  ; prefix        : string
+  ; free_vars     : (int, string * t) BatMultiMap.t
+  ; level         : int 
+  ; extra_fun     : (funexp * t) list 
   } 
 
+(** Evaluates name in current scope *)
+let name_in env = (^) env.prefix
+
 (** Creates top-level env *)
-let empty = { prefixed  = BatMap.empty
-            ; opened    = BatMap.empty
-            ; prefix    = "." 
-            ; free_vars = BatMultiMap.empty
-            ; level     = 0 
-            ; extra_fun = [] }
+let empty = { prefixed      = BatMap.empty
+            ; opened        = BatMap.empty
+            ; prefix        = "." 
+            ; free_vars     = BatMultiMap.empty
+            ; level         = 0 
+            ; extra_fun     = []
+            ; last_var      = 0
+            ; substitutions = BatMap.empty }
+
+let fresh_type env =
+  let new_env = { env with last_var = env.last_var + 1 } in
+  new_env, Lang_types_def.Generic (sprintf "'a%d" env.last_var)
