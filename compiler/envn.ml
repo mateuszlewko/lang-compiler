@@ -13,6 +13,9 @@ type substitutions = (LT.t * LT.t) list
 type bound        = Ez.Value.t * Lang_types.t 
 type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
 
+type instance_key = string * LT.t * string
+[@@deriving show]
+
 type generic_fun  = { poli : t -> (LT.t, LT.t) BatMap.t -> t * fun_binding
                     ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
 
@@ -21,7 +24,7 @@ and binding =
   | Val        of bound 
   | GlobalVar  of bound
   | GenericFun of generic_fun 
-  | Class      of string
+  | Class      of string * string
 
 and bindings_map = (string, binding) BatMap.t
 
@@ -30,7 +33,8 @@ and environment =
   (** inferred type substitutions *)
   ; substitutions : (LT.t, LT.t) BatMap.t
   (** methods of all class instances in a current scope *)
-  ; classes       : (string * LT.t * string, binding) BatMap.t
+  (* TODO: Rename to instances *)
+  ; classes       : (instance_key, binding) BatMap.t
   (** low-level module *)
   ; m             : M.t
   } 

@@ -68,19 +68,19 @@ let cmp1 (x : 'a) (y : 'a) : int when 'a : Eq =
 
 let cmp2 x y = x = y *)
 
-class Eq 'a where eq : 'a -> 'a -> bool 
-class Lt 'a where lt : 'a -> 'a -> bool 
+class Eq 'xyz where eq : 'xyz -> 'xyz -> bool 
+class Lt 'xyz where lt : 'xyz -> 'xyz -> bool 
 
 let not (b : bool) : bool = 
     if b 
     then false 
     else true
 
-instance Eq bool where
-    let eq (a : bool) (b : bool) : bool =
-        if (a && b) || ((not a) && (not b)) 
+instance Lt bool where 
+    let lt (a : bool) (b : bool) : bool = 
+        if (not a) && b 
         then true 
-        else false 
+        else false
 
 instance Eq int where
     let eq a b : bool = a = b 
@@ -88,16 +88,20 @@ instance Eq int where
 instance Lt int where 
     let lt a b : bool = a < b 
 
-
-(* instance Lt bool where 
-    let lt (a : bool) (b : bool) : bool = a < b  *)
+instance Eq bool where
+    let eq (a : bool) (b : bool) : bool =
+        if (a && b) || ((not a) && (not b)) 
+        then true 
+        else false 
 
 let leq (l : 'a) (r : 'a) : bool when 'a : (Eq, Lt) =
-    if (eq l r) 
+    if (eq l r) || (lt l r)
     then true 
     else false
 
 let leq_int l r : bool = leq l r 
+
+let leq_bool (l : bool) (r : bool) : bool = leq l r 
 
 let p_bool (b : bool) : () =
     if b 
@@ -109,6 +113,13 @@ let _ : () =
     p_bool (leq_int 1 2)
     p_bool (leq_int 1 1)
     p_bool (leq_int 121 9)
+    pn ()
+    pn () 
+
+    p_bool (leq_bool false true)
+    p_bool (leq_bool true true)
+    p_bool (leq_bool false false)
+    p_bool (leq_bool true false)
     pn ()
 
 

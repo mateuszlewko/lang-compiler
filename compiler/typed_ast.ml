@@ -333,12 +333,16 @@ and funexp env let_exp =
                    (t, Global) in 
 
     add_type env name (t, Global), []
-  | Class { declarations; name; _ }    -> 
+  | Class { declarations; name; type_name }    -> 
     let env = 
     List.fold declarations ~init:env 
       ~f:(fun env (name, t) -> 
             add env name (LT.of_annotation !-> env (Some t), Global)) in 
-    env, [Class (name, List.map declarations (fst %> name_in env))]
+
+    (* let class_t = Some { basic = A.Single [type_name]; classes = [] } 
+                  |> LT.of_annotation !-> env  in  *)
+
+    env, [Class (name, type_name, List.map declarations (fst %> name_in env))]
   | Instance { class_name; definitions; type_ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
@@ -348,6 +352,8 @@ and funexp env let_exp =
     let env    = { env with prefixed = parent_env.prefixed
                           ; opened   = parent_env.opened } in 
     let impl_t = LT.of_annotation !-> env (Some type_) in 
+
+    printf "Adding instance for type: %s\n" (LT.show impl_t);
 
     env, [Instance (class_name, impl_t, funexps)]
 

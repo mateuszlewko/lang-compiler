@@ -71,9 +71,16 @@ let rec replacements old_t new_t =
       printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
       raise WrongTypeOfApplyArgument)
 
-
 type _substitutions = (t * t) list 
 [@@deriving show]
+
+let rec find_concrete substitutions generic_t = 
+  match BatMap.Exceptionless.find (Generic generic_t) substitutions with 
+  | Some (Generic t) 
+    when t = generic_t -> None 
+  | Some (Generic t)   -> find_concrete substitutions t 
+  | Some concrete      -> Some concrete
+  | None               -> None
 
 let apply fn_t arg_ts = 
   let no_substitution t e = e, t in 
