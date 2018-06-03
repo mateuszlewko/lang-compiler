@@ -12,10 +12,10 @@
 
 // 2-3 weeks
 ❑ 5a. Type checking / simple type inference 
-❑ 5b. Let-polymorphism
+✔ 5b. Let-polymorphism @done(18-06-04 01:19)
 
 // 2-3 weeks
-❑ 6a. Type classes (Implementing Type Classes.pdf)
+✔ 6a. Type classes (Implementing Type Classes.pdf) @done(18-06-04 01:19)
 ❑ 6b. Type inference with type classes
 
 // 2-4 weeks

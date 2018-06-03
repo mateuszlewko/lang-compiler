@@ -86,11 +86,15 @@ Codegen:
         ✔ record literal @done(18-05-23 19:12)
 
     ✔ let-polymorphism @done(18-05-26 23:24)
-    ❑ generics in return return type (for example in case of partial application) @today 
+    ❑ generics in return type (for example in case of partial application) @today 
 
-    ❑ simple type inference (with let-polymorphism) @today 
+    simple type inference (with let-polymorphism): @today 
+        ✔ basic type unification @done(18-06-04 01:14)
+        ❑ unify if-cond with bool and if branches with each other
+        ❑ unify single generic type with function application 
+        ❑ let-rec
    
-    ❑ type classes @today 
+    ✔ basic type classes @today @done(18-06-04 01:16)
     ❑ type inference with type classes @today 
 
     ❑ generic arrays
