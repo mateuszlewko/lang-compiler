@@ -185,6 +185,7 @@ let rec expr env =
       match elifs with 
       | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr env
       | (cond, then_)::elifs -> expr env (IfExp {cond; then_; elifs; else_}) in
+    let env, then_body = LT.unify_expr (snd else_body) env then_body in 
    
     if snd then_body <> snd else_body 
     then raise IfBranchesTypeMismatched;

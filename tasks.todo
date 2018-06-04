@@ -90,7 +90,7 @@ Codegen:
 
     simple type inference (with let-polymorphism): @today 
         ✔ basic type unification @done(18-06-04 01:14)
-        ❑ unify if-cond with bool and if branches with each other
+        ✔ unify if-cond with bool and if branches with each other @done(18-06-04 02:53)
         ❑ unify single generic type with function application 
         ❑ let-rec
    
