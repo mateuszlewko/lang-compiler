@@ -85,6 +85,14 @@ let valid_replacements old_t new_t = replacements old_t new_t
                                      |> List.dedup_and_sort 
                                      |> List.filter ~f:(uncurry (<>))
 
+let unify_expr new_t (env : TAD.environment) (expr, et) =
+  match valid_replacements et new_t with 
+  | []   -> env, (expr, et)
+  | subs -> let substitutions = List.fold subs ~init:env.substitutions 
+                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+            let env = { env with substitutions } in 
+            env, (TAD.Substitute (subs, (expr, new_t)), new_t)
+
 type _substitutions = (t * t) list 
 [@@deriving show]
 

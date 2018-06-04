@@ -179,7 +179,7 @@ let rec expr env =
     let env, e = LT.apply env op_t arg_ts (InfixOp (name, lhs, rhs)) in 
     env, e
   | IfExp { cond; then_; elifs; else_ } ->
-    let env, cond      = expr env cond in 
+    let env, cond      = expr env cond |> uncurry (LT.unify_expr LT.Bool) in 
     let env, then_body = expr env then_ in 
     let env, else_body = 
       match elifs with 
