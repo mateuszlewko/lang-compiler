@@ -161,6 +161,7 @@ and token state buf =
   | "open"     -> [OPEN], state
   | "type"     -> [TYPE], state
   | "with"     -> [WITH], state
+  | "and"     -> [AND], state
 
   | '"'   -> [QUOTE], state
   | "->"  -> [ARROW], state
@@ -177,8 +178,8 @@ and token state buf =
   | decnum_neg -> [INT (ascii buf |> int_of_string)], state
   | decnum_pos -> [INT (ascii buf |> int_of_string)], state
   
-  | "&&" -> [AND], state
-  | "||" -> [OR], state
+  | "&&" -> [BOOL_AND], state
+  | "||" -> [BOOL_OR], state
   | "<=" -> [LEQ], state
   | '<'  -> [LE], state
   | '>'  -> [GE], state

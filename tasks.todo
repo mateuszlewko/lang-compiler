@@ -29,14 +29,15 @@ Parser:
         ✔ type class declaration @today @done(18-05-30 01:50)
         ✔ type class annotation @today @done(18-05-30 01:50)
         
+    ❑ mutually recursive let-exps
     ❑ lambda (fun or =>)
     ❑ mutable var
-    ❑ lists
-    ❑ tuples
-    ❑ tuples pattern matching
-    ❑ match (...) with (...)
-    ❑ function keyword or similar (pattern matching)
-    ❑ algebraic types (unions / variants)
+    ✘ lists @cancelled(18-06-06 21:00)
+    ✘ tuples @cancelled(18-06-06 21:00)
+    ✘ tuples pattern matching @cancelled(18-06-06 21:00)
+    ✘ match (...) with (...) @cancelled(18-06-06 20:59)
+    ✘ function keyword or similar (pattern matching) @cancelled(18-06-06 21:00)
+    ✘ algebraic types (unions / variants) @cancelled(18-06-06 21:00)
 
 Codegen:
     ✔ let-exp @high @done(18-01-15 01:08)

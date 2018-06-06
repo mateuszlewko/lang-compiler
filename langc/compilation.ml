@@ -44,6 +44,9 @@ let specs = [
 
 let compile ?(log=true) file_name output_path llvm_out_only src =
   let (Prog prog) = Parser.prog_of_string (src ^ "\n") file_name in
+
+  printf "ast:\n %s\n" (Lang_parsing.Ast.show_program (Prog prog));
+
   let ll_code     = gen_llvm_exn prog in
   let save_llvm   = write_str_to_file ll_code in
 

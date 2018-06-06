@@ -31,6 +31,7 @@ type expr =
   | VarExp        of string
   | LitExp        of literal
   | LetExp        of letexp
+  | LetRecsExp    of letexp list
   | AppExp        of expr * expr list
   | InfixOp       of string * expr * expr
   | IfExp         of ifexp

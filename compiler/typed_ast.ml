@@ -236,12 +236,15 @@ let rec expr env =
     let r       = RecordLit fs in
     let t       = List.zip_exn (List.map fields fst) (List.map fs snd)
                   |> BatSet.of_list |> find_fields env in 
+
+    begin
     match t with 
     | Some ((t, Global), _) -> env, (r, t)
     | _                     ->
       sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
       |> failwith
-    
+    end
+  | LetRecsExp ls -> failwith "typedAst LetRecsExp TODO"  
 
 and lit env = 
   function

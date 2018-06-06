@@ -110,6 +110,16 @@ let p_bool (b : bool) : () =
     else ll_putint 0
     pn ()
 
+let rec f1 a =
+    if 0 = 0 
+    then 0 
+    else f1 a 
+
+and f3 a = a
+
+and f4 a = 0 
+
+
 let _ : () = 
     p_bool (leq 1 2)
     p_bool (leq 1 1)

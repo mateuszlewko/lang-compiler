@@ -20,7 +20,7 @@ let to_exps fst_line rest = merge_multiline fst_line rest |> (fun x -> Exprs x)
 %token <string> OPERATOR
 %token <char> KWD
 %token LET REC IF ELSE ELIF THEN MODULE TYPE OPEN 
-%token CLASS INSTANCE WHERE WHEN
+%token CLASS INSTANCE WHERE WHEN AND
 %token PIPE FUNCTION MATCH WITH ARROW UNIT
 %token LPAR RPAR LBRACKET RBRACKET LCURLY RCURLY
 %token QUOTE COMMA COLON SEMICOL DOT
@@ -30,8 +30,8 @@ let to_exps fst_line rest = merge_multiline fst_line rest |> (fun x -> Exprs x)
 %token ARRAY_OPEN ARRAY_CLOSE
 %left OPERATOR
 
-%token LEQ GEQ LE GE NEQ PLUS MINUS DIV MULT AND OR
-%left AND OR
+%token LEQ GEQ LE GE NEQ PLUS MINUS DIV MULT BOOL_AND BOOL_OR
+%left BOOL_AND BOOL_OR
 %left LEQ GEQ EQ LE GE NEQ 
 %left PLUS MINUS
 %left DIV MULT
@@ -92,6 +92,16 @@ module_exp: MODULE; s = SYMBOL; EQ; NEWLINE+; INDENT; es = top_expr+; DEDENT
 
 open_exp: OPEN; s = nested_sym; NEWLINE+ { Open s }
 
+and_letexp:
+  | AND; n = SYMBOL; args = typed_var*;
+    ret_t = type_anot?; EQ; e = value_expr?;
+    NEWLINE*; es = indented?
+    { { name = n; is_rec = true; ret_t; args; body = merge_multiline e es } }
+
+letrecs_exp: 
+  l1 = letexp; ls = nonempty_list(and_letexp)
+  { LetRecsExp (l1::ls) }
+
 letexp:
   | LET; is_rec = boption(REC); n = SYMBOL; args = typed_var*;
     ret_t = type_anot?; EQ; e = value_expr?;
@@ -102,8 +112,8 @@ application:
   | s = simple_expr; es1 = simple_expr+ { AppExp (s, es1) }
 
 %inline oper:
-  | AND { "&&" }
-  | OR { "||" }
+  | BOOL_AND { "&&" }
+  | BOOL_OR { "||" }
   | LEQ { "<=" }
   | LE { "<" }
   | GE { ">" }
@@ -247,6 +257,7 @@ value_expr:
 
 complex_expr:
   | e = record_literal; NEWLINE*           { e        }
+  | l = letrecs_exp; NEWLINE*              { l        }
   | l = letexp; NEWLINE*                   { LetExp l }
   | e = if_exp; NEWLINE*                   { e        }
   | s = value_expr; NEWLINE+               { s        }
