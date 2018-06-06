@@ -29,7 +29,7 @@ Parser:
         ✔ type class declaration @today @done(18-05-30 01:50)
         ✔ type class annotation @today @done(18-05-30 01:50)
         
-    ❑ mutually recursive let-exps
+    ✔ mutually recursive let-exps @done(18-06-06 21:31)
     ❑ lambda (fun or =>)
     ❑ mutable var
     ✘ lists @cancelled(18-06-06 21:00)
