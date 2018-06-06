@@ -114,14 +114,14 @@ let p_bool (b : bool) : () =
     else ll_putint 0
     pn ()
 
-let rec f1 (acc : int) (a : int) : int =
+let rec f1 acc a : int =
     if a = 0 
     then acc 
     else f1 (acc + 2) (a - 1) 
 
-and f3 (a : int) : int = f4 (a - 1)
+and f3 a : int = f4 (a - 1)
 
-and f4 (a : int) : int = f1 0 a
+and f4 a : int = f1 0 a
 
 let _ : () = 
     p_int (f4 3)

@@ -9,7 +9,7 @@ type funexp =
   ; gen_name : string
   ; is_rec   : bool 
   ; args     : arg list
-  ; body     : expr_t list }
+  ; body     : expr_t list option }
 
 and ifexp = 
   { cond      : expr_t 

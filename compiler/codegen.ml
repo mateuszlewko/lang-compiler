@@ -147,32 +147,38 @@ module Codegen = struct
 
     let add_this_fn env = Env.add env name (Fun f_binding) in
 
-    let body_env : Env.t = 
-      (if is_rec then add_this_fn env else env)
-      |> fun env -> List.fold2_exn args fn_args_named ~init:env 
-                          ~f:(fun env v (arg_name, t) -> 
-                                Env.add env arg_name (Val (v, t))) in 
-  
-    let body_env, (iss, values) = 
-      List.fold_map body ~init:(body_env) 
-        ~f:(fun env e -> 
-              let iss, vals, env = expr env e in 
-              env, (iss, vals))
-      |> fun (body_env, lists) -> body_env, List.unzip lists in 
-    
-    let env = { env with m = body_env.m } in 
-  
-    let iss       = List.concat iss in 
-    let ret_v     = List.last_exn values in 
-    let ret_i     = Ez.Instr.ret ret_v |> Instr in
-    let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
-    
-    printf "\n--- START OF FUN --- \n";
-    List.iter blocks (show_block %> printf "block: %s\n");
-    printf "--- END OF FUN --- \n";
+    let env = 
+      match body with 
+      | Some body ->
+        let body_env : Env.t = 
+          (if is_rec then add_this_fn env else env)
+          |> fun env -> List.fold2_exn args fn_args_named ~init:env 
+                              ~f:(fun env v (arg_name, t) -> 
+                                    Env.add env arg_name (Val (v, t))) in 
+      
+        let body_env, (iss, values) = 
+          List.fold_map body ~init:(body_env) 
+            ~f:(fun env e -> 
+                  let iss, vals, env = expr env e in 
+                  env, (iss, vals))
+          |> fun (body_env, lists) -> body_env, List.unzip lists in 
+        
+        let env = { env with m = body_env.m } in 
+      
+        let iss       = List.concat iss in 
+        let ret_v     = List.last_exn values in 
+        let ret_i     = Ez.Instr.ret ret_v |> Instr in
+        let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
+        
+        printf "\n--- START OF FUN --- \n";
+        List.iter blocks (show_block %> printf "block: %s\n");
+        printf "--- END OF FUN --- \n";
 
-    let df        = define fn args blocks in
-    let env = { env with m = M.definition m df } in 
+        let df        = define fn args blocks in
+        { env with m = M.definition m df } 
+      | None -> 
+        let dl = declare fn (List.map args fst) in 
+        { env with m = M.declaration m dl } in
 
     (* printf "add %s to env.m\n" name; *)
     env, f_binding
@@ -550,7 +556,7 @@ module Codegen = struct
       let apply_args = List.map args (fun (a, t)     -> Var a, t) in 
       let body       = [App ((Var ext_name, fn_t), apply_args), ast_ret_t] in 
       
-      gen_top env (TA.Fun ({ name = name; is_rec = false; args; body
+      gen_top env (TA.Fun ({ name = name; is_rec = false; args; body = Some body
                             ; gen_name = name ^ ".ext_wrapped" }, fn_t))
     | other  -> failwith "external values not supported"
   [@@@warning "+8"]
@@ -558,7 +564,8 @@ module Codegen = struct
   let gen_main env main_exprs =
     let funexp = 
       { TA.name = "<main>"; gen_name = "main"; is_rec = false
-      ; args = ["_", Unit]; body = main_exprs @ [ TA.Lit (Int 0), LT.Int ] } in  
+      ; args = ["_", Unit]
+      ; body = main_exprs @ [ TA.Lit (Int 0), LT.Int ] |> Some } in  
     gen_let env gen_expr funexp (Fun [Unit; Int]) |> snd
 
   let gen_class env name type_name declarations = 

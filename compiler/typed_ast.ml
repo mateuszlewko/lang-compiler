@@ -139,7 +139,8 @@ let rec expr env =
       printf "fun: %s, extra args:\n" g_name;
       List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
-      { name = g_name; gen_name = g_name; is_rec; args; body }, global_fn_t in
+      { name = g_name; gen_name = g_name; is_rec; args; body = Some body }
+      , global_fn_t in
 
     let env         = { env with extra_fun = global_fn::env.extra_fun } in
  
@@ -315,22 +316,27 @@ and funexp_raw env { name; is_rec; args; ret_t; body } =
   let args = List.zip_exn args_names (List.map arg_ts try_concrete) in 
 
   let gen_name = name_in env name in 
-  let f        = { name = gen_name; gen_name; is_rec; args; body } in 
-  add env name (fn_t, Global), f, fn_t
+  let f        = { name = gen_name; gen_name; is_rec; args
+                 ; body = Some body } in 
+
+  add env name (fn_t, Global), (f, fn_t)
 
 and funexp env let_exp = 
-  let env, f, fn_t = funexp_raw env let_exp in 
-  env, [Fun (f, fn_t)]
+  let env, (f, t) = funexp_raw env let_exp in 
+  env, [Fun (f, t)]
 
 and fun_recs env ls = 
   let env         = List.fold ls ~init:env ~f:add_fn_type in 
   let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
-  let decls       = List.map2_exn fn_tys ls (fun t f -> 
+  (* let decls       = List.map2_exn fn_tys ls (fun t f -> 
                       let name = name_in env f.name in 
-                      FunDecl ({ name; gen_name = name }, t)) in 
-  let env, tops   = List.fold_map ls ~init:env ~f:funexp in 
-  
-  env, decls @ List.concat tops
+                      FunDecl ({ name; gen_name = name }, t)) in  *)
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
+
+  let decls = List.map tops (fun (f, t) -> Fun ({ f with body = None}, t)) in 
+  let tops  = List.map tops (fun (f, t) -> Fun (f, t)) in 
+
+  env, decls @ tops
  
 and top env =
   function 
@@ -415,7 +421,7 @@ and top env =
   | Instance { class_name; definitions; type_ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
-    let funexp env e = let env, f, t = funexp_raw env e in env, (f, t) in 
+    let funexp env e = let env, (f, t) = funexp_raw env e in env, (f, t) in 
     let env, funexps = List.fold_map definitions ~init:env ~f:funexp in 
     (* replace opened and prefixed symbols with ones from parent_env  *)
     let env = { env with prefixed = parent_env.prefixed
