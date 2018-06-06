@@ -68,6 +68,24 @@ let fn_type env { args; ret_t; _ } =
 let add_fn_type env fn = let env, fn_t = fn_type env fn in 
                          add env fn.name (fn_t, Global)
 
+let make_fn_t_concrete env ret_t fn_t body = 
+  let env = 
+    match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
+    | []   -> env 
+    | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
+              let substitutions = List.fold subs ~init:env.substitutions 
+                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+              { env with substitutions } in 
+
+  let try_concrete t = LT.find_concrete_lt env.substitutions t 
+                       |> Option.value ~default:t in 
+                       
+  let fn_t = match fn_t with 
+             | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
+             | other     -> other in        
+
+  env, fn_t               
+
 let rec expr env = 
   function 
   | VarExp v -> 
