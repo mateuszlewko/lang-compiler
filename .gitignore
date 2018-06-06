@@ -35,3 +35,10 @@ a.out
 **/*.dSYM
 playground/out
 playground/apply_test
+thesis.aux
+thesis.dvi
+thesis.fdb_latexmk
+thesis.fls
+thesis.log
+thesis.out
+thesis.toc
