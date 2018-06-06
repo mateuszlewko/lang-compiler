@@ -3,6 +3,10 @@ external ll_print_line : ()  -> ()
 
 let pn () : () = ll_print_line () 
 
+let p_int x = 
+    ll_putint x
+    pn ()
+
 let print_add x y = 
     let sum p = x + y - p
     let s = sum -1
@@ -110,17 +114,21 @@ let p_bool (b : bool) : () =
     else ll_putint 0
     pn ()
 
-let rec f1 a =
-    if 0 = 0 
-    then 0 
-    else f1 a 
+let rec f1 (acc : int) (a : int) : int =
+    if a = 0 
+    then acc 
+    else f1 (acc + 2) (a - 1) 
 
-and f3 a = a
+and f3 (a : int) : int = f4 (a - 1)
 
-and f4 a = 0 
-
+and f4 (a : int) : int = f1 0 a
 
 let _ : () = 
+    p_int (f4 3)
+    p_int (f3 2)
+    p_int (f1 0 10)
+    pn ()
+
     p_bool (leq 1 2)
     p_bool (leq 1 1)
     p_bool (leq 121 9)

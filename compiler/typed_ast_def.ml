@@ -48,17 +48,21 @@ and body_expr =
 and expr_t = body_expr * t
 [@@deriving show]
 
-type extern = { name : string; gen_name : string }
+type declaration = { name : string; gen_name : string }
 [@@deriving show]
+
+(* type fun_decl = { name : string; gen_name : string; t : t }
+[@@deriving show] *)
 
 type top = 
   | Expr     of expr_t
   | Fun      of funexp * t
   | Class    of string * string * string list
   | Instance of string * t * (funexp * t) list
-  | Extern   of extern * t
+  | Extern   of declaration * t
   | Module   of string * top list
   | Open     of string
+  | FunDecl  of declaration * t
   [@@deriving show]
 
 type location = AtLevel of int | Global 

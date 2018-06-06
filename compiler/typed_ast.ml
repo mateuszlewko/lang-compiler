@@ -58,6 +58,16 @@ let add_builtin_ops env =
 
   List.fold (a @ b @ c) ~init:env ~f:(fun env (n, t) -> add env n (t, Global)) 
  
+let fn_type env { args; ret_t; _ } = 
+  let args_names, arg_ts = List.unzip args in 
+  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+  let args        = List.zip_exn args_names arg_ts in 
+  let env, ret_t  = LT.of_annotation env ret_t in 
+  env, LT.merge arg_ts ret_t 
+
+let add_fn_type env fn = let env, fn_t = fn_type env fn in 
+                         add env fn.name (fn_t, Global)
+
 let rec expr env = 
   function 
   | VarExp v -> 
@@ -312,10 +322,21 @@ and funexp env let_exp =
   let env, f, fn_t = funexp_raw env let_exp in 
   env, [Fun (f, fn_t)]
 
- and top env =
+and fun_recs env ls = 
+  let env         = List.fold ls ~init:env ~f:add_fn_type in 
+  let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
+  let decls       = List.map2_exn fn_tys ls (fun t f -> 
+                      let name = name_in env f.name in 
+                      FunDecl ({ name; gen_name = name }, t)) in 
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp in 
+  
+  env, decls @ List.concat tops
+ 
+and top env =
   function 
   | A.Expr (LetExp e) ->
     funexp env e
+  | Expr (LetRecsExp ls) -> fun_recs env ls
   | Expr e            -> let env, e = expr env e in env, [Expr e]
   | Extern (name, ta) -> 
     let env, t = LT.of_annotation env (Some ta) in 

@@ -581,12 +581,30 @@ module Codegen = struct
     
     { env with m = inner_env.m; classes }
 
+  let gen_fun_decl (env : Env.t) {TA.gen_name; name} t = 
+    match t with 
+    | LT.Fun (_::_::_ as ts) as fn_t -> 
+      let arity                   = List.length ts - 1 in 
+      let ast_arg_ts, [ast_ret_t] = BatList.takedrop arity ts in 
+      let arg_ts, ret_t           = List.map ast_arg_ts LT.to_ollvm
+                                  , LT.to_ollvm ast_ret_t in 
+
+      let m, fn    = M.global env.m ret_t gen_name in 
+      let m = declare fn arg_ts |> M.declaration m in
+      
+      printf "adding decl of %s\n" name;
+
+      Fun { fn = fn, fn_t; fns_arr = null; arity } 
+      |> Env.add { env with m } name 
+    | other  -> failwith "external values not supported"
+
   let rec gen_top env =
     let open TA in 
     function 
     | Fun ({TA.args = []; _} as funexp, t) -> 
       let main_expr, env = gen_top_value env gen_expr funexp t in 
       env, [main_expr]
+    | FunDecl (decl, t)           -> gen_fun_decl env decl t, []
     | Instance (name, t, defs)    -> gen_instance env gen_expr name t defs, []
     | Class (name, t_name, decls) -> gen_class env name t_name decls, []
     | Fun (funexp, t)             -> gen_let env gen_expr funexp t |> snd, []
