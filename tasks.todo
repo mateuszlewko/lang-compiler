@@ -105,15 +105,15 @@ Codegen:
 
     ❑ simple boehm gc
 
-    ❑ algebraic types (unions / variants)
-    ❑ match (...) with (...) expression
     ❑ lists
     ❑ lambda (fun or =>)
     ❑ tuples
-    ❑ tuples pattern matching
-    ❑ function keyword or similar (pattern matching)
+    ✘ tuples pattern matching @cancelled(18-06-06 20:44)
+    ❑ ref 
+    ✘ function keyword or similar (pattern matching) @cancelled(18-06-06 20:43)
+    ✘ algebraic types (unions / variants) @cancelled(18-06-06 20:42)
+    ✘ match (...) with (...) expression @cancelled(18-06-06 20:42)
 
-    ❑ mutable var
 
     ❑ type string @medium @optional 
     ❑ type char @medium @optional 

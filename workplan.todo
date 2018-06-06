@@ -8,7 +8,7 @@
 // 1-2 weeks
 //❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
 ✔ 3b. Records @done(18-05-23 21:28)
-// ❑ 3c. Mutually recursive functions
+❑ 3c. Mutually recursive functions
 
 // 2-3 weeks
 ❑ 5a. Type checking / simple type inference 

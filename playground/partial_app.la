@@ -85,7 +85,7 @@ instance Lt bool where
 
 instance Eq int where
     let eq a b = a = b 
-
+ 
 instance Lt int where 
     let lt a b = a < b 
 
