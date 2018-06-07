@@ -314,13 +314,16 @@ and funexp_raw env { name; is_rec; args; ret_t; body } =
   |> printf "inner funexp subs: %s\n";
 
   (* TODO: Duplicated code *)
-  let env = 
-    match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
-    | []   -> env 
+
+  let env, body = 
+    let last_t = List.last_exn body |> snd in 
+    match LT.valid_replacements ret_t last_t with 
+    | []   -> env, body
     | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
               let substitutions = List.fold subs ~init:env.substitutions 
                                   ~f:(fun m (u, v) -> BatMap.add u v m) in 
-              { env with substitutions } in 
+              let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
+              { env with substitutions }, body in 
 
   let try_concrete t = LT.find_concrete_lt env.substitutions t 
                        |> Option.value ~default:t in 

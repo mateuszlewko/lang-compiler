@@ -407,7 +407,7 @@ module Codegen = struct
       List.fold_map es ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
-              (iss @ all, env), arg) in
+              (all @ iss, env), arg) in
     instrs, List.last_exn args, env
 
   let gen_value env expr name e t = 

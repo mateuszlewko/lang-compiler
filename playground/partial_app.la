@@ -121,7 +121,7 @@ let rec f1 acc a : int =
 
 and f3 a : int = f4 (a - 1)
 
-and f4 a : int = f1 0 a
+and f4 a = f1 0 a
 
 let _ : () = 
     p_int (f4 3)
