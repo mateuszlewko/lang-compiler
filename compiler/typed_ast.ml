@@ -74,7 +74,9 @@ let make_fn_t_concrete env ret_t fn_t body =
     | []   -> env 
     | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
               let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+                                  ~f:(fun m (u, v) -> 
+                                        BatMultiMap.add u v m
+                                        |> BatMultiMap.add v u) in 
               { env with substitutions } in 
 
   let try_concrete t = LT.find_concrete_lt env.substitutions t 
@@ -136,7 +138,9 @@ let rec expr env =
       match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
       | []   -> env 
       | subs -> let substitutions = List.fold subs ~init:env.substitutions 
-                                    ~f:(fun m (u, v) -> BatMap.add u v m) in 
+                                    ~f:(fun m (u, v) -> 
+                                          BatMultiMap.add u v m
+                                          |> BatMultiMap.add v u) in 
               { env with substitutions } in 
 
     let try_concrete t = LT.find_concrete_lt env.substitutions t 
@@ -214,6 +218,10 @@ let rec expr env =
       match elifs with 
       | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr env
       | (cond, then_)::elifs -> expr env (IfExp {cond; then_; elifs; else_}) in
+
+    LT.show_subs env.substitutions
+    |> printf "after else funexp subs: %s\n";
+    
     let env, then_body = LT.unify_expr (snd else_body) env then_body in 
    
     if snd then_body <> snd else_body 
@@ -310,7 +318,7 @@ and funexp_raw env { name; is_rec; args; ret_t; body } =
 
   printf "FUN name: %s\n" name; 
 
-  LT.show__substitutions (BatMap.bindings env.substitutions)
+  LT.show_subs env.substitutions
   |> printf "inner funexp subs: %s\n";
 
   (* TODO: Duplicated code *)
@@ -321,7 +329,9 @@ and funexp_raw env { name; is_rec; args; ret_t; body } =
     | []   -> env, body
     | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
               let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+                                  ~f:(fun m (u, v) -> 
+                                      BatMultiMap.add u v m
+                                      |> BatMultiMap.add v u) in 
               let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
               { env with substitutions }, body in 
 
@@ -352,6 +362,8 @@ and fun_recs env ls =
   (* let decls       = List.map2_exn fn_tys ls (fun t f -> 
                       let name = name_in env f.name in 
                       FunDecl ({ name; gen_name = name }, t)) in  *)
+
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
 
   let decls = List.map tops (fun (f, t) -> Fun ({ f with body = None}, t)) in 

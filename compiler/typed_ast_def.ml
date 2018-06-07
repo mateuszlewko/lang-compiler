@@ -88,7 +88,7 @@ type environment = {
   ; opened        : bindings_map
   (** current scope (module) prefix *)
   ; last_var      : int
-  ; substitutions : (t, t) BatMap.t
+  ; substitutions : (t, t) BatMultiMap.t
   ; prefix        : string
   ; free_vars     : (int, string * t) BatMultiMap.t
   ; level         : int 
@@ -106,7 +106,7 @@ let empty = { prefixed      = BatMap.empty
             ; level         = 0 
             ; extra_fun     = []
             ; last_var      = 0
-            ; substitutions = BatMap.empty }
+            ; substitutions = BatMultiMap.empty }
 
 let fresh_type env =
   let new_env = { env with last_var = env.last_var + 1 } in

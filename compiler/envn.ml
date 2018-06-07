@@ -16,7 +16,7 @@ type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
 type instance_key = string * LT.t * string
 [@@deriving show]
 
-type generic_fun  = { poli : t -> (LT.t, LT.t) BatMap.t -> t * fun_binding
+type generic_fun  = { poli : t -> (LT.t, LT.t) BatMultiMap.t -> t * fun_binding
                     ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
 
 and binding = 
@@ -31,7 +31,7 @@ and bindings_map = (string, binding) BatMap.t
 and environment = 
   { bindings      : bindings_map
   (** inferred type substitutions *)
-  ; substitutions : (LT.t, LT.t) BatMap.t
+  ; substitutions : (LT.t, LT.t) BatMultiMap.t
   (** methods of all class instances in a current scope *)
   (* TODO: Rename to instances *)
   ; classes       : (instance_key, binding) BatMap.t
@@ -45,7 +45,7 @@ open BatMap.Infix
 
 (** Creates top-level env *)
 let empty = { bindings      = BatMap.empty
-            ; substitutions = BatMap.empty
+            ; substitutions = BatMultiMap.empty
             ; classes       = BatMap.empty
             ; m             = M.empty }
 

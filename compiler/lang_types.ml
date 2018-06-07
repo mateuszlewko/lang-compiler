@@ -89,32 +89,63 @@ let unify_expr new_t (env : TAD.environment) (expr, et) =
   match valid_replacements et new_t with 
   | []   -> env, (expr, et)
   | subs -> let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v) -> BatMap.add u v m) in 
+                                  ~f:(fun m (u, v) -> 
+                                        BatMultiMap.add u v m
+                                        |> BatMultiMap.add v u) in 
             let env = { env with substitutions } in 
             env, (TAD.Substitute (subs, (expr, new_t)), new_t)
 
 type _substitutions = (t * t) list 
 [@@deriving show]
 
+let show_subs substitutions = 
+  BatMultiMap.enum substitutions
+  |> BatList.of_enum
+  |> show__substitutions
+
 let rec find_concrete substitutions generic_t = 
-  match BatMap.Exceptionless.find (Generic generic_t) substitutions with 
-  | Some (Generic t) 
-    when t = generic_t -> None 
-  | Some (Generic t)   -> find_concrete substitutions t 
-  | Some concrete      -> Some concrete
-  | None               -> None
+  let rec dfs vis curr = 
+    try BatSet.find curr vis |> ignore; vis, None 
+    with Not_found ->
+      let vis = BatSet.add curr vis in  
+
+      let rec find_first vis =  
+        function 
+        | (Generic s)::subs -> 
+          let vis, t = dfs vis s in 
+          begin 
+          match t with 
+          | Some _ as t -> vis, t 
+          | None        -> find_first vis subs 
+          end
+        | concrete::_ -> vis, Some concrete
+        | []          -> vis, None in 
+
+      let subs = BatMultiMap.find (Generic curr) substitutions in 
+
+      if BatSet.is_empty subs 
+      then vis, None 
+      else find_first vis (BatSet.to_list subs) in 
+
+  dfs BatSet.empty generic_t |> snd
+
+    (* | Some (Generic t) 
+      when t = generic_t -> None 
+    | Some (Generic t)   -> find_concrete substitutions t 
+    | Some concrete      -> Some concrete
+    | None               -> None *)
 
 let rec find_concrete_lt substitutions = 
   function 
-  | Generic _ as generic_t ->
-    begin
+  | Generic generic_t -> find_concrete substitutions generic_t 
+    (* begin
     match BatMap.Exceptionless.find generic_t substitutions with 
     | Some (Generic _ as t) 
       when t = generic_t    -> None 
     | Some (Generic _ as t) -> find_concrete_lt substitutions t 
     | Some concrete         -> Some concrete
     | None                  -> None
-    end 
+    end  *)
   | other -> Some other
 
 let apply (env : TAD.environment) fn_t arg_ts = 
@@ -141,7 +172,7 @@ let apply (env : TAD.environment) fn_t arg_ts =
 
         fun expr -> 
           let substitutions = List.fold subs ~init:env.substitutions 
-                                ~f:(fun m (u, v) -> BatMap.add u v m) in 
+                                ~f:(fun m (u, v) -> BatMultiMap.add u v m) in 
 
           { env with substitutions }, (TAD.Substitute (subs, (expr, t)), t) in 
 
