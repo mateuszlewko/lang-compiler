@@ -94,6 +94,7 @@ Codegen:
         ✔ unify if-cond with bool and if branches with each other @done(18-06-04 02:53)
         ❑ unify single generic type with function application 
         ❑ let-rec
+        ❑ mutually recursive functions
    
     ✔ basic type classes @today @done(18-06-04 01:16)
     ❑ type inference with type classes @today 

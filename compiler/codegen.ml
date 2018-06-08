@@ -198,7 +198,7 @@ module Codegen = struct
 
       if List.exists arg_ts LT.is_generic 
       then begin
-        printf "Exists generic\n";
+        printf "Exists generic for: %s\n" funexp.name;
 
         let poli env map = 
           printf "Calling poli!\n";
@@ -516,9 +516,7 @@ module Codegen = struct
     |> printf "NEW subs here after: %s\n";
 
     let substitutions = List.fold subs ~init:env.substitutions 
-                          ~f:(fun m (u, v) -> 
-                                BatMultiMap.add u v m
-                                |> BatMultiMap.add v u) in 
+                          ~f:(fun m (u, v) -> LT.add_equality u v m) in 
 
     expr { env with substitutions } e 
 

@@ -23,7 +23,7 @@ let find_type (env : TAD.environment) name  =
   end
   |> Option.map ~f:(fst %> fst)
 
-let of_annotation env annotation =
+let of_annotation ?(mono=false) env annotation =
   let rec of_basic =
     function
     | A.Fun []                   -> raise (UnsupportedType "<empty>")
@@ -81,6 +81,14 @@ let rec replacements old_t new_t =
       printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
       raise WrongTypeOfApplyArgument)
 
+let rec add_equality ?(both=true) t1 t2 substitutions = 
+  let last = try BatMap.find t1 substitutions 
+             with Not_found -> [] in 
+
+  BatMap.add t1 (t2::last) substitutions
+  |> if both then add_equality ~both:false t2 t1 
+             else identity
+
 let valid_replacements old_t new_t = replacements old_t new_t 
                                      |> List.dedup_and_sort 
                                      |> List.filter ~f:(uncurry (<>))
@@ -89,19 +97,19 @@ let unify_expr new_t (env : TAD.environment) (expr, et) =
   match valid_replacements et new_t with 
   | []   -> env, (expr, et)
   | subs -> let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v) -> 
-                                        BatMultiMap.add u v m
-                                        |> BatMultiMap.add v u) in 
+                                  ~f:(fun m (u, v) -> add_equality u v m) in 
             let env = { env with substitutions } in 
             env, (TAD.Substitute (subs, (expr, new_t)), new_t)
 
 type _substitutions = (t * t) list 
 [@@deriving show]
 
+type _substitutions2 = (t * t list) list 
+[@@deriving show]
+
 let show_subs substitutions = 
-  BatMultiMap.enum substitutions
-  |> BatList.of_enum
-  |> show__substitutions
+  BatMap.bindings substitutions
+  |> show__substitutions2
 
 let rec find_concrete substitutions generic_t = 
   let rec dfs vis curr = 
@@ -121,11 +129,9 @@ let rec find_concrete substitutions generic_t =
         | concrete::_ -> vis, Some concrete
         | []          -> vis, None in 
 
-      let subs = BatMultiMap.find (Generic curr) substitutions in 
-
-      if BatSet.is_empty subs 
-      then vis, None 
-      else find_first vis (BatSet.to_list subs) in 
+      match BatMap.find_default [] (Generic curr) substitutions with 
+      | []   -> vis, None 
+      | subs -> find_first vis subs in 
 
   dfs BatSet.empty generic_t |> snd
 
@@ -172,7 +178,7 @@ let apply (env : TAD.environment) fn_t arg_ts =
 
         fun expr -> 
           let substitutions = List.fold subs ~init:env.substitutions 
-                                ~f:(fun m (u, v) -> BatMultiMap.add u v m) in 
+                                ~f:(fun m (u, v) -> add_equality u v m) in 
 
           { env with substitutions }, (TAD.Substitute (subs, (expr, t)), t) in 
 
