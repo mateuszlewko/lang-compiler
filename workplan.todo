@@ -8,7 +8,7 @@
 // 1-2 weeks
 //❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
 ✔ 3b. Records @done(18-05-23 21:28)
-❑ 3c. Mutually recursive functions
+✔ 3c. Mutually recursive functions @done(18-06-08 19:24)
 
 // 2-3 weeks
 ❑ 5a. Type checking / simple type inference 
@@ -27,9 +27,9 @@ Optional:
     // 2-4 weeks
     ❑ Reference type, var
     ❑ Lambda-exprs
-    ❑ Pattern matching, Union type
+    ✘ Pattern matching, Union type @cancelled(18-06-08 19:24)
     ❑ Additional types: float, char, string
-    ❑ Tuples, pattern matching for tuples
-    ❑ Function keyword, case ... of ...
+    ✘ Tuples, pattern matching for tuples @cancelled(18-06-08 19:24)
+    ✘ Function keyword, case ... of ... @cancelled(18-06-08 19:24)
 
 
