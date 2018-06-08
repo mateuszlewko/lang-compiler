@@ -360,6 +360,7 @@ and fun_recs env ls =
 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
 
   let decls = List.map tops (fun (f, t) -> Fun ({ f with body = None}, t)) in 
   let tops  = List.map tops (fun (f, t) -> Fun (f, t)) in 

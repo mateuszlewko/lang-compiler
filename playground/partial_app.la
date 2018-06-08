@@ -99,6 +99,9 @@ instance Eq bool where
         then true 
         else false 
 
+(* val leq : 'a -> 'a -> 'a when 'a : (Eq, Lt)  *)
+(* val leq : (Eq 'a, Lt 'a) => a -> 'a -> 'a  *)
+
 let leq (l : 'a) (r : 'a) : bool when 'a : (Eq, Lt) =
     if (eq l r) || (lt l r)
     then true 
@@ -117,9 +120,14 @@ let p_bool (b : bool) : () =
 let rec f1 acc a =
     if a = 0 
     then acc 
+    elif a = 1
+    then acc + (f3 a)
     else f1 (acc + 2) (a - 1) 
 
-and f3 a = f4 (a - 1)
+and f3 a = 
+    if a = 1
+    then f1 1 0
+    else f4 (a - 1)
 
 and f4 a = f1 0 a
 
