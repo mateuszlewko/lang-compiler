@@ -346,7 +346,7 @@ module Codegen = struct
           LT.show_subs env.substitutions
           |> printf "Current subs: %s\n";
 
-          match LT.find_concrete env.substitutions type_name with 
+          match LT.find_concrete BatMap.empty env.substitutions type_name with 
           | None        -> sprintf "Couldn't find concrete type for: %s" 
                            type_name |> failwith 
           | Some impl_t -> 

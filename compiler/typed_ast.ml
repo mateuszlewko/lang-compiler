@@ -294,7 +294,7 @@ and lit env =
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
-and funexp_raw env { name; is_rec; args; ret_t; body } =
+ and funexp_raw env { name; is_rec; args; ret_t; body } =
   let args_names, arg_ts = List.unzip args in 
 
   (* TODO: This code is duplicated *)
@@ -330,16 +330,26 @@ and funexp_raw env { name; is_rec; args; ret_t; body } =
               let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
               { env with substitutions }, body in 
 
-  let try_concrete t = LT.find_concrete_lt env.substitutions t 
-                       |> Option.value ~default:t in 
+  let try_concrete preferred t = 
+    LT.find_concrete_lt ~preferred env.substitutions t 
+    |> Option.value ~default:t in 
                        
   let fn_t = match fn_t with 
-             | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
+             | LT.Fun ts -> 
+               List.folding_map ts ~init:(BatMap.empty, -1)
+                ~f:(fun (pref, (ix : int)) t -> 
+                      let t    = try_concrete pref t in 
+                      let pref = match t with 
+                                 | Generic t -> BatMap.add t (ix - 1) pref
+                                 | other     -> pref in 
+                      
+                      (pref, ix - 1), t) |> LT.Fun
              | other     -> other in 
 
   printf "final fn_t: %s\n" (LT.show fn_t);
 
-  let args = List.zip_exn args_names (List.map arg_ts try_concrete) in 
+  let args = List.zip_exn args_names 
+              (List.map arg_ts (try_concrete BatMap.empty)) in 
 
   let gen_name = name_in env name in 
   let f        = { name = gen_name; gen_name; is_rec; args

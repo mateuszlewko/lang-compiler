@@ -13,7 +13,6 @@ exception WrongNumberOfApplyArguments
 exception WrongTypeOfApplyArgument
 exception ValueCannotBeApplied 
 
-
 let find_type (env : TAD.environment) name  = 
   begin
   try BatMap.find (TAD.Type name) env.opened |> Some
@@ -111,48 +110,44 @@ let show_subs substitutions =
   BatMap.bindings substitutions
   |> show__substitutions2
 
-let rec find_concrete substitutions generic_t = 
-  let rec dfs vis curr = 
-    try BatSet.find curr vis |> ignore; vis, None 
+let rec find_concrete preferred substitutions generic_t = 
+  let rec dfs vis alt curr = 
+    try BatSet.find curr vis |> ignore; vis, None, alt 
     with Not_found ->
       let vis = BatSet.add curr vis in  
 
-      let rec find_first vis =  
+      let rec find_first alt vis =  
         function 
         | (Generic s)::subs -> 
-          let vis, t = dfs vis s in 
+          let alt    = 
+            let s_pref   = BatMap.find_default 0 s preferred in
+            let alt_pref = Option.value_map alt ~default:0 ~f:snd in 
+            
+            if s_pref < alt_pref
+            then Some (Generic s, s_pref)
+            else alt in 
+
+          let vis, t, alt = dfs vis alt s in 
           begin 
           match t with 
-          | Some _ as t -> vis, t 
-          | None        -> find_first vis subs 
+          | Some _ as t -> vis, t, alt
+          | None        -> find_first alt vis subs 
           end
-        | concrete::_ -> vis, Some concrete
-        | []          -> vis, None in 
+        | concrete::_ -> vis, Some concrete, alt
+        | []          -> vis, None         , alt in 
 
       match BatMap.find_default [] (Generic curr) substitutions with 
-      | []   -> vis, None 
-      | subs -> find_first vis subs in 
+      | []   -> vis, None, alt
+      | subs -> find_first alt vis subs in 
 
-  dfs BatSet.empty generic_t |> snd
+  match dfs BatSet.empty None generic_t with 
+  | _, None, alt -> alt |> Option.map ~f:fst 
+  | _, s   , _   -> s
 
-    (* | Some (Generic t) 
-      when t = generic_t -> None 
-    | Some (Generic t)   -> find_concrete substitutions t 
-    | Some concrete      -> Some concrete
-    | None               -> None *)
-
-let rec find_concrete_lt substitutions = 
+let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions = 
   function 
-  | Generic generic_t -> find_concrete substitutions generic_t 
-    (* begin
-    match BatMap.Exceptionless.find generic_t substitutions with 
-    | Some (Generic _ as t) 
-      when t = generic_t    -> None 
-    | Some (Generic _ as t) -> find_concrete_lt substitutions t 
-    | Some concrete         -> Some concrete
-    | None                  -> None
-    end  *)
-  | other -> Some other
+  | Generic generic_t -> find_concrete preferred substitutions generic_t 
+  | other             -> Some other
 
 let apply (env : TAD.environment) fn_t arg_ts = 
   let no_substitution t e = env, (e, t) in 
