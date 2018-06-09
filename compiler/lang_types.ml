@@ -20,7 +20,7 @@ let find_type (env : TAD.environment) name  =
   try BatMap.find (TAD.Type (TAD.name_in env name)) env.prefixed |> Some
   with Not_found -> None
   end
-  |> Option.map ~f:(fst %> fst)
+  |> Option.map ~f:(fst3 %> fst)
 
 let of_annotation ?(mono=false) env annotation =
   let rec of_basic =
@@ -147,6 +147,10 @@ let rec find_concrete preferred substitutions generic_t =
 let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions = 
   function 
   | Generic generic_t -> find_concrete preferred substitutions generic_t 
+  | Fun ts            -> 
+    List.map ts (fun t -> find_concrete_lt ~preferred substitutions t
+                          |> Option.value ~default:t)
+    |> Fun |> Some
   | other             -> Some other
 
 let apply (env : TAD.environment) fn_t arg_ts = 

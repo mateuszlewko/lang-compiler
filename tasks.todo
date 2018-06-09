@@ -18,7 +18,7 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ✔ correct priority of operators @done(18-01-26 23:17)
 
-    ❑ proper (improved) parsing @high 
+    ❑ proper (improved) parsing @medium  
 
     ✔ record types @done(18-05-21 01:45)
     ✔ record field get @done(18-05-21 21:54)
@@ -92,7 +92,7 @@ Codegen:
     simple type inference (with let-polymorphism): @today 
         ✔ basic type unification @done(18-06-04 01:14)
         ✔ unify if-cond with bool and if branches with each other @done(18-06-04 02:53)
-        ❑ unify single generic type with function application 
+        ❑ unify single generic type with function application @today 
         ✔ let-rec @done(18-06-08 19:23)
         ✔ mutually recursive functions @done(18-06-08 19:23)
    
@@ -109,7 +109,7 @@ Codegen:
 
     ❑ lists
     ❑ lambda (fun or =>)
-    ❑ tuples
+    ✘ tuples @cancelled(18-06-08 20:57)
     ✘ tuples pattern matching @cancelled(18-06-06 20:44)
     ❑ ref 
     ✘ function keyword or similar (pattern matching) @cancelled(18-06-06 20:43)

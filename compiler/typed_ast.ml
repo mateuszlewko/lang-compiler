@@ -6,16 +6,18 @@ include Typed_ast_def
 module LT = Lang_types
 module A  = Lang_parsing.Ast
 
-let add_raw env name (key_type : string -> key) value = 
+let add_raw env name (key_type : string -> key) ?(subs=[]) value = 
   let pref_name = name_in env name in
   
   { env with 
-    prefixed = BatMap.add (key_type pref_name) (value, pref_name) env.prefixed 
-  ; opened   = BatMap.add (key_type name) (value, pref_name) env.opened }
+    prefixed = 
+      BatMap.add (key_type pref_name) (value, pref_name, subs) env.prefixed 
+  ; opened   = BatMap.add (key_type name) (value, pref_name, subs) env.opened }
 
 (** Adds new binding in current scope *)
-let add env name value      = add_raw env name (fun x -> Val x) value
-let add_type env name value = add_raw env name (fun x -> Type x) value
+let add env name ?(subs=[]) value = 
+  add_raw env name (fun x -> Val x) ~subs value
+let add_type env name value  = add_raw env name (fun x -> Type x) value
 
 (* let find_type env name = 
   try BatMap.find (Type name) env.opened |> Some
@@ -89,17 +91,22 @@ let make_fn_t_concrete env ret_t fn_t body =
 let rec expr env = 
   function 
   | VarExp v -> 
-    let (t, loc), pref_name = find env v in
-    let var = Var v, t in 
+    let (t, loc), pref_name, subs = find env v in
+    
+    printf "found subs: %s for a pref name: %s\n" (show_subs subs) pref_name;
+
+    let var v = let var = Var v, t in 
+                match subs with []   -> var
+                              | subs -> Substitute (subs, var), t in
     begin 
     match loc with 
-    | Global -> env, (Var pref_name, t)
+    | Global -> env, var pref_name
     | AtLevel l when l = env.level -> 
-      printf "var: %s is at level: %d\n" v l;
-      env, var
+      (* printf "var: %s is at level: %d\n" v l; *)
+      env, var v
     | AtLevel l -> let free_vars = BatMultiMap.add l (v, t) env.free_vars in 
-                   printf "var: %s is at lower level: %d\n" v l;
-                   { env with free_vars }, var
+                   (* printf "var: %s is at lower level: %d\n" v l; *)
+                   { env with free_vars }, var v
     end
   | LitExp l -> env, lit env l
   | LetExp { name; is_rec; args = []; ret_t; body } -> 
@@ -195,7 +202,7 @@ let rec expr env =
                    map env (x::acc) xs
     in map env [] es
   | InfixOp (name, lhs, rhs)          -> 
-    let (op_t, loc), name = find env name in 
+    let (op_t, loc), name, _ = find env name in 
    
     if loc <> Global 
     then sprintf "Non global operator: %s is not supported." name |> failwith;
@@ -273,7 +280,7 @@ let rec expr env =
 
     begin
     match t with 
-    | Some ((t, Global), _) -> env, (r, t)
+    | Some ((t, Global), _, _) -> env, (r, t)
     | _                     ->
       sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
       |> failwith
@@ -319,7 +326,6 @@ and lit env =
   |> printf "inner funexp subs: %s\n";
 
   (* TODO: Duplicated code *)
-
   let env, body = 
     let last_t = List.last_exn body |> snd in 
     match LT.valid_replacements ret_t last_t with 
@@ -336,7 +342,7 @@ and lit env =
                        
   let concrete ts = 
     List.folding_map ts ~init:(BatMap.empty, -1)
-              ~f:(fun (pref, (ix : int)) t -> 
+              ~f:(fun (pref, ix) t -> 
                     let t    = try_concrete pref t in 
                     let pref = match t with 
                                 | Generic t -> BatMap.add t (ix - 1) pref
@@ -356,7 +362,15 @@ and lit env =
   let f        = { name = gen_name; gen_name; is_rec; args
                  ; body = Some body } in 
 
-  add env name (fn_t, Global), (f, fn_t)
+  let subs = 
+    BatMap.bindings env.substitutions 
+    |> List.concat_map ~f:(fun (x, ys) -> List.map ys (fun y -> x, y))
+    |> BatList.unique in
+
+  printf "added subs: %s for name: %s\n" (show_subs subs) name;
+  let env = add env name ~subs (fn_t, Global) in 
+  
+  { env with substitutions = BatMap.empty }, (f, fn_t)
 
 and funexp env let_exp = 
   let env, (f, t) = funexp_raw env let_exp in 

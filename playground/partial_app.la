@@ -131,7 +131,7 @@ and f3 a =
 
 and f4 a = f1 0 a
 
-let gen_apply (ff : 'a111 -> 'a111 -> 'a111) a b = ff a b 
+let gen_apply (ff : 'a111 -> 'a112 -> 'a113) a b = ff a b 
 
 let _ : () = 
     gen_apply print_add 1 3 

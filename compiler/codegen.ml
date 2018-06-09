@@ -282,6 +282,17 @@ module Codegen = struct
   let gen_apply (env : Env.t) expr callee args app_t = 
     LT.show_subs env.substitutions    
     |> printf "subs here: %s\n";
+    printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
+
+    let env, callee = 
+      match callee with 
+      | TA.Substitute (subs, callee), _ -> 
+        let substitutions = List.fold subs ~init:env.substitutions 
+                          ~f:(fun m (u, v) -> LT.add_equality u v m) in 
+
+        { env with substitutions }, callee
+      | callee                          -> env, callee in 
+
     let [app_t] = convert_types env.substitutions [app_t] in 
 
     let (arg_instrs, env), args = 
@@ -290,7 +301,6 @@ module Codegen = struct
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
 
-    printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
     List.iter args (Ez.Value.show %> printf "arg val: %s\n");
 
     let typed t = insert_type (LT.to_ollvm app_t) t in 

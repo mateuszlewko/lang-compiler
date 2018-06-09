@@ -4,6 +4,9 @@ open Core
 type arg = string * t
 [@@deriving show]
 
+type subs = (t * t) list
+[@@deriving show]
+
 type funexp = 
   { name     : string
   ; gen_name : string
@@ -42,7 +45,7 @@ and body_expr =
   | GepStore   of gep_store
   | RecordLit  of expr_t list
   | Exprs      of expr_t list
-  | Substitute of (t * t) list * expr_t
+  | Substitute of subs * expr_t
   [@@deriving show]
 
 and expr_t = body_expr * t
@@ -69,7 +72,7 @@ type location = AtLevel of int | Global
 [@@deriving show]
 type bound = t * location
 [@@deriving show]
-type bbb = bound * string 
+type bbb = bound * string * subs
 [@@deriving show]
 
 type fun_arg_type = Generic of string | Concrete of t
@@ -79,7 +82,7 @@ type key =
   | Val        of string 
   | Fields     of (string * t) BatSet.t
   
-type bindings_map = (key, bound * string) BatMap.t
+type bindings_map = (key, bound * string * subs) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
