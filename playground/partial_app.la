@@ -131,10 +131,24 @@ and f3 a =
 
 and f4 a = f1 0 a
 
-let gen_apply (ff : 'a111 -> 'a112 -> 'a113) a b = ff a b 
+let gen_apply ff a b = ff a b 
+
+let gen_apply2 gen ff a b = gen ff a b 
+
+let gen_apply3 f_id (ff : 'a999 -> 'a998) a b = f_id (ff a b)
+
+let id x = x
 
 let _ : () = 
     gen_apply print_add 1 3 
+    pn ()
+    pn ()
+    gen_apply2 gen_apply print_add 1 3 
+    pn ()
+    pn ()
+    gen_apply3 id print_add 1 3
+    pn ()
+    pn () 
 
     p_int (f4 3)
     p_int (f3 2)
