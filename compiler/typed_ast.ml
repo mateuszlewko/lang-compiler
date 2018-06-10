@@ -67,8 +67,18 @@ let fn_type env { args; ret_t; _ } =
   let env, ret_t  = LT.of_annotation env ret_t in 
   env, LT.merge arg_ts ret_t 
 
+let fn_ret_args_type env { args; ret_t; _ } = 
+  let args_names, arg_ts = List.unzip args in 
+  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+  let args        = List.zip_exn args_names arg_ts in 
+  let env, ret_t  = LT.of_annotation env ret_t in 
+  env, LT.merge arg_ts ret_t, ret_t, arg_ts
+
 let add_fn_type env fn = let env, fn_t = fn_type env fn in 
-                         add env fn.name (fn_t, Global)
+                         add env fn.name (fn_t, Global), fn_t
+
+let add_fn_type_fst env fn = let env, fn_t = fn_type env fn in 
+                             add env fn.name (fn_t, Global)
 
 let make_fn_t_concrete env ret_t fn_t body = 
   let env = 
@@ -222,7 +232,7 @@ let rec expr env =
       |> failwith
     end
   | LetRecsExp ls -> 
-    let env         = List.fold ls ~init:env ~f:add_fn_type in 
+    let env         = List.fold ls ~init:env ~f:(add_fn_type_fst) in 
     let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
     let env, decls  = List.fold_map ls ~init:env 
                                        ~f:(nested_letexp ~skip_body:true) in
@@ -321,19 +331,26 @@ and lit env =
   | Unit             -> Lit (Unit    ), LT.Unit
   | Array []         -> Lit (Array []), LT.Array LT.Int
 
- and funexp_raw env { name; is_rec; args; ret_t; body } =
+ and funexp_raw env ?(clear_subs=true) ?(fn_tys=None)
+  ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
 
   (* TODO: This code is duplicated *)
-  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+  (* let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
   let args        = List.zip_exn args_names arg_ts in 
   let env, ret_t  = LT.of_annotation env ret_t in 
-  let fn_t        = LT.merge arg_ts ret_t in 
+  let fn_t        = LT.merge arg_ts ret_t in  *)
 
-  let env = if is_rec then add env name (fn_t, Global) else env in 
-  let env = List.fold args ~init:env 
-                           ~f:(fun env (a, t) -> 
-                                add env a (t, AtLevel env.level)) in 
+  let env, fn_t, ret_t, arg_ts = 
+    match fn_tys with 
+    | Some (fn_t, ret_t, arg_ts) -> env, fn_t, ret_t, arg_ts 
+    | None                       -> fn_ret_args_type env fn in
+
+  let args = List.zip_exn args_names arg_ts in 
+  let env  = if is_rec then add env name (fn_t, Global) else env in 
+  let env  = List.fold args ~init:env 
+                            ~f:(fun env (a, t) -> 
+                                  add env a (t, AtLevel env.level)) in 
   
   let env = { env with level = env.level + 1} in 
   let env, body = List.fold_map body ~init:env ~f:expr in
@@ -389,30 +406,56 @@ and lit env =
 
   printf "added subs: %s for name: %s\n" (show_subs subs) name;
   let env = add env name ~subs (fn_t, Global) in 
-
-  { env with substitutions = BatMap.empty }, (f, fn_t)
+  let env = if clear_subs then { env with substitutions = BatMap.empty }
+                          else env in 
+  
+  env, (f, fn_t)
 
 and funexp env let_exp = 
   let env, (f, t) = funexp_raw env let_exp in 
   env, [Fun (f, t)]
 
 and fun_recs env ls = 
-  let env         = List.fold ls ~init:env ~f:add_fn_type in 
-  let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
+  let env, fn_tys = 
+    List.fold_map ls ~init:env 
+      ~f:(fun env fn -> 
+            let env, fn_t, ret_t, arg_ts = fn_ret_args_type env fn in 
+            let env = add env fn.name (fn_t, Global) in 
+            env, (fn_t, ret_t, arg_ts)) in 
+
+  (* let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in *)
   (* let decls       = List.map2_exn fn_tys ls (fun t f -> 
                       let name = name_in env f.name in 
                       FunDecl ({ name; gen_name = name }, t)) in  *)
+  let ls_with_tys = List.zip_exn ls fn_tys in 
+  let env, tops   = 
+    List.fold_map ls_with_tys ~init:env 
+      ~f:(fun env (l, fn_t) -> 
+            funexp_raw env ~clear_subs:false ~fn_tys:(Some fn_t) l) in 
+ 
+  let env, tops   = 
+    List.fold_map ls_with_tys ~init:env 
+      ~f:(fun env (l, fn_t) -> 
+            funexp_raw env ~clear_subs:false ~fn_tys:(Some fn_t) l) in 
 
+  (* let env, tops   = List.fold_map ls ~init:env 
+                                     ~f:(funexp_raw ~clear_subs:false) in  *)
+
+  (* let tt = LT.find_concrete BatMap.empty env.substitutions "'a87" in 
+  printf "CONCRETE for 'a87 is: %s\n" (Option.value tt ~default:LT.Unit 
+                                      |> LT.show); *)
+
+  (* let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
-  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
-  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
-  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in  *)
+
+  printf "subs after fun_recs: %s\n" (LT.show_subs env.substitutions);
 
   let decls = List.map tops (fun (f, t) -> Fun ({ f with body = None}, t)) in 
   let tops  = List.map tops (fun (f, t) -> Fun (f, t)) in 
 
-  env, decls @ tops
+  { env with substitutions = BatMap.empty }, decls @ tops
  
 and top env =
   function 

@@ -139,7 +139,7 @@ let gen_apply3 f_id (ff : 'b -> 'b -> 'b) a b = f_id (ff a b)
 
 let id x = x
 
-let nested_recs () = 
+(* let nested_recs () = 
     let rec af1 acc a =
         if a = 0 
         then acc 
@@ -159,7 +159,7 @@ let nested_recs () =
     p_int (af3 2)
     p_int (af1 0 10)
     pn ()
-    0
+    0 *)
 
 let rec add1 (cycle : bool) (x : int) : int = 
     if cycle
@@ -170,7 +170,21 @@ and add2 x = add3 (x + 1)
 and add3 x = add4 (x + 1)
 and add4 x = add5 (x + 1)
 and add5 x = add6 (x + 1)
-and add6 x = add1 false (x + 1)
+and add6 x = add7 (x + 1)
+and add7 x = add8 (x + 1)
+and add8 x = add1 false (x + 1)
+
+(* let rec add1 next (cycle : bool) x = 
+    if cycle
+    then add2 next (next x)
+    else x
+
+and add2 next x = add3 next (next x)
+and add3 next x = add4 next (next x)
+and add4 next x = add5 next (next x)
+and add5 next x = add6 next (next x)
+and add6 next x = add1 next false (next x)
+let add7 x = add4 (fun x -> x + 1) x *)
 
 let _ : () = 
     gen_apply print_add 1 3 
@@ -183,7 +197,7 @@ let _ : () =
     pn ()
     pn () 
    
-    nested_recs ()
+    (* nested_recs () *)
     pn()
 
     ll_putint (add2 3)
