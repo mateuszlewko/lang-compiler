@@ -109,6 +109,8 @@ module Codegen = struct
 
     printf "fun name: %s\n" name; 
     List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
+    LT.show_subs env.substitutions    
+    |> printf "subs here: %s\n";
 
     let args_cnt = List.length ta_args in 
     let ret      = List.drop ts args_cnt in 
@@ -195,6 +197,9 @@ module Codegen = struct
     | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
       let args, arg_ts = List.unzip ta_args in 
+
+      LT.show_subs env.substitutions    
+      |> printf "subs here gen_let: %s\n";
 
       if List.exists arg_ts LT.is_generic 
       then begin

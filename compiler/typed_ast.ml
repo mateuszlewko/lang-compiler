@@ -117,72 +117,8 @@ let rec expr env =
 
     let t = List.last_exn body |> snd in 
     add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
-  | LetExp { name; is_rec; args; ret_t; body }  -> 
-    let args_names, arg_ts = List.unzip args in 
-
-    let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
-    let args        = List.zip_exn args_names arg_ts in 
-    let env, ret_t  = LT.of_annotation env ret_t in 
-    let fn_t        = LT.merge arg_ts ret_t in 
-    
-    let env = { env with level = env.level + 1 } in
-    let lvl = AtLevel env.level in 
-    let env = let env = if is_rec 
-                        then add env name (fn_t, Global) 
-                        else env in 
-              List.fold args ~init:env 
-                             ~f:(fun env (a, t) -> add env a (t, lvl)) in 
-    
-    let env, body = List.fold_map body ~init:env ~f:expr in
-
-    let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
-                       |> List.map ~f:snd in 
-
-    (* apply unbound type to concrete *)
-    let env = 
-      match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
-      | []   -> env 
-      | subs -> let substitutions = List.fold subs ~init:env.substitutions 
-                                    ~f:(fun m (u, v) -> 
-                                          LT.add_equality u v m) in 
-              { env with substitutions } in 
-
-    let try_concrete t = LT.find_concrete_lt env.substitutions t 
-                        |> Option.value ~default:t in 
-
-    let fn_t = match fn_t with 
-              | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
-              | other     -> other in 
-
-    let extra_arg_ts = List.map extra_args (snd %> try_concrete) in
-    let args         = List.zip_exn args_names (List.map arg_ts try_concrete) in 
-    let extra_args   = List.zip_exn (List.map extra_args fst) extra_arg_ts in 
-
-    let global_fn_t = LT.merge extra_arg_ts fn_t in
-    let g_name      = name ^ ".lifted" in
-    let global_fn   = 
-      let args = extra_args @ args in 
-      printf "fun: %s, extra args:\n" g_name;
-      List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
-
-      { name = g_name; gen_name = g_name; is_rec; args; body = Some body }
-      , global_fn_t in
-
-    let env         = { env with extra_fun = global_fn::env.extra_fun } in
- 
-    let fn_with_env  = 
-      let args = List.map extra_args (fun (s, t) -> Var s, t) in
-      let app  = App ((Var g_name, global_fn_t), args) in 
-      Value (name, (app, fn_t)) in
-
-    (* remove vars defined in current scope *)
-    let free_vars = BatMultiMap.remove_all env.level env.free_vars in 
-    let env       = { env with level = env.level - 1; free_vars } in
-    (* added new binding to parent scope *)
-    let env       = add env name (fn_t, AtLevel env.level) in 
-
-    env, (fn_with_env, fn_t)
-
+  | LetExp exp  -> 
+    nested_letexp env exp
   | AppExp (callee, args) -> 
     let env, args   = List.fold_map args ~init:env ~f:expr in 
     printf "callee: %s\n" (Lang_parsing.Ast.show_expr callee);
@@ -285,7 +221,91 @@ let rec expr env =
       sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
       |> failwith
     end
-  | LetRecsExp ls -> failwith "typedAst LetRecsExp TODO"  
+  | LetRecsExp ls -> 
+    let env         = List.fold ls ~init:env ~f:add_fn_type in 
+    let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
+    let env, decls  = List.fold_map ls ~init:env 
+                                       ~f:(nested_letexp ~skip_body:true) in
+    let env, tops   = List.fold_map ls ~init:env 
+                                       ~f:(nested_letexp ~skip_body:false) in
+
+    (* let t = List.last_exn tops |> snd in  *)
+    env, (Exprs (decls @ tops), Unit)
+    (* failwith "typedAst LetRecsExp TODO"   *)
+
+and nested_letexp env ?(skip_body=false) { name; is_rec; args; ret_t; body } = 
+  let args_names, arg_ts = List.unzip args in 
+
+  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
+  let args        = List.zip_exn args_names arg_ts in 
+  let env, ret_t  = LT.of_annotation env ret_t in 
+  let fn_t        = LT.merge arg_ts ret_t in 
+  
+  let env = { env with level = env.level + 1 } in
+  let lvl = AtLevel env.level in 
+  let env = let env = if is_rec 
+                      then add env name (fn_t, Global) 
+                      else env in 
+            List.fold args ~init:env 
+                            ~f:(fun env (a, t) -> add env a (t, lvl)) in 
+  
+  let env, body = List.fold_map body ~init:env ~f:expr in
+
+  let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
+                      |> List.map ~f:snd in 
+
+  (* apply unbound type to concrete *)
+  let env = 
+    match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
+    | []   -> env 
+    | subs -> let substitutions = List.fold subs ~init:env.substitutions 
+                                  ~f:(fun m (u, v) -> 
+                                        LT.add_equality u v m) in 
+            { env with substitutions } in 
+
+  let try_concrete t = LT.find_concrete_lt env.substitutions t 
+                      |> Option.value ~default:t in 
+
+  let fn_t = match fn_t with 
+            | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
+            | other     -> other in 
+
+  let extra_arg_ts = List.map extra_args (snd %> try_concrete) in
+  let args         = List.zip_exn args_names (List.map arg_ts try_concrete) in 
+  let extra_args   = List.zip_exn (List.map extra_args fst) extra_arg_ts in 
+
+  let global_fn_t = LT.merge extra_arg_ts fn_t in
+  let g_name      = name ^ ".lifted" in
+  let global_fn   = 
+    let args = extra_args @ args in 
+    printf "fun: %s, extra args:\n" g_name;
+    List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
+
+    { name = g_name; gen_name = g_name; is_rec; args
+    ; body = Option.some_if (not skip_body) body }
+    , global_fn_t in
+
+  let env          = { env with extra_fun = global_fn::env.extra_fun } in
+
+  let fn_with_env  = 
+    let args = List.map extra_args (fun (s, t) -> Var s, t) in
+    let app  = App ((Var g_name, global_fn_t), args) in 
+    Value (name, (app, fn_t)) in
+
+  (* remove vars defined in current scope *)
+  let free_vars = BatMultiMap.remove_all env.level env.free_vars in 
+  let env       = { env with level = env.level - 1; free_vars } in
+  let subs      = 
+    BatMap.bindings env.substitutions 
+    |> List.concat_map ~f:(fun (x, ys) -> List.map ys (fun y -> x, y))
+    |> BatList.unique in
+  
+  printf "added nested subs: %s for name: %s\n" (show_subs subs) name;
+
+  (* added new binding to parent scope *)
+  let env       = add env name ~subs (fn_t, AtLevel env.level) in 
+
+  env, (fn_with_env, fn_t)
 
 and lit env = 
   function
@@ -369,7 +389,7 @@ and lit env =
 
   printf "added subs: %s for name: %s\n" (show_subs subs) name;
   let env = add env name ~subs (fn_t, Global) in 
-  
+
   { env with substitutions = BatMap.empty }, (f, fn_t)
 
 and funexp env let_exp = 
@@ -383,6 +403,8 @@ and fun_recs env ls =
                       let name = name_in env f.name in 
                       FunDecl ({ name; gen_name = name }, t)) in  *)
 
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
+  let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
