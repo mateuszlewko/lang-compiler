@@ -175,7 +175,7 @@ let nested_recs () =
     and add7 x = add8 (x + 1)
     and add8 x = add1 false (x + 1)
 
-    add4 4
+    add3 4
 
 (* let rec add1 next (cycle : bool) x = 
     if cycle
@@ -203,7 +203,7 @@ let _ : () =
     ll_putint (nested_recs ())
     pn()
 
-    ll_putint (add4 4)
+    (* ll_putint (add4 4) *)
     pn () 
     pn ()
 

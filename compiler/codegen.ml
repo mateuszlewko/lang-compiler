@@ -417,12 +417,15 @@ module Codegen = struct
 
     blocks, res, { env with m}
 
-  let gen_exprs env expr es =
+  let gen_exprs (env : Env.t) expr es =
     let (instrs, env), args = 
       List.fold_map es ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (all @ iss, env), arg) in
+    
+    printf "After exprs\n";
+    Env.print_keys env.bindings;
     instrs, List.last_exn args, env
 
   let gen_value env expr name e t = 

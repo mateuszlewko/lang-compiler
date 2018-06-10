@@ -254,8 +254,8 @@ let rec expr env =
         ~f:(fun env (l, fn_t) -> 
               nested_letexp env ~skip_body:false ~fn_tys:(Some fn_t) l) in 
   
-    (* let t = List.last_exn tops |> snd in  *)
-    env, (Exprs (decls @ tops), Unit)
+    let t = List.last_exn tops |> snd in 
+    env, (Exprs (decls @ tops), t)
     (* failwith "typedAst LetRecsExp TODO"   *)
 
 and nested_letexp env ?(skip_body=false) ?(fn_tys=None)

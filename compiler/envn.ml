@@ -61,8 +61,17 @@ let of_binding =
   | Fun ({fn = b; _}) | Val b | GlobalVar b  -> b
   | GenericFun _ -> failwith "of_binding GenericFun."
 
+let print_keys bindings =
+  let open Core in 
+  printf "bindings:\n";
+  BatMap.keys bindings
+  |> BatEnum.iter (Core.printf "+ key: %s\n");
+  printf "end bindings\n"
+
 let find env name =
     try BatMap.find name env.bindings 
-    with Not_found -> SymbolNotFound name |> raise
+    with Not_found -> 
+      print_keys env.bindings;
+      SymbolNotFound name |> raise
 
 let find_val env name = find env name |> of_binding |> fst
