@@ -161,18 +161,21 @@ let id x = x
     pn ()
     0 *)
 
-let rec add1 (cycle : bool) (x : int) : int = 
-    if cycle
-    then add2 (x + 1)
-    else x
+let nested_recs () = 
+    let rec add1 cycle x = 
+        if cycle
+        then add2 (x + 1)
+        else x
 
-and add2 x = add3 (x + 1)
-and add3 x = add4 (x + 1)
-and add4 x = add5 (x + 1)
-and add5 x = add6 (x + 1)
-and add6 x = add7 (x + 1)
-and add7 x = add8 (x + 1)
-and add8 x = add1 false (x + 1)
+    and add2 x = add3 (x + 1)
+    and add3 x = add4 (x + 1)
+    and add4 x = add5 (x + 1)
+    and add5 x = add6 (x + 1)
+    and add6 x = add7 (x + 1)
+    and add7 x = add8 (x + 1)
+    and add8 x = add1 false (x + 1)
+
+    add4 4
 
 (* let rec add1 next (cycle : bool) x = 
     if cycle
@@ -197,10 +200,10 @@ let _ : () =
     pn ()
     pn () 
    
-    (* nested_recs () *)
+    ll_putint (nested_recs ())
     pn()
 
-    ll_putint (add2 3)
+    ll_putint (add4 4)
     pn () 
     pn ()
 

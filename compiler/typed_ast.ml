@@ -232,24 +232,42 @@ let rec expr env =
       |> failwith
     end
   | LetRecsExp ls -> 
-    let env         = List.fold ls ~init:env ~f:(add_fn_type_fst) in 
-    let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in
-    let env, decls  = List.fold_map ls ~init:env 
-                                       ~f:(nested_letexp ~skip_body:true) in
-    let env, tops   = List.fold_map ls ~init:env 
-                                       ~f:(nested_letexp ~skip_body:false) in
+    (* let env         = List.fold ls ~init:env ~f:(add_fn_type_fst) in  *)
+    (* let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in *)
+    (* let env, decls  = List.fold_map ls ~init:env 
+                                       ~f:(nested_letexp ~skip_body:true) in *)
+    let env, fn_tys = 
+      List.fold_map ls ~init:env 
+        ~f:(fun env fn -> 
+              let env, fn_t, ret_t, arg_ts = fn_ret_args_type env fn in 
+              let env = add env fn.name (fn_t, Global) in 
+              env, (fn_t, ret_t, arg_ts)) in 
 
+    let ls_with_tys = List.zip_exn ls fn_tys in 
+    let env, decls  = 
+      List.fold_map ls_with_tys ~init:env 
+        ~f:(fun env (l, fn_t) -> 
+              nested_letexp env ~skip_body:true ~fn_tys:(Some fn_t) l) in 
+
+    let env, tops  = 
+      List.fold_map ls_with_tys ~init:env 
+        ~f:(fun env (l, fn_t) -> 
+              nested_letexp env ~skip_body:false ~fn_tys:(Some fn_t) l) in 
+  
     (* let t = List.last_exn tops |> snd in  *)
     env, (Exprs (decls @ tops), Unit)
     (* failwith "typedAst LetRecsExp TODO"   *)
 
-and nested_letexp env ?(skip_body=false) { name; is_rec; args; ret_t; body } = 
+and nested_letexp env ?(skip_body=false) ?(fn_tys=None)
+  ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
 
-  let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
-  let args        = List.zip_exn args_names arg_ts in 
-  let env, ret_t  = LT.of_annotation env ret_t in 
-  let fn_t        = LT.merge arg_ts ret_t in 
+  let env, fn_t, ret_t, arg_ts = 
+    match fn_tys with 
+    | Some (fn_t, ret_t, arg_ts) -> env, fn_t, ret_t, arg_ts 
+    | None                       -> fn_ret_args_type env fn in
+
+  let args = List.zip_exn args_names arg_ts in 
   
   let env = { env with level = env.level + 1 } in
   let lvl = AtLevel env.level in 
@@ -334,12 +352,6 @@ and lit env =
  and funexp_raw env ?(clear_subs=true) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
-
-  (* TODO: This code is duplicated *)
-  (* let env, arg_ts = List.fold_map arg_ts ~init:env ~f:LT.of_annotation  in 
-  let args        = List.zip_exn args_names arg_ts in 
-  let env, ret_t  = LT.of_annotation env ret_t in 
-  let fn_t        = LT.merge arg_ts ret_t in  *)
 
   let env, fn_t, ret_t, arg_ts = 
     match fn_tys with 
@@ -427,6 +439,7 @@ and fun_recs env ls =
   (* let decls       = List.map2_exn fn_tys ls (fun t f -> 
                       let name = name_in env f.name in 
                       FunDecl ({ name; gen_name = name }, t)) in  *)
+                      
   let ls_with_tys = List.zip_exn ls fn_tys in 
   let env, tops   = 
     List.fold_map ls_with_tys ~init:env 
