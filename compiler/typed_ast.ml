@@ -232,7 +232,7 @@ let rec expr env =
       |> failwith
     end
   | LetRecsExp ls -> 
-    failwith "Nested mutually recursive let expressions not supported.\n"
+    failwith "Nested mutually recursive let expressions are not supported.\n"
     |> ignore;
     (* let env         = List.fold ls ~init:env ~f:(add_fn_type_fst) in  *)
     (* let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in *)
@@ -312,7 +312,7 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
     List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
     { name = g_name; gen_name = g_name; is_rec; args
-    ; body = Option.some_if (kind <> `Default) body }
+    ; body = Some body }
     , global_fn_t in
 
   let env = 
@@ -344,7 +344,7 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   printf "added nested subs: %s for name: %s\n" (show_subs subs) name;
 
   (* added new binding to parent scope *)
-  let env       = add env name ~subs (fn_t, AtLevel env.level) in 
+  let env = add env name ~subs (fn_t, AtLevel env.level) in 
 
   env, (fn_with_env, fn_t)
 
