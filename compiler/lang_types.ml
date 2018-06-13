@@ -153,35 +153,73 @@ let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions =
     |> Fun |> Some
   | other             -> Some other
 
-let apply (env : TAD.environment) fn_t arg_ts = 
-  let no_substitution t e = env, (e, t) in 
-
-  match fn_t, arg_ts with 
-  | _     , []     -> no_substitution fn_t 
-  | Fun ts, arg_ts -> 
-    let cnt           = List.length arg_ts in 
-    let before, after = List.split_n ts cnt in 
-    
-    let substitution t = 
-      match List.map2_exn before arg_ts replacements 
-            |> List.concat 
-            |> List.dedup_and_sort 
-            |> List.filter ~f:(uncurry (<>))
-      with 
-      | []   -> no_substitution t 
-      | subs -> 
-        show__substitutions subs |> printf "adding subs: %s\n";
-
-        let t = List.find subs (fst %> (=) t) 
-                |> Option.map ~f:snd |> Option.value ~default:t in 
-
-        fun expr -> 
-          let substitutions = List.fold subs ~init:env.substitutions 
-                                ~f:(fun m (u, v) -> add_equality u v m) in 
-
-          { env with substitutions }, (TAD.Substitute (subs, (expr, t)), t) in 
-
+let rec drop_args n vis subs t = 
+  match n, t with  
+  | 0, Fun [t] | 0, t          -> Some t 
+  | n, Fun (_::((_::_) as ts)) -> drop_args (n - 1) vis subs (Fun ts) 
+  | n, (Generic _ as t)
+  | n, Fun [Generic _ as t]    -> 
     begin 
+    match BatMap.Exceptionless.find t subs with 
+    | Some (Fun (_::((_::_) as ts)) as t) when BatSet.mem t vis |> not ->
+      drop_args (n - 1) (BatSet.add t vis) subs (Fun ts)
+    | _ -> None 
+    end 
+  | _, t            -> None 
+
+let rec apply (env : TAD.environment) fn_t arg_ts = 
+  let no_substitution t e = env, (e, t) in 
+  
+  let t_as_fun gen_t arg_ts = fun expr ->
+    let env, ret_t     = TAD.fresh_type env in 
+    let fn_t           = Fun (arg_ts @ [ret_t]) in 
+    
+    (* printf "new fn_t is: %s\n" (show fn_t); *)
+    let (env : TAD.environment), (expr, t) = apply env fn_t arg_ts expr in 
+   
+    let substitutions  = add_equality gen_t fn_t env.substitutions in 
+    let env            = { env with substitutions } in
+
+   env, (TAD.Substitute ([gen_t, fn_t], (expr, t)), t) in
+  
+  match fn_t, arg_ts with 
+  | _        , []     -> no_substitution fn_t 
+  (* | Generic _ as gen_t, arg_ts -> t_as_fun gen_t arg_ts *)
+  | fn_t, arg_ts -> 
+    (* let cnt = List.length arg_ts in 
+
+    if cnt >= List.length ts 
+    then 
+
+    else  *)
+    (* let before, after = List.split_n ts cnt in  *)
+    
+    (* let substitution t =  *)
+    begin
+    let env, ret_t = TAD.fresh_type env in 
+
+    match replacements fn_t (Fun (arg_ts @ [ret_t]))
+          |> List.dedup_and_sort 
+          |> List.filter ~f:(uncurry (<>))
+    with 
+    | []   -> no_substitution fn_t
+    | subs -> 
+      show__substitutions subs |> printf "adding subs: %s\n";
+
+      (* let t = List.find subs (fst %> (=) fn_t) 
+              |> Option.map ~f:snd |> Option.value ~default:fn_t in  *)
+      let cnt    = List.length arg_ts in 
+      let subs_m = subs |> BatList.enum |> BatMap.of_enum in
+      let t      = BatOption.get_exn (drop_args cnt BatSet.empty subs_m fn_t)
+                                      WrongNumberOfApplyArguments in
+
+      fun expr -> 
+        let substitutions = List.fold subs ~init:env.substitutions 
+                              ~f:(fun m (u, v) -> add_equality u v m) in 
+
+        { env with substitutions }, (TAD.Substitute (subs, (expr, t)), t) 
+    end
+    (* begin 
     match List.exists2 before arg_ts (<>) with 
     | Ok _        -> 
       begin 
@@ -196,8 +234,8 @@ let apply (env : TAD.environment) fn_t arg_ts =
       printf "fn_t: %s\n" (show_lang_type fn_t);
       List.iter arg_ts (show_lang_type %> printf "arg: %s\n");
       raise WrongTypeOfApplyArgument *)
-    end
-  | _     , _      -> raise ValueCannotBeApplied
+    end *)
+  | _     , _      -> raise ValueCannotBeApplied 
 
 let closure_t = let open High_ollvm.Ez.Type in
                 structure ~packed:true 

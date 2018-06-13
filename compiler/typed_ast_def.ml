@@ -113,4 +113,4 @@ let empty = { prefixed      = BatMap.empty
 
 let fresh_type env =
   let new_env = { env with last_var = env.last_var + 1 } in
-  new_env, Lang_types_def.Generic (sprintf "'a%d" env.last_var)
+  new_env, Lang_types_def.Generic (sprintf "'a%d" new_env.last_var)
