@@ -279,10 +279,14 @@ let closure_entry_fns m name full_args arity raw_fn =
   array_of_fns m (name ^ "_entry_fns") fns
 
 (** apply arguments to function which returns closure *)
-let value_apply m closure_ptr ret_t args sink_b =  
+let value_apply ?(is_ptr=false) m closure_ptr ret_t args sink_b =  
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
-    struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
+    (if is_ptr 
+     then struct_fields 
+     else struct_val_fields
+    ) m closure_ptr [2; 3; 0; 1; 4] in
+    (* struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in *)
   
   (* set correct types (currently type of struct field is opaque) *)
   let cl_args      = T.ptr T.i8, snd cl_args in
@@ -339,10 +343,13 @@ let value_apply m closure_ptr ret_t args sink_b =
   m, entry_instrs, blocks, phi [then_res, then_b; else_res, else_b]
 
 (** apply arguments to function which returns value *)
-let closure_apply m closure_ptr args sink_block = 
+let closure_apply ?(is_ptr=false) m closure_ptr args sink_block = 
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
-    struct_val_fields m closure_ptr [2; 3; 0; 1; 4] in
+    (if is_ptr 
+     then struct_fields 
+     else struct_val_fields
+    ) m closure_ptr [2; 3; 0; 1; 4] in
 
   let cl_left_args  = T.i8, snd cl_left_args in
   let cl_used_bytes = T.i32, snd cl_used_bytes in
@@ -357,7 +364,7 @@ let closure_apply m closure_ptr args sink_block =
     ; br x1 then_b else_b
     ] in 
 
-  let m, res      = M.local m closure_t "res" in 
+  let m, res          = M.local m closure_t "res" in 
 
   (* then branch *)
   let m, res_args_ptr = M.local m (T.ptr T.i8) "res_args" in 
@@ -372,7 +379,9 @@ let closure_apply m closure_ptr args sink_block =
 
   let then_instrs = 
     [ res          <-- alloca closure_t 
-    ; store closure_ptr res |> snd
+    ; if is_ptr 
+      then memcpy closure_ptr res (t_size closure_t |> i32) |> snd 
+      else store closure_ptr res |> snd
     ; res_args_ptr <-- struct_gep res 1 
     ; total_bytes  <-- add cl_used_bytes args_size
     ; heap_bytes   <-- malloc_raw total_bytes

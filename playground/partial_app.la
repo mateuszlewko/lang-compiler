@@ -142,7 +142,7 @@ let id x = x
 (* let nested_recs () = 
     let rec af1 acc a =
         if a = 0 
-        then acc 
+        then acc 3
         elif a = 1
         then acc + (af3 a)
         else 3
@@ -161,21 +161,56 @@ let id x = x
     pn ()
     0 *)
 
-let nested_recs () = 
-    let rec add1 cycle x = 
+let nested_recs () : int = 
+     (* let rec add1 add2a add3a cycle x = 
         if cycle
-        then add2 (x + 1)
+        then add2a add1 add3a (x + 1)
         else x
 
-    and add2 x = add3 (x + 1)
-    and add3 x = add4 (x + 1)
-    and add4 x = add5 (x + 1)
-    and add5 x = add6 (x + 1)
-    and add6 x = add7 (x + 1)
-    and add7 x = add8 (x + 1)
-    and add8 x = add1 false (x + 1)
+    let rec add2 add1a add3a x = 
+        add3a add1a add2 (x + 1)
+    let rec add3 add1a add2a x = add1a add2a add3 false (x + 1) *)
 
-    add3 4
+    (* let rec add1 add1a add2a x = 
+        if x = 0
+        then 0
+        else add2a add1a add2a (x - 1)
+
+    let rec add2 add1a add2a x = 
+        add1a add1a add2a x *)
+    
+
+    (* let rec add1 add2 add3 add4 add5 add6 add7 add8 cycle x = 
+        if cycle
+        then add2 add1 add3 add4 add5 add6 add7 add8 (x + 1)
+        else x
+
+    let rec add2 add1 add3 add4 add5 add6 add7 add8 x = 
+        add3 (x + 1)
+    let rec add3 add4 x = add4 (x + 1)
+    let rec add4 add5 x = add5 (x + 1)
+    let rec add5 add6 x = add6 (x + 1)
+    let rec add6 add7 x = add7 (x + 1)
+    let rec add7 add8 x = add8 (x + 1)
+    let rec add8 add1 add2 x = add1 add2 false (x + 1) *)
+
+    (* ll_putint (add2 add1 add2 4) *)
+    0
+
+
+(* let rec add1.lifted add2 cycle x = ...
+
+let rec add2.lifted add3 x = ...
+
+let nested_recs 
+    val add1_ptr = alloca fn  
+    val add2_ptr = alloca fn 
+    
+    val add1_f = add1.lifted add2_ptr 
+
+    Store (add1_ptr <- add1_f)
+    Value (add1, add1_ptr) *)
+
 
 (* let rec add1 next (cycle : bool) x = 
     if cycle

@@ -232,6 +232,8 @@ let rec expr env =
       |> failwith
     end
   | LetRecsExp ls -> 
+    failwith "Nested mutually recursive let expressions not supported.\n"
+    |> ignore;
     (* let env         = List.fold ls ~init:env ~f:(add_fn_type_fst) in  *)
     (* let env, fn_tys = List.fold_map ls ~init:env ~f:fn_type in *)
     (* let env, decls  = List.fold_map ls ~init:env 
@@ -243,22 +245,22 @@ let rec expr env =
               let env = add env fn.name (fn_t, Global) in 
               env, (fn_t, ret_t, arg_ts)) in 
 
-    let ls_with_tys = List.zip_exn ls fn_tys in 
-    let env, decls  = 
+    let ls_with_tys  = List.zip_exn ls fn_tys in 
+    let fold_ls env kind = 
       List.fold_map ls_with_tys ~init:env 
         ~f:(fun env (l, fn_t) -> 
-              nested_letexp env ~skip_body:true ~fn_tys:(Some fn_t) l) in 
-
-    let env, tops  = 
-      List.fold_map ls_with_tys ~init:env 
-        ~f:(fun env (l, fn_t) -> 
-              nested_letexp env ~skip_body:false ~fn_tys:(Some fn_t) l) in 
-  
+              nested_letexp env ~kind ~fn_tys:(Some fn_t) l) in 
+ 
+    let env, decls = fold_ls env `Alloca in 
+    let env, tops  = fold_ls env `SetVar in
+    let loads      = List.map2_exn ls tops 
+                      (fun f (_, t) -> Value (f.name, (Load f.name, t)), t) in 
+    
     let t = List.last_exn tops |> snd in 
-    env, (Exprs (decls @ tops), t)
+    env, (Exprs (decls @ tops @ loads), t)
     (* failwith "typedAst LetRecsExp TODO"   *)
 
-and nested_letexp env ?(skip_body=false) ?(fn_tys=None)
+and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
 
@@ -275,7 +277,7 @@ and nested_letexp env ?(skip_body=false) ?(fn_tys=None)
                       then add env name (fn_t, Global) 
                       else env in 
             List.fold args ~init:env 
-                            ~f:(fun env (a, t) -> add env a (t, lvl)) in 
+                           ~f:(fun env (a, t) -> add env a (t, lvl)) in 
   
   let env, body = List.fold_map body ~init:env ~f:expr in
 
@@ -310,15 +312,26 @@ and nested_letexp env ?(skip_body=false) ?(fn_tys=None)
     List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
     { name = g_name; gen_name = g_name; is_rec; args
-    ; body = Option.some_if (not skip_body) body }
+    ; body = Option.some_if (kind <> `Default) body }
     , global_fn_t in
 
-  let env          = { env with extra_fun = global_fn::env.extra_fun } in
+  let env = 
+    match kind with 
+    | `Default | `SetVar -> { env with extra_fun = global_fn::env.extra_fun } 
+    | `Alloca            -> env in 
 
-  let fn_with_env  = 
-    let args = List.map extra_args (fun (s, t) -> Var s, t) in
-    let app  = App ((Var g_name, global_fn_t), args) in 
-    Value (name, (app, fn_t)) in
+  let fn_with_env  =
+    match kind with 
+    | `Alloca  -> 
+      Value (name, (Alloca fn_t, fn_t))
+    | `SetVar  -> 
+      let args = List.map extra_args (fun (s, t) -> Var s, t) in
+      let app  = App ((Var g_name, global_fn_t), args) in   
+      SetVar (name, (app, fn_t))
+    | `Default -> 
+      let args = List.map extra_args (fun (s, t) -> Var s, t) in
+      let app  = App ((Var g_name, global_fn_t), args) in 
+      Value (name, (app, fn_t)) in
 
   (* remove vars defined in current scope *)
   let free_vars = BatMultiMap.remove_all env.level env.free_vars in 

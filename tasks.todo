@@ -125,7 +125,7 @@ Codegen:
 Optimisations: @optional
     ✔ value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
     ❑ no closure conversion when there is no free variables
-    ❑ unboxed structures
+    ❑ unboxed structures when possible
 
 Bugs:
     ❑ fix if-else codegen (something with env) @critical @today 
