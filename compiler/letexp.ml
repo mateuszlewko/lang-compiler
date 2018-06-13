@@ -282,6 +282,8 @@ let closure_entry_fns m name full_args arity raw_fn =
 let value_apply ?(is_ptr=false) m closure_ptr ret_t args sink_b =  
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
+    let is_ptr = false in 
+
     (if is_ptr 
      then struct_fields 
      else struct_val_fields
@@ -344,6 +346,8 @@ let value_apply ?(is_ptr=false) m closure_ptr ret_t args sink_b =
 
 (** apply arguments to function which returns value *)
 let closure_apply ?(is_ptr=false) m closure_ptr args sink_block = 
+  let is_ptr = false in 
+
   let m, entry_instrs, [ cl_left_args; cl_arity; cl_fn; cl_args
                        ; cl_used_bytes ] = 
     (if is_ptr 

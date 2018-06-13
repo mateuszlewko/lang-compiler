@@ -100,7 +100,7 @@ Codegen:
     ❑ type inference with type classes @today 
 
     ✔ mutually recursive functions @done(18-06-08 19:23)
-    ❑ mutually recursive nested functions @today 
+    ✘ mutually recursive nested functions @today @cancelled(18-06-13 22:26)
 
     ❑ generic arrays
     ❑ top level expressions 

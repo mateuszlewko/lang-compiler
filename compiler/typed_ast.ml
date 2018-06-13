@@ -321,14 +321,14 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
     | `Alloca            -> env in 
 
   let fn_with_env  =
-    match kind with 
+    (* match kind with 
     | `Alloca  -> 
       Value (name, (Alloca fn_t, fn_t))
     | `SetVar  -> 
       let args = List.map extra_args (fun (s, t) -> Var s, t) in
       let app  = App ((Var g_name, global_fn_t), args) in   
       SetVar (name, (app, fn_t))
-    | `Default -> 
+    | `Default ->  *)
       let args = List.map extra_args (fun (s, t) -> Var s, t) in
       let app  = App ((Var g_name, global_fn_t), args) in 
       Value (name, (app, fn_t)) in
