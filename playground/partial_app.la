@@ -135,7 +135,7 @@ let gen_apply ff a b = ff a b
 
 let gen_apply2 gen ff a b = gen ff a b 
 
-let gen_apply3 f_id (ff : 'b -> 'b -> 'b) a b = f_id (ff a b)
+let gen_apply3 f_id ff a b = f_id (ff a b)
 
 let id x = x
 
@@ -160,6 +160,22 @@ let id x = x
     p_int (af1 0 10)
     pn ()
     0 *)
+
+let rec af1 acc a = 
+    if a = 0 
+    then acc
+    elif a = 1
+    then (af3 a) + acc
+    else 3 
+    (* af1 (acc + 2) (a - 1)  *)
+
+and af3 a = 
+    if a = 1
+    then af1 1 0
+    else af4 (a - 1)
+
+and af4 a = 
+    af1 0 a
 
 let nested_recs () : int = 
      (* let rec add1 add2a add3a cycle x = 
@@ -224,10 +240,20 @@ and add5 next x = add6 next (next x)
 and add6 next x = add1 next false (next x)
 let add7 x = add4 (fun x -> x + 1) x *)
 
+let rec some_fn x = x 
+and just_pass x = other_fn x
+and other_fn y = 5 + y
+
 let _ : () = 
     gen_apply print_add 1 3 
     pn ()
     pn ()
+
+    (* p_int (af4 3)
+    p_int (af3 2)
+    p_int (af1 0 10)
+    pn () *)
+
     gen_apply2 gen_apply print_add 1 3 
     pn ()
     pn ()
