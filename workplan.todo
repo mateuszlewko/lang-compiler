@@ -6,12 +6,12 @@
 ✔ 2b. Rewrite existing codegen to use high-ollvm @optional @done(18-05-19 16:31)
 
 // 1-2 weeks
-//❑ 3a. Improve parsing (as in F# 4.0 - 15.1.5)
+✘ 3a. Improve parsing (as in F# 4.0 - 15.1.5) @cancelled(18-06-14 00:14)
 ✔ 3b. Records @done(18-05-23 21:28)
-✔ 3c. Mutually recursive functions @done(18-06-08 19:24)
+✔ 3c. Mutually recursive functions (only top-level) @done(18-06-08 19:24)
 
 // 2-3 weeks
-❑ 5a. Type checking / simple type inference 
+✔ 5a. Type checking / simple type inference @done(18-06-14 00:18)
 ✔ 5b. Let-polymorphism @done(18-06-04 01:19)
 
 // 2-3 weeks
