@@ -310,7 +310,7 @@ module Codegen = struct
 
     let typed t = insert_type (LT.to_ollvm app_t) t in 
 
-    let unknown_apply (env : Env.t) iss callee = 
+    let unknown_apply ?(is_ptr=false) (env : Env.t) iss callee = 
       let m, sink_b = M.local env.m T.label "sink_b" in 
       let m, res    = M.tmp m in 
       let m, app_iss, blocks, phi_i = 
@@ -353,7 +353,13 @@ module Codegen = struct
       | GenericFun gf    -> 
         printf "HERE1\n";
         monomorphize env gf |> uncurry (of_fun_binding name)
-      | Val       (v, _) -> unknown_apply env [] v 
+      | Val       (v, _) -> 
+        let is_ptr = match fst v with 
+                     | Ast.TYPE_Pointer _ -> true | _ -> false in 
+        
+        printf "name: %s is_ptr: %b\n" name is_ptr;
+
+        unknown_apply ~is_ptr env [] v 
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
         unknown_apply { env with m } [g <-- load v |> Instr] g 
@@ -532,11 +538,28 @@ module Codegen = struct
     let subs = List.filter subs (uncurry (<>)) in 
     Env.show_substitutions subs
     |> printf "NEW subs here after: %s\n";
-
+    
     let substitutions = List.fold subs ~init:env.substitutions 
                           ~f:(fun m (u, v) -> LT.add_equality u v m) in 
 
     expr { env with substitutions } e 
+
+  let gen_alloca (env : Env.t) t = 
+    let t     = LT.to_ollvm t in 
+    let m, al = M.local env.m (T.ptr t) "allocated" in
+    [al <-- alloca t |> Instr], al, { env with m }
+ 
+  let gen_load (env : Env.t) name = 
+    match Env.find env name with 
+    | Val (b, _) -> 
+      let b_t = match fst b with 
+                | Ast.TYPE_Pointer t -> t 
+                | other              -> other in 
+               
+      let m, res = M.local env.m b_t "loaded" in 
+      let iss    = [ Instr (res <-- load b) ] in
+      iss, res, { env with m }
+    | other      -> sprintf "Can't load other for name %s" name |> failwith
 
   let rec gen_expr env = 
     function 
@@ -553,6 +576,8 @@ module Codegen = struct
     | Clone e               , t -> gen_clone env gen_expr e t
     | GepStore gep_s        , t -> gen_gep_store env gen_expr gep_s t
     | Substitute (subs, e)  , t -> gen_substitute env gen_expr subs e t
+    | Alloca t              , _ -> gen_alloca env t 
+    | Load name             , _ -> gen_load env name 
 
   [@@@warning "-8"]
   let gen_extern (env : Env.t) gen_top {TA.name; gen_name} t =

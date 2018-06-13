@@ -46,6 +46,8 @@ and body_expr =
   | RecordLit  of expr_t list
   | Exprs      of expr_t list
   | Substitute of subs * expr_t
+  | Alloca     of t
+  | Load       of string 
   [@@deriving show]
 
 and expr_t = body_expr * t
