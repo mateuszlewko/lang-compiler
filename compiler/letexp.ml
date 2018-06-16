@@ -299,7 +299,8 @@ let value_apply ?(is_ptr=false) m closure_ptr ret_t args sink_b =
   let m, last    = M.local m T.opaque "__tmp_last" in 
   let m, then_res = M.local m T.opaque "then_res" in 
   let m, else_res = M.local m T.opaque "else_res" in 
-  let args_cnt_c  = List.length args |> i8 in 
+  let args_cnt_c  = List.length args |> i8 in  
+
   let call_args   = args @ [cl_args] in 
   let call_args_t = List.map call_args fst in 
 

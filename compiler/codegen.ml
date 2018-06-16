@@ -83,26 +83,27 @@ module Codegen = struct
     let res1, lhs, env = expr env lhs in
     let res2, rhs, env = expr env rhs in
     let res   = res1 @ res2 in 
-    let m, v  = M.tmp env.m in
     
     (match op with
     (* operators returning int *)
-    | ".+"   -> add  lhs rhs
-    | ".-"   -> sub  lhs rhs
-    | ".*"   -> mul  lhs rhs
-    | "./"   -> sdiv lhs rhs
+    | ".+"   -> add  lhs rhs, T.i32
+    | ".-"   -> sub  lhs rhs, T.i32
+    | ".*"   -> mul  lhs rhs, T.i32
+    | "./"   -> sdiv lhs rhs, T.i32
     (* operators returning bool *)
-    | ".="   -> eq   lhs rhs
-    | ".<"   -> slt  lhs rhs
-    | ".<="  -> sle  lhs rhs
-    | ".>"   -> sgt  lhs rhs
-    | ".>="  -> sge  lhs rhs
-    | ".<>"  -> ne   lhs rhs
-    | ".&&"  -> and_ lhs rhs
-    | ".||"  -> or_  lhs rhs
+    | ".="   -> eq   lhs rhs, T.i1
+    | ".<"   -> slt  lhs rhs, T.i1
+    | ".<="  -> sle  lhs rhs, T.i1
+    | ".>"   -> sgt  lhs rhs, T.i1
+    | ".>="  -> sge  lhs rhs, T.i1
+    | ".<>"  -> ne   lhs rhs, T.i1
+    | ".&&"  -> and_ lhs rhs, T.i1
+    | ".||"  -> or_  lhs rhs, T.i1
     (* raise when operator is unknown *)
     | other -> unsupp ~name:"operator" other)
-    |> fun op_res -> res @ [Instr (v <-- op_res)], v, { env with m }
+    |> fun (op_res, t) -> 
+      let m, v  = M.local env.m t "op_res" in
+      res @ [Instr (v <-- op_res)], v, { env with m }
     
   let gen_let_raw (env : Env.t) expr funexp fn_t ts = 
     let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
