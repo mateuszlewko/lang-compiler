@@ -202,7 +202,7 @@ module Codegen = struct
       LT.show_subs env.substitutions    
       |> printf "subs here gen_let: %s\n";
 
-      if List.exists arg_ts LT.is_generic 
+      if LT.is_generic fn_t
       then begin
         printf "Exists generic for: %s\n" funexp.name;
 
@@ -239,10 +239,13 @@ module Codegen = struct
         gf, Env.add env name gf 
         end
       else 
+        begin
+        printf "non generic fun t is: %s\n" (LT.show fn_t);
+
         let env, fb = gen_let_raw env expr funexp fn_t ts in
         let b       = Env.Fun fb in
         b, Env.add env funexp.name b
-
+        end
     | other -> sprintf "TODO let-value for: %s" funexp.name |> failwith
 
   let gen_top_value (env : Env.t) expr funexp ts = 

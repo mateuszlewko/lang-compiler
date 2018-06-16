@@ -2,7 +2,7 @@ module Prelude =
     external ll_putint     : int -> () 
     external ll_print_line : ()  -> () 
 
-    let print_int : int -> () = ll_putint
+    let print_int (x : int) : () = ll_putint x
     let print_nl : () -> () = ll_print_line
     let printn_int x = 
         print_int x 
@@ -13,16 +13,16 @@ open Prelude
 let rec fact x = 
     if x = 0 
     then 1 
-    else x + fact (-1 + x)
+    else x * fact (x - 1)
 
 let rec fix f n = f (fix f) n
 
 let fact_nr self n = 
     if n = 0 
     then 1 
-    else n + (self (-1 + n))
+    else n * (self (n - 1))
 
-let fact_fix (n : int) : int = fix fact_nr n
+let fact_fix n = fix fact_nr n
 
 let _ : () = 
     printn_int (fact_fix 5)
