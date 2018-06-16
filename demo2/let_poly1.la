@@ -1,29 +1,61 @@
 module Prelude = 
-    external ll_putint     : int -> () 
-    external ll_print_line : ()  -> () 
+    external ll_putint      : int -> () 
+    external ll_print_line  : ()  -> () 
+    external ll_print_space : ()  -> () 
 
-    let print_int (x : int) : () = ll_putint x
-    let print_nl : () -> () = ll_print_line
-    let printn_int x = 
-        print_int x 
-        print_nl () 
+    let printInt (x : int) : () = ll_putint x
+    let printNl : () -> () = ll_print_line
+    let printSpace : () -> () = ll_print_space
+    let printnInt x = 
+        printInt x 
+        printNl () 
 
 open Prelude
 
-let rec fact x = 
-    if x = 0 
-    then 1 
-    else x * fact (x - 1)
+type vec2 = { x : int; y : int }
+type vec3 = { x : int; y : int; z : int }
 
-let rec fix f n = f (fix f) n
+let addVec3 (l : vec3) (r : vec3) =
+    { l with x = l.x + r.x; 
+             y = l.y + r.y; z = l.z + r.z 
+    }
 
-let fact_nr self n = 
-    if n = 0 
-    then 1 
-    else n * (self (n - 1))
+let addVec2 (l : vec2) (r : vec2) =
+    { l with x = l.x + r.x; 
+             y = l.y + r.y
+    }
 
-let fact_fix n = fix fact_nr n
+let printVec2 (v : vec2) = 
+    printInt v.x 
+    printSpace ()
+    printInt v.y 
+
+let printVec3 (v : vec3) = 
+    printInt v.x 
+    printSpace ()
+    printInt v.y 
+    printSpace ()
+    printInt v.z
+
+let genericAdder add x y = add x y
+
+let genericPrinter print x = 
+    print x
+    printNl ()
+
+let id x = x
+
+let compose f g x = f (g x)
 
 let _ : () = 
-    printn_int (fact_fix 5)
-    printn_int (fact 5)
+    let v2 = compose id id { x = 1; y = 1 }
+    let v2 = compose (addVec2 v2) id v2 (* (1, 1) + (1, 1) *)
+    let v2 = compose (addVec2 v2) (genericAdder addVec2 v2) v2 (* (2, 2) + (2, 2)
+                                                                   + (2, 2) *)
+
+    genericPrinter printVec2 v2 
+
+    (* let v3 : vec3 = compose id id { x = 1; y = 1; z = 1 }
+    let v3 = compose (addVec3 v3) id v3
+    let v3 = compose (addVec3 v3) (genericAdder addVec3 v3) v3
+    genericPrinter printVec3 v3  *)

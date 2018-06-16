@@ -10,6 +10,10 @@ extern void ll_print_line() {
   printf("\n");
 }
 
+extern void ll_print_space() {
+  printf(" ");
+}
+
 extern int ll_get_ith_elem_of_int_array(int* arr, int i) {
   return *(arr + i);
 }

@@ -124,7 +124,8 @@ let rec expr env =
     then failwith "Value cannot be defined with 'rec'";
 
     let env, body = List.fold_map body ~init:env ~f:expr in
-
+    (* TODO: Try concrete return type *)
+    
     let t = List.last_exn body |> snd in 
     add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
   | LetExp exp  -> 
