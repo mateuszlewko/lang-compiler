@@ -111,7 +111,7 @@ let leq_int l r : bool = leq l r
 
 let leq_bool (l : bool) (r : bool) : bool = leq l r 
 
-let p_bool (b : bool) : () =
+let p_bool b : () =
     if b 
     then ll_putint 1
     else ll_putint 0
