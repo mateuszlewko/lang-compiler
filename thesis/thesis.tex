@@ -45,18 +45,115 @@
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
 
 \chapter{Wprowadzenie}
+\section{Język ML}
+
+1. Dlaczego ML, jakie są inne języki ML
+
+2. Bazowanie na $ F\# $
+
+\subsection{Składnia}
+
+1. Opis, szczegóły składni, (przykłady: każda cecha języka i krótki przykład)
+
+\section{Cechy języka}
+
+1. Proste wyrażenia, rekurencja, let-polymorphism, rekordy,
+wzajemnie rekurencyjne funkcje na top levelu, klasy typów, proste moduły, 
+wyrażanie na top levelu, efekty uboczne, inferencja typów, anotacje.
+
+\section{Klasy typów}
+
+1. Wprowadzenie czym są 
+
+2. Dlaczego? Jakie są alternatywy
+
+3. Opis tego co zostało zaimplementowane, porównanie do innych języków, (Haskell,
+Rust, Scala)
+
+\section{Infrastruktura LLVM}
+
+1. Co to jest? 
+
+2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
+
+3. Jak działa kompilowanie do LLVM? 
+
+4. Krótki opis high-ollvm 
 
 \chapter{Kompilator}
-\section{Etapy}
+\section{Etapy kompilacji}
+
+1. Jakie są etapy (lexer $\rightarrow$ parser $\rightarrow$ untyped ast $\rightarrow$ 
+typed ast bez zagnieżdżonych funkcji $\rightarrow$ generowanie kodu (ast high-ollvm)
+$\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ gcc i external) 
+
+2. Krótko o każdym etapie
+
+\section{Analiza leksykalna}
+
+1. Czego użyłem. 
+
+2. Analiza wcięć 
+
 \section{Parsowanie}
+
+1. Czego użyłem, coś o Menhirze, dlaczego Menhir 
+
+2. Wyzwania (składnia bazująca na wcięciach)
+
+3. Gramatyka
+
+\section{Inferencja typów}
+
+1. Po co? Jak działa u mnie
 
 \chapter{Generowanie kodu}
 \section{Częściowa aplikacja}
+
+\subsection{Opis działania}
+
+1. Dlaczego jest to nietrywialne
+
+2. Jakie miałem cele 
+
+3. Jak to działa u mnie 
+
+4. Przykład (wygenerowanego pseudo-kodu)
+
+\subsection{Porównanie z innymi implementacjami}
+
+1. Push/enter vs eval/apply
+
+Porównanie z pracą "Making a fast curry: ..."
+
 \section{Zagnieżdżone funkcje}
 
+1. Co to są zagnieżdżone funkcje 
 
+2. Na czym polega trudność w ich implementacji 
 
-\ldots
+3. Jak zostały zaimplementowane: lambda lifting + closure conversion + 
+wykorzystanie aplikacji częściowej
+
+\section{Rekordy}
+
+Implementacja, porównanie do rekordów w F\#.
+
+\section{Let polimorfizm}
+
+1. Krótki opis, czym jest let-polimorfizm
+
+2. Sposoby implementacji w różnych językach, zalety i wady 
+
+3. Sposób implementacji u mnie
+
+\section{Klasy typów}
+
+1. Czym są? Po co? 
+
+2. Sposoby implementowania, porównanie do pracy TODO
+
+3. Jak zostały zaimplementowane, dlaczego tak
 
 %%%%% BIBLIOGRAFIA
 
