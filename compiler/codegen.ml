@@ -105,6 +105,10 @@ module Codegen = struct
       let m, v  = M.local env.m t "op_res" in
       res @ [Instr (v <-- op_res)], v, { env with m }
     
+  let clear_subs (env : Env.t) =
+    env
+    (* { env with substitutions = BatMap.empty } *)
+
   let gen_let_raw (env : Env.t) expr funexp fn_t ts = 
     let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
 
@@ -112,6 +116,8 @@ module Codegen = struct
     List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
     LT.show_subs env.substitutions    
     |> printf "subs here: %s\n";
+
+    printf "AND TYPE IS: %s\n" (LT.show (Fun ts));
 
     let args_cnt = List.length ta_args in 
     let ret      = List.drop ts args_cnt in 
@@ -222,11 +228,11 @@ module Codegen = struct
 
           let arg_ts = convert_types map arg_ts in
           let args   = List.zip_exn args arg_ts in 
-          let rem_invalid c = 
+          (* let rem_invalid c = 
             if Char.is_alpha c || c = '.' || c = '_' 
             then String.of_char c 
             else if c = ' ' then "_"
-            else "" in
+            else "" in *)
                                                  
           let gen_name = funexp.gen_name ^ "_" ^ LT.mangle_name fn_t in 
                          (* (List.map arg_ts (LT.show %> sprintf "%s") 
@@ -236,7 +242,7 @@ module Codegen = struct
           gen_let_raw env expr { funexp with args; gen_name } fn_t ts in 
 
         let gf = Env.GenericFun { Env.poli; mono = BatMap.empty } in 
-        gf, Env.add env name gf 
+        gf, Env.add env name gf
         end
       else 
         begin
@@ -293,7 +299,7 @@ module Codegen = struct
     |> printf "subs here: %s\n";
     printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
 
-    let env, callee = 
+     let env, callee = 
       match callee with 
       | TA.Substitute (subs, callee), _ -> 
         let substitutions = List.fold subs ~init:env.substitutions 
@@ -302,14 +308,13 @@ module Codegen = struct
         { env with substitutions }, callee
       | callee                          -> env, callee in 
 
-    let [app_t] = convert_types env.substitutions [app_t] in 
-
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
 
+    let [app_t] = convert_types env.substitutions [app_t] in 
     List.iter args (Ez.Value.show %> printf "arg val: %s\n");
 
     let typed t = insert_type (LT.to_ollvm app_t) t in 
@@ -371,7 +376,7 @@ module Codegen = struct
           LT.show_subs env.substitutions
           |> printf "Current subs: %s\n";
 
-          match LT.find_concrete BatMap.empty env.substitutions type_name with 
+          match LT.find_concrete env.substitutions type_name with 
           | None        -> sprintf "Couldn't find concrete type for: %s" 
                            type_name |> failwith 
           | Some impl_t -> 

@@ -81,22 +81,24 @@ let add_fn_type_fst env fn = let env, fn_t = fn_type env fn in
                              add env fn.name (fn_t, Global)
 
 let make_fn_t_concrete env ret_t fn_t body = 
-  let env = 
-    match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
-    | []   -> env 
+  let env, body = 
+    let last_t = List.last_exn body |> snd in 
+    match LT.valid_replacements ret_t last_t with 
+    | []   -> env, body
     | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
               let substitutions = List.fold subs ~init:env.substitutions 
                                   ~f:(fun m (u, v) -> LT.add_equality u v m) in 
-              { env with substitutions } in 
+              let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
+              { env with substitutions }, body in 
 
   let try_concrete t = LT.find_concrete_lt env.substitutions t 
                        |> Option.value ~default:t in 
                        
   let fn_t = match fn_t with 
              | LT.Fun ts -> List.map ts try_concrete |> LT.Fun
-             | other     -> other in        
+             | other     -> try_concrete other in        
 
-  env, fn_t               
+  env, body, fn_t         
 
 let rec expr env = 
   function 
@@ -123,10 +125,12 @@ let rec expr env =
     if is_rec = true 
     then failwith "Value cannot be defined with 'rec'";
 
-    let env, body = List.fold_map body ~init:env ~f:expr in
-    (* TODO: Try concrete return type *)
+    let env, ret_t   = LT.of_annotation env ret_t in
+    let env, body    = List.fold_map body ~init:env ~f:expr in
+    let env, body, t = make_fn_t_concrete env ret_t ret_t body in
+
+    (* let t = List.last_exn body |> snd in  *)
     
-    let t = List.last_exn body |> snd in 
     add env name (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
   | LetExp exp  -> 
     nested_letexp env exp
@@ -286,13 +290,23 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
                       |> List.map ~f:snd in 
 
   (* apply unbound type to concrete *)
+  let env, body = 
+    let last_t = List.last_exn body |> snd in 
+    match LT.valid_replacements ret_t last_t with 
+    | []   -> env, body
+    | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
+              let substitutions = List.fold subs ~init:env.substitutions 
+                                  ~f:(fun m (u, v) -> LT.add_equality u v m) in 
+              let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
+              { env with substitutions }, body in 
+(* 
   let env = 
     match LT.valid_replacements ret_t (List.last_exn body |> snd) with 
     | []   -> env 
     | subs -> let substitutions = List.fold subs ~init:env.substitutions 
                                   ~f:(fun m (u, v) -> 
                                         LT.add_equality u v m) in 
-            { env with substitutions } in 
+            { env with substitutions } in  *)
 
   let try_concrete t = LT.find_concrete_lt env.substitutions t 
                       |> Option.value ~default:t in 

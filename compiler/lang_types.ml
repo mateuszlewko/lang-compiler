@@ -110,43 +110,53 @@ let show_subs substitutions =
   BatMap.bindings substitutions
   |> show__substitutions2
 
-let rec find_concrete preferred substitutions generic_t = 
-  let rec dfs vis alt curr = 
-    try BatSet.find curr vis |> ignore; vis, None, alt 
+let rec find_concrete substitutions generic_t = 
+  let rec dfs vis curr = 
+    try BatSet.find curr vis |> ignore; vis, None 
     with Not_found ->
+      printf "curr: %s\n" curr;
+
       let vis = BatSet.add curr vis in  
 
-      let rec find_first alt vis =  
+      let rec find_first vis =  
         function 
         | (Generic s)::subs -> 
-          let alt    = 
-            let s_pref   = BatMap.find_default 0 s preferred in
-            let alt_pref = Option.value_map alt ~default:0 ~f:snd in 
+          (* let alt    = 
+            (* let s_pref   = BatMap.find_default 0 s preferred in *)
+            (* let alt_pref = Option.value_map alt ~default:0 ~f:snd in  *)
             
             if s_pref < alt_pref
             then Some (Generic s, s_pref)
-            else alt in 
+            else alt in  *)
 
-          let vis, t, alt = dfs vis alt s in 
+          let vis, t = dfs vis s in 
           begin 
           match t with 
-          | Some _ as t -> vis, t, alt
-          | None        -> find_first alt vis subs 
+          | Some _ as t -> 
+            vis, t
+          | None        -> find_first vis subs 
           end
-        | concrete::_ -> vis, Some concrete, alt
-        | []          -> vis, None         , alt in 
+        | concrete::_ ->
+          printf "found: %s\n" (show concrete);
+          vis, Some concrete
+        | []          -> vis, None          in 
 
-      match BatMap.find_default [] (Generic curr) substitutions with 
-      | []   -> vis, None, alt
-      | subs -> find_first alt vis subs in 
+      let neighbours = BatMap.find_default [] (Generic curr) substitutions 
+                       |> List.stable_dedup in 
 
-  match dfs BatSet.empty None generic_t with 
-  | _, None, alt -> alt |> Option.map ~f:fst 
-  | _, s   , _   -> s
+      printf "ns: ";
+      List.iter neighbours (show %> printf "%s, ");
+      printf "\n";
+
+      match neighbours with 
+      | []   -> vis, None
+      | subs -> find_first vis subs in 
+
+  dfs BatSet.empty generic_t |> snd
 
 let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions = 
   function 
-  | Generic generic_t -> find_concrete preferred substitutions generic_t 
+  | Generic generic_t -> find_concrete substitutions generic_t 
   | Fun ts            -> 
     List.map ts (fun t -> find_concrete_lt ~preferred substitutions t
                           |> Option.value ~default:t)
