@@ -228,10 +228,10 @@ module Codegen = struct
             else if c = ' ' then "_"
             else "" in
                                                  
-          let gen_name = funexp.gen_name ^ "." ^
-                         (List.map arg_ts (LT.show %> sprintf "%s") 
+          let gen_name = funexp.gen_name ^ "_" ^ LT.mangle_name fn_t in 
+                         (* (List.map arg_ts (LT.show %> sprintf "%s") 
                           |> BatString.concat "-" 
-                          |> BatString.replace_chars rem_invalid) in 
+                          |> BatString.replace_chars rem_invalid) in  *)
 
           gen_let_raw env expr { funexp with args; gen_name } fn_t ts in 
 

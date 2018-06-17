@@ -262,3 +262,17 @@ let rec to_ollvm ?(is_arg=true) =
   | Record fields -> List.map fields (snd %> to_ollvm)  
                      |> T.structure ~packed:true 
                      |> (if is_arg then T.ptr else identity)
+
+let rec mangle_name = 
+  function
+  | Int  -> "i"
+  | Bool -> "b"
+  | Unit -> "u"
+  | Generic g -> "g_" ^ g
+  | Fun ts    -> "fun(" ^ BatString.concat "|" (List.map ts mangle_name) ^ ")"
+  | Float     -> "f"
+  | Array t   -> "arr_" ^ mangle_name t
+  | Record fs -> 
+    let fs = (List.map fs (fun (f, t) -> f ^ "_" ^ mangle_name t)) in 
+    "rec(" ^ BatString.concat "|" fs ^ ")"
+  | String    -> "s"
