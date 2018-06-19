@@ -49,23 +49,23 @@ let compose f g x = f (g x)
 
 let apply fn x = fn x
 
-let v2 = { x = 1; y = 2 }
-let v21 = compose id id v2
-let v22 = compose (addVec2 v21) id v21 (* (1, 1) + (1, 1) *)
-let v23 = compose (addVec2 v22) (genericAdder addVec2 v22) v22 (* (2, 2) + (2, 2)
-                                                                + (2, 2)  *)
-
-let res = compose (genericAdder addVec2 v23) (apply id) v23
-
-let v3 : Vec3 = { x = 1; y = 1; z = 1 }
-let v3 = compose id id v3
-let v3 : Vec3 = compose (addVec3 v3) id v3
-let v3 : Vec3 = compose (addVec3 v3) (genericAdder addVec3 v3) v3 
 
 let _ : () = 
+    let v2 = { x = 1; y = 2 }
+    let v21 = compose id id v2
+    let v22 = compose (addVec2 v21) id v21 (* (1, 1) + (1, 1) *)
+    let v23 = compose (addVec2 v22) (genericAdder addVec2 v22) v22 (* (2, 2) + (2, 2)
+                                                                    + (2, 2)  *)
+
+    let res = compose (genericAdder addVec2 v23) (apply id) v23
 
     genericPrinter printVec2 res
 
     (* fn1 fn2 (fn3 0) *)
 
-    genericPrinter printVec3 v3 
+    (* let v3 : Vec3 = { x = 1; y = 1; z = 1 }
+    let v3 = compose id id v3
+    let v3 : Vec3 = compose (addVec3 v3) id v3
+    let v3 : Vec3 = compose (addVec3 v3) (genericAdder addVec3 v3) v3 
+
+    genericPrinter printVec3 v3  *)

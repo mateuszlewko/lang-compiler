@@ -199,9 +199,12 @@ let length t =
 
   count 0 t 
 
-let make_mostly_same subs t = 
+let make_mostly_same ?(initial_sets) subs t = 
   let subs = find_equalities subs |> shrink in 
-  let sets = ref BatMap.empty in 
+  let sets = 
+    match initial_sets with 
+    | Some sets -> ref sets 
+    | None      -> ref BatMap.empty in  
 
   let rec find t =
     printf "u-find: %s\n" (show t);
@@ -232,7 +235,7 @@ let make_mostly_same subs t =
   printf "initial: %s\n" (show t);
   let res = make t in 
   printf "simplified: %s\n" (show res);
-  res
+  !sets, res
 
 let rec find_conc subs curr =
   let subs = find_equalities subs |> shrink in 

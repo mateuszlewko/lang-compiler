@@ -217,8 +217,9 @@ module Codegen = struct
           printf "trying to convert types for call to: %s.\n" funexp.name;
           List.iter ts (LT.show %> printf "fn t: %s\n");
 
-          let subs, fn_t = convert_type env.substitutions fn_t in 
-          let subs, ts   = List.fold_map ts  ~init:subs ~f:convert_type in 
+          let subs, ts   = 
+            List.fold_map ts ~init:env.substitutions ~f:convert_type in 
+          let subs, fn_t = convert_type subs fn_t in 
 
           (* let arg_ts = List.map arg_ts (fun t -> 
               printf "converting type: %s\n" (LT.show t);
@@ -264,8 +265,8 @@ module Codegen = struct
     LT.show_subs env.substitutions    
     |> printf "subs here: %s\n";
 
-    (* let subs, ts = convert_type env.substitutions ts in  *)
-    (* let env      = { env with substitutions = subs } in  *)
+    (* let subs, ts = convert_type env.substitutions ts in 
+    let env      = { env with substitutions = subs } in  *)
 
     let args   = ["unit_arg", LT.Unit] in 
     let new_ts = LT.merge [LT.Unit] ts in 
