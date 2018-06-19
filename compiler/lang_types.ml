@@ -66,7 +66,7 @@ let rec replacements old_t new_t =
   | Fun [t]           , other                -> replacements t other 
   | old               , Fun [other]          -> replacements old other
   | Generic _ as old_t, new_t                
-  | new_t             , (Generic _ as old_t) -> [old_t, new_t]
+  | new_t             , (Generic _ as old_t) -> [old_t, new_t, true]
   | Fun ts            , Fun new_ts           -> 
     let min_len = min (List.length ts  - 1) (List.length new_ts - 1) in 
     let ts    , ret_t    = List.split_n ts min_len in 
@@ -81,26 +81,29 @@ let rec replacements old_t new_t =
       raise WrongTypeOfApplyArgument)
 
 let rec add_equality ?(both=true) t1 t2 substitutions = 
-  let last = try BatMap.find t1 substitutions 
-             with Not_found -> [] in 
-
-  BatMap.add t1 (t2::last) substitutions
-  |> if both then add_equality ~both:false t2 t1 
-             else identity
+  if t1 = t2 
+  then substitutions
+  else let last = try BatMap.find t1 substitutions 
+                  with Not_found -> [] in 
+     
+       BatMap.add t1 (t2::last) substitutions
+       |> if both then add_equality ~both:false t2 t1 
+                  else identity
 
 let valid_replacements old_t new_t = replacements old_t new_t 
                                      |> List.dedup_and_sort 
-                                     |> List.filter ~f:(uncurry (<>))
+                                     |> List.filter ~f:(fun (u, v, _) -> u <> v)
 
 let unify_expr new_t (env : TAD.environment) (expr, et) =
   match valid_replacements et new_t with 
   | []   -> env, (expr, et)
   | subs -> let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v) -> add_equality u v m) in 
+                                  ~f:(fun m (u, v, both) -> 
+                                      add_equality ~both u v m) in 
             let env = { env with substitutions } in 
             env, (TAD.Substitute (subs, (expr, new_t)), new_t)
 
-type _substitutions = (t * t) list 
+type _substitutions = (t * t * bool) list 
 [@@deriving show]
 
 type _substitutions2 = (t * t list) list 
@@ -110,6 +113,176 @@ let show_subs substitutions =
   BatMap.bindings substitutions
   |> show__substitutions2
 
+let rec is_generic = 
+  function 
+  | Generic _ -> true 
+  | Fun ts    -> List.exists ts is_generic 
+  | _         -> false
+
+let rec drop_args n vis subs t = 
+  match n, t with  
+  | 0, Fun [t] | 0, t          -> Some t 
+  | n, Fun (_::((_::_) as ts)) -> drop_args (n - 1) vis subs (Fun ts) 
+  | n, (Generic _ as t)
+  | n, Fun [Generic _ as t]    -> 
+    begin 
+    match BatMap.Exceptionless.find t subs with 
+    | Some (Fun (_::((_::_) as ts)) as t) when BatSet.mem t vis |> not ->
+      drop_args (n - 1) (BatSet.add t vis) subs (Fun ts)
+    | _ -> None 
+    end 
+  | _, t            -> None 
+
+let just_drop_args n t = drop_args n BatSet.empty BatMap.empty t 
+
+let rec take_arg = 
+  function 
+  | Fun (t::_::_) -> Some t 
+  | Fun [t]       -> take_arg t
+  | _             -> None 
+  (* | other      -> Some other *)
+
+let find_equalities subs = 
+  let rec find_single vis curr =
+    printf "find single: %s\n" (show curr);
+
+    if BatSet.mem curr vis 
+    then vis, []
+    else 
+      let vis = BatSet.add curr vis in 
+      let vis, ns = 
+        BatMap.find_default [] curr subs 
+        |> List.fold_map ~init:vis ~f:find_single in 
+      vis, curr :: List.concat ns in 
+
+  let rec add_subs subs = 
+    function 
+    | [] | [_]     -> subs 
+    | x1::x2::rest -> 
+      printf "adding equality: %s %s\n" (show x1) (show x2);
+      add_subs (add_equality x1 x2 subs) (x2::rest) in 
+
+  let rec merge subs = 
+    function 
+    | []    -> subs 
+    | equal -> 
+      let args = List.map equal take_arg |> List.filter_opt in
+      let rest = List.map equal (just_drop_args 1) |> List.filter_opt in 
+      let subs = add_subs subs args in 
+      let subs = add_subs subs equal in 
+      merge subs rest in 
+
+  let is_fun = function Fun _ -> true | _ -> false in 
+
+  BatEnum.filter is_fun (BatMap.keys subs)
+  |> BatList.of_enum
+  |> List.fold ~init:subs ~f:(
+      fun subs curr -> 
+        printf "finding for: %s\n" (show curr);
+
+        let equal = find_single BatSet.empty curr |> snd in 
+        printf "got equal:\n";
+        List.iter equal (show %> printf "%s\n");
+        printf "end\n";
+        merge subs equal
+    )
+
+let shrink subs = BatMap.map List.stable_dedup subs 
+
+let rec find_conc subs curr =
+  let subs = find_equalities subs |> shrink in 
+  let res_subs = ref subs in 
+  printf "--------\n";
+
+  let rec find_first vis funs from curr =  
+    match curr with 
+    | x::xs ->
+      let vis, res = find vis funs from x in 
+      begin 
+      match res with 
+      | None          -> find_first vis funs from xs 
+      | Some _ as res -> BatMap.add x res vis, res 
+      end
+    | []    -> vis, None 
+
+  and find vis funs prev curr =
+    if not (is_generic curr)
+    then (
+      List.iter funs (show %> printf "one of funs: %s\n");
+      let vis = 
+        List.fold funs ~init:vis 
+          ~f:(fun m f -> BatMap.add f (Some curr) m) in 
+
+      printf "found: %s\n" (show curr);
+
+      BatMap.iter (fun k -> 
+        function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
+               | None   -> printf "vis %s -> none\n" (show k)) vis;
+
+      let vis = match prev with Some prev -> BatMap.add prev (Some curr) vis 
+                              | None      -> vis in 
+      vis, Some curr 
+    )
+    else if BatMap.mem curr vis 
+    then 
+      begin 
+      BatMap.iter (fun k -> 
+        function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
+               | None   -> printf "s vis %s -> none\n" (show k)) vis;
+
+      vis, BatMap.find curr vis 
+      end
+    else 
+      begin 
+      printf "find: %s\n" (show curr);
+
+      let vis = BatMap.add curr None vis in 
+
+      let check_ns vis funs curr = 
+        let ns = BatMap.find_default [] curr subs |> List.stable_dedup in
+        find_first vis funs (Some curr) ns in 
+    
+      match curr with 
+      | Fun [t]             -> find vis funs (Some curr) t
+      | Fun (t::ts) as fn_t -> 
+        let vis, res = check_ns vis (fn_t::funs) fn_t in 
+
+        begin 
+        match res with 
+        | Some _ as res -> BatMap.add curr res vis, res 
+        | None          -> 
+          let funs1 = t :: (BatList.map take_arg funs |> List.filter_opt) in 
+          let funs2 = (Fun ts) :: 
+                      (BatList.map (drop_args 1 BatSet.empty BatMap.empty) funs
+                       |> List.filter_opt) in 
+
+          let vis, res1 = find vis funs1 None t in 
+          let vis, res  = find vis funs2 None (Fun ts) in 
+          begin 
+          match res1, res with 
+          | Some res1, Some (Fun res) -> 
+            let res = Some (Fun (res1::res)) in 
+            BatMap.add curr res vis, res 
+          | Some res1, Some res       -> 
+            let res = Some (Fun (res1::[res])) in 
+            BatMap.add curr res vis, res 
+          | _        , _              -> vis, None 
+          end 
+        end 
+      | Generic _ as g -> check_ns vis funs g 
+      | concrete       -> assert false
+        (* BatMap.add curr (Some concrete) vis, Some concrete *)
+      end
+    in 
+  
+  let vis, t = find BatMap.empty [] None curr in 
+  BatMap.iter (fun k -> 
+    function Some v -> res_subs := add_equality k v !res_subs
+           | None   -> ()) vis;
+
+  !res_subs |> shrink, t
+
+(* 
 let rec find_concrete substitutions generic_t = 
   let rec dfs vis curr = 
     try BatSet.find curr vis |> ignore; vis, None 
@@ -121,14 +294,6 @@ let rec find_concrete substitutions generic_t =
       let rec find_first vis =  
         function 
         | (Generic s)::subs -> 
-          (* let alt    = 
-            (* let s_pref   = BatMap.find_default 0 s preferred in *)
-            (* let alt_pref = Option.value_map alt ~default:0 ~f:snd in  *)
-            
-            if s_pref < alt_pref
-            then Some (Generic s, s_pref)
-            else alt in  *)
-
           let vis, t = dfs vis s in 
           begin 
           match t with 
@@ -136,6 +301,9 @@ let rec find_concrete substitutions generic_t =
             vis, t
           | None        -> find_first vis subs 
           end
+        | (Fun ts as fn_t)::subs when is_generic fn_t -> 
+          let vis, ts = List.fold_map ts ~init:vis ~f:dfs in 
+
         | concrete::_ ->
           printf "found: %s\n" (show concrete);
           vis, Some concrete
@@ -161,26 +329,15 @@ let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions =
     List.map ts (fun t -> find_concrete_lt ~preferred substitutions t
                           |> Option.value ~default:t)
     |> Fun |> Some
-  | other             -> Some other
+  | other             -> Some other *)
 
-let rec drop_args n vis subs t = 
-  match n, t with  
-  | 0, Fun [t] | 0, t          -> Some t 
-  | n, Fun (_::((_::_) as ts)) -> drop_args (n - 1) vis subs (Fun ts) 
-  | n, (Generic _ as t)
-  | n, Fun [Generic _ as t]    -> 
-    begin 
-    match BatMap.Exceptionless.find t subs with 
-    | Some (Fun (_::((_::_) as ts)) as t) when BatSet.mem t vis |> not ->
-      drop_args (n - 1) (BatSet.add t vis) subs (Fun ts)
-    | _ -> None 
-    end 
-  | _, t            -> None 
+let find_concrete_lt substitutions curr  =
+  find_conc substitutions curr 
 
 let rec apply (env : TAD.environment) fn_t arg_ts = 
   let no_substitution t e = env, (e, t) in 
   
-  let t_as_fun gen_t arg_ts = fun expr ->
+  (* let t_as_fun gen_t arg_ts = fun expr ->
     let env, ret_t     = TAD.fresh_type env in 
     let fn_t           = Fun (arg_ts @ [ret_t]) in 
     
@@ -190,7 +347,7 @@ let rec apply (env : TAD.environment) fn_t arg_ts =
     let substitutions  = add_equality gen_t fn_t env.substitutions in 
     let env            = { env with substitutions } in
 
-   env, (TAD.Substitute ([gen_t, fn_t], (expr, t)), t) in
+   env, (TAD.Substitute ([gen_t, fn_t, true], (expr, t)), t) in *)
   
   match fn_t, arg_ts with 
   | _        , []     -> no_substitution fn_t 
@@ -210,7 +367,7 @@ let rec apply (env : TAD.environment) fn_t arg_ts =
 
     match replacements fn_t (Fun (arg_ts @ [ret_t]))
           |> List.dedup_and_sort 
-          |> List.filter ~f:(uncurry (<>))
+          |> List.filter ~f:(fun (u, v, _) -> u <> v)
     with 
     | []   -> no_substitution fn_t
     | subs -> 
@@ -219,13 +376,15 @@ let rec apply (env : TAD.environment) fn_t arg_ts =
       (* let t = List.find subs (fst %> (=) fn_t) 
               |> Option.map ~f:snd |> Option.value ~default:fn_t in  *)
       let cnt    = List.length arg_ts in 
-      let subs_m = subs |> BatList.enum |> BatMap.of_enum in
+      let subs_m = subs |> BatList.map (fun (u, v, _) -> u, v) |> BatList.enum 
+                        |> BatMap.of_enum in
       let t      = BatOption.get_exn (drop_args cnt BatSet.empty subs_m fn_t)
                                       WrongNumberOfApplyArguments in
 
       fun expr -> 
         let substitutions = List.fold subs ~init:env.substitutions 
-                              ~f:(fun m (u, v) -> add_equality u v m) in 
+                              ~f:(fun m (u, v, both) -> 
+                                    add_equality ~both u v m) in 
 
         { env with substitutions }, (TAD.Substitute (subs, (expr, t)), t) 
     end
@@ -251,12 +410,6 @@ let closure_t = let open High_ollvm.Ez.Type in
                 structure ~packed:true 
                   [ ptr (ptr (fn void [])); ptr i8; i8; i8
                   ; i32 ]
-
-let rec is_generic = 
-  function 
-  | Generic _ -> true 
-  | Fun ts    -> List.exists ts is_generic 
-  | _         -> false
 
 let rec to_ollvm ?(is_arg=true) = 
   let module T = High_ollvm.Ez.Type in

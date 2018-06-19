@@ -6,7 +6,7 @@ module Prelude =
     let printInt (x : int) : () = ll_putint x
     let printNl : () -> () = ll_print_line
     let printSpace : () -> () = ll_print_space
-    let printnInt x = 
+    let printnInt (x : int) = 
         printInt x 
         printNl () 
 
@@ -39,7 +39,7 @@ let printVec3 (v : Vec3) =
 
 let genericAdder add x y = add x y
 
-let genericPrinter print x = 
+let genericPrinter (print : 'aaa -> ()) (x : 'aaa) = 
     print x
     printNl ()
 
@@ -51,10 +51,10 @@ let apply fn x = fn x
 
 let _ : () = 
     let v2 = { x = 1; y = 1 }
-    (* let v2 = compose id id v2
+    let v2 = compose id id v2
     let v2 = compose (addVec2 v2) id v2 (* (1, 1) + (1, 1) *)
     let v2 = compose (addVec2 v2) (genericAdder addVec2 v2) v2 (* (2, 2) + (2, 2)
-                                                                   + (2, 2)  *) *)
+                                                                   + (2, 2)  *)
 
     let res = compose (genericAdder addVec2 v2) (apply id) v2
 
@@ -62,8 +62,8 @@ let _ : () =
 
     (* fn1 fn2 (fn3 0) *)
 
-    (* let v3 : Vec3 = { x = 1; y = 1; z = 1 }
+    let v3 : Vec3 = { x = 1; y = 1; z = 1 }
     let v3 : Vec3 = compose id id v3
     let v3 : Vec3 = compose (addVec3 v3) id v3
     let v3 : Vec3 = compose (addVec3 v3) (genericAdder addVec3 v3) v3
-    genericPrinter printVec3 v3  *)
+    genericPrinter printVec3 v3 

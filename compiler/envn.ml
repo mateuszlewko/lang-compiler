@@ -7,7 +7,7 @@ exception SymbolNotFound of string
 module V = Ez.Value
 module M = Ez.Module
 
-type substitutions = (LT.t * LT.t) list 
+type substitutions = (LT.t * LT.t * bool) list 
 [@@deriving show]
 
 type bound        = Ez.Value.t * Lang_types.t 
@@ -16,7 +16,7 @@ type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
 type instance_key = string * LT.t * string
 [@@deriving show]
 
-type generic_fun  = { poli : t -> (LT.t, LT.t list) BatMap.t -> t * fun_binding
+type generic_fun  = { poli : t -> t * fun_binding
                     ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
 
 and binding = 
