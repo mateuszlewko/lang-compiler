@@ -80,6 +80,23 @@ let add_fn_type env fn = let env, fn_t = fn_type env fn in
 let add_fn_type_fst env fn = let env, fn_t = fn_type env fn in 
                              add env fn.name (fn_t, Global)
 
+let rewrite_type env t =
+  let rec re (env, subs) = 
+    function 
+    | LT.Fun ts         ->
+      let (env, subs), ts = List.fold_map ts ~init:(env, subs) ~f:re in 
+      (env, subs), (LT.Fun ts)
+    | Generic _ as g -> 
+      let env, ng = if BatMap.mem g subs 
+                    then env, BatMap.find g subs 
+                    else fresh_type env in 
+      let subs = BatMap.add g ng subs in 
+      (env, subs), ng
+    | concrete -> (env, subs), concrete in 
+  
+  let (env, subs), t = re (env, BatMap.empty) t in 
+  env, subs, t
+
 let make_fn_t_concrete env ret_t fn_t body = 
   let env, body = 
     let last_t = List.last_exn body |> snd in 
@@ -117,9 +134,13 @@ let make_fn_t_concrete env ret_t fn_t body =
     let subs, t = try_concrete subs t in 
     if LT.is_generic t
     then 
+      begin 
+      printf "making %s mostly same\n" (LT.show t);
+
       let s, t = LT.make_mostly_same subs t in 
       sets := s;
       subs, t
+      end
     else subs, t in
   
   printf "concrete2 fn_t: %s\n" (LT.show fn_t);
@@ -128,13 +149,13 @@ let make_fn_t_concrete env ret_t fn_t body =
   let env = { env with substitutions = subs } in 
 
   let env, body = 
-    let vars        = BatSet.to_list env.mono_vars in 
+    let vars, from = BatMap.bindings env.mono_vars |> List.unzip in 
     let subs, vars2 = 
       List.fold_map vars ~init:env.substitutions ~f:try_concrete in 
       
     let env = { env with substitutions = subs } in 
 
-    let subs = List.zip_exn vars vars2
+    let subs = List.zip_exn vars2 vars
                |> BatList.map (fun (u, v) -> u, v, true) in  
 
     let last_t = List.last_exn body |> snd in 
@@ -151,10 +172,15 @@ let make_fn_t_concrete env ret_t fn_t body =
               { env with substitutions }, body in 
 
   
+  let subs, fn_t = try_concrete env.substitutions fn_t in 
+  printf "once again fn_t: %s\n" (LT.show fn_t);
+
+  let env = { env with substitutions = subs } in 
+
   LT.show_subs env.substitutions 
   |> printf "ALL SUBS:\n%s\n";
 
-  { env with mono_vars = BatSet.empty }, body, fn_t, try_concrete        
+  { env with mono_vars = BatMap.empty }, body, fn_t, try_concrete        
 
 let rec expr env = 
   function 
@@ -162,7 +188,7 @@ let rec expr env =
     let (t, loc), pref_name, subs = find env v in
     printf "found subs: %s for a pref name: %s\n" (show_subs subs) pref_name;
 
-    let var env v = 
+    let var add_subs env v = 
       let var = Var v, t in 
       (* let var =
         match subs with []   -> var
@@ -170,20 +196,26 @@ let rec expr env =
 
       if LT.is_generic t 
       then  
-        let env, new_t = fresh_type env in 
-        printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t);
+        (* let env, new_t = fresh_type env in  *)
+        (* printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t); *)
+        let env, subs, t = rewrite_type env t in 
+        let subs = 
+          BatMap.bindings subs |> BatList.map (fun (k, v) -> 
+            printf "Introducing equality: %s %s\n" (LT.show k) (LT.show v);
+            k, v, true) in 
 
-        (* let env = 
+        let env = 
           { env with 
-            substitutions = 
-              List.fold ([new_t, t, false]) ~init:env.substitutions 
-                ~f:(fun m (u, v, both) -> 
-                      LT.add_equality ~both u v m)
-          
-          ; mono_vars = BatSet.add new_t env.mono_vars
-          } in  *)
-        env, var 
-        (* (Substitute ([new_t, t, false], var), new_t)  *)
+              substitutions = 
+                if add_subs 
+                then 
+                  List.fold subs ~init:env.substitutions 
+                    ~f:(fun m (u, v, both) -> 
+                          LT.add_equality ~both u v m)  
+                else env.substitutions
+           (* mono_vars = BatMap.add new_t t env.mono_vars *)
+          } in 
+        env, (Substitute (subs, var), t) 
       else 
          (* let env = 
           { env with 
@@ -197,13 +229,13 @@ let rec expr env =
     
     begin 
     match loc with 
-    | Global -> var env pref_name
+    | Global -> var false env pref_name
     | AtLevel l when l = env.level -> 
       (* printf "var: %s is at level: %d\n" v l; *)
-      var env v
+      var true env v
     | AtLevel l -> let free_vars = BatMultiMap.add l (v, t) env.free_vars in 
                    (* printf "var: %s is at lower level: %d\n" v l; *)
-                   var { env with free_vars } v
+                   var true { env with free_vars } v
     end
   | LitExp l -> env, lit env l
   | LetExp { name; is_rec; args = []; ret_t; body } -> 

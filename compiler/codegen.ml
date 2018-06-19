@@ -296,34 +296,43 @@ module Codegen = struct
 
   let insert_type t (_, v) = t, v 
 
-  let monomorphize (env : Env.t) (generic_fun : Env.generic_fun) = 
+  let monomorphize (env : Env.t) extra_subs (generic_fun : Env.generic_fun) = 
+    let prev_subs = env.substitutions in 
+    let substitutions = List.fold extra_subs ~init:env.substitutions 
+                          ~f:(fun m (u, v, both) -> 
+                                LT.add_equality ~both u v m) in 
+
+    let env = { env with substitutions } in 
+    
     printf "doing mono\n";
     LT.show_subs env.substitutions
     |> printf "subs: %s\n";
 
-    generic_fun.poli env 
+    let env, res = generic_fun.poli env in 
+    { env with substitutions = prev_subs }, res
 
   let gen_apply (env : Env.t) expr callee args app_t = 
     LT.show_subs env.substitutions    
     |> printf "subs here: %s\n";
     printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
 
-     let env, callee = 
-      match callee with 
-      | TA.Substitute (subs, callee), _ -> 
-        let substitutions = List.fold subs ~init:env.substitutions 
-                          ~f:(fun m (u, v, both) -> 
-                                LT.add_equality ~both u v m) in 
-
-        { env with substitutions }, callee
-      | callee                          -> env, callee in 
-
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
+     
+     let env, extra_subs, callee = 
+      match callee with 
+      | TA.Substitute (subs, callee), _ -> 
+        env, subs, callee
+        (* let substitutions = List.fold subs ~init:env.substitutions 
+                          ~f:(fun m (u, v, both) -> 
+                                LT.add_equality ~both u v m) in 
 
+        { env with substitutions }, callee *)
+      | callee                          -> env, [], callee in 
+              
     let subs, app_t = convert_type env.substitutions app_t in 
     let env = { env with substitutions = subs } in 
     List.iter args (Ez.Value.show %> printf "arg val: %s\n");
@@ -372,7 +381,7 @@ module Codegen = struct
       | Fun        fb    -> of_fun_binding name env fb
       | GenericFun gf    -> 
         printf "HERE1\n";
-        monomorphize env gf |> uncurry (of_fun_binding name)
+        monomorphize env extra_subs gf |> uncurry (of_fun_binding name)
       | Val       (v, _) -> 
         let is_ptr = match fst v with 
                      | Ast.TYPE_Pointer _ -> true | _ -> false in 
@@ -549,7 +558,7 @@ module Codegen = struct
       [g <-- load g_var |> Instr], g, { env with m }
     | Val b           -> [], fst b, env 
     | GenericFun gf   -> printf "HERE2\n";
-                         let env, _ = monomorphize env gf in 
+                         let env, _ = monomorphize env [] gf in 
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 

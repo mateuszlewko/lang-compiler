@@ -233,12 +233,16 @@ let make_mostly_same ?(initial_sets) subs t =
     | other  -> find other in 
 
   printf "initial: %s\n" (show t);
-  let res = make t in 
+  let res = make t |> make in 
   printf "simplified: %s\n" (show res);
   !sets, res
 
-let rec find_conc subs curr =
-  let subs = find_equalities subs |> shrink in 
+let rec find_conc ?(find_eqs=false) subs curr =
+  let subs = 
+    if find_eqs
+    then find_equalities subs |> shrink 
+    else subs |> shrink in 
+
   let res_subs = ref subs in 
   printf "--------\n";
 

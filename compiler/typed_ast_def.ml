@@ -94,7 +94,7 @@ type environment = {
   (** current scope (module) prefix *)
   ; last_var      : int
   ; substitutions : (t, t list) BatMap.t
-  ; mono_vars     : t BatSet.t
+  ; mono_vars     : (t, t) BatMap.t
   (* ; all_subs      : (t, t list) BatMap.t *)
   ; prefix        : string
   ; free_vars     : (int, string * t) BatMultiMap.t
@@ -113,7 +113,7 @@ let empty = { prefixed      = BatMap.empty
             ; level         = 0 
             ; extra_fun     = []
             ; last_var      = 0
-            ; mono_vars     = BatSet.empty
+            ; mono_vars     = BatMap.empty
             ; substitutions = BatMap.empty 
             (* ; all_subs      = BatMap.empty  *)
             }
