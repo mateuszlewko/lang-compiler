@@ -261,6 +261,12 @@ module Codegen = struct
 
     printf "gen_top_value for: %s\n" name;
 
+    LT.show_subs env.substitutions    
+    |> printf "subs here: %s\n";
+
+    (* let subs, ts = convert_type env.substitutions ts in  *)
+    (* let env      = { env with substitutions = subs } in  *)
+
     let args   = ["unit_arg", LT.Unit] in 
     let new_ts = LT.merge [LT.Unit] ts in 
     

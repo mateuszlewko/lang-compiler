@@ -189,6 +189,51 @@ let find_equalities subs =
 
 let shrink subs = BatMap.map List.stable_dedup subs 
 
+let length t = 
+  let rec count curr = 
+    function 
+    | Fun []      -> curr 
+    | Fun [t]     -> count curr t 
+    | Fun (t::ts) -> count (curr + 1) (Fun ts)
+    | other       -> curr + 1 in 
+
+  count 0 t 
+
+let make_mostly_same subs t = 
+  let subs = find_equalities subs |> shrink in 
+  let sets = ref BatMap.empty in 
+
+  let rec find t =
+    printf "u-find: %s\n" (show t);
+
+    let f = BatMap.find_default t t !sets in 
+    if t <> f 
+    then 
+      let f = find f in 
+      sets := BatMap.add t f !sets; 
+      f
+    else t in 
+
+  let union t1 t2 = 
+    let f1, f2 = find t1, find t2 in 
+    if not (is_generic f1) || (is_generic f2 && length f1 > length f2)
+    then sets := BatMap.add t2 f1 !sets |> BatMap.add f2 f1
+    else sets := BatMap.add t1 f2 !sets |> BatMap.add f1 f2; 
+    in 
+
+  BatMap.iter (fun t ts -> List.iter ts (union t)) subs;
+
+  let rec make = 
+    function 
+    | t when not (is_generic t) -> t 
+    | Fun ts -> Fun (List.map ts make)
+    | other  -> find other in 
+
+  printf "initial: %s\n" (show t);
+  let res = make t in 
+  printf "simplified: %s\n" (show res);
+  res
+
 let rec find_conc subs curr =
   let subs = find_equalities subs |> shrink in 
   let res_subs = ref subs in 

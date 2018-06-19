@@ -105,6 +105,16 @@ let make_fn_t_concrete env ret_t fn_t body =
                       subs, LT.Fun t
                    | other     -> try_concrete env.substitutions other in        
 
+  printf "concrete fn_t: %s\n" (LT.show fn_t);
+  
+  let fn_t = 
+    if LT.is_generic fn_t 
+    then LT.make_mostly_same subs fn_t 
+    else fn_t in 
+  
+  printf "concrete2 fn_t: %s\n" (LT.show fn_t);
+  (* printf "NAME AGAIN: %s\n"  *)
+  
   let env = { env with substitutions = subs } in 
 
   let env, body = 
@@ -148,23 +158,31 @@ let rec expr env =
         match subs with []   -> var
                       | subs -> Substitute (subs, var), t in *)
 
-      (* if LT.is_generic t 
-      then  *)
-        (* let env, new_t = fresh_type env in  *)
-        (* printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t); *)
+      if LT.is_generic t 
+      then  
+        let env, new_t = fresh_type env in 
+        printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t);
 
         let env = 
           { env with 
             substitutions = 
-              List.fold (subs ) ~init:env.substitutions 
+              List.fold (subs @ [new_t, t, true]) ~init:env.substitutions 
                 ~f:(fun m (u, v, both) -> 
                       LT.add_equality ~both u v m)
           
-          (* ; mono_vars = BatSet.add new_t env.mono_vars *)
+          ; mono_vars = BatSet.add new_t env.mono_vars
           } in 
-        env,  (Substitute (subs , var), t) in
-      (* else 
-      env, var in  *)
+        env, (Substitute (subs @ [new_t, t, true], var), new_t) 
+      else 
+         let env = 
+          { env with 
+            substitutions = 
+              List.fold subs ~init:env.substitutions 
+                ~f:(fun m (u, v, both) -> 
+                      LT.add_equality ~both u v m)
+          } in 
+        env, (Substitute (subs, var), t) in 
+        (* env, var in   *)
     
     begin 
     match loc with 
