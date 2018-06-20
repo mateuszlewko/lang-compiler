@@ -49,8 +49,7 @@ let compose f g x = f (g x)
 
 let apply fn x = fn x
 
-
-let _ : () = 
+let _ = 
     let v2 = { x = 1; y = 2 }
     let v2 = compose id id v2
     let v2 = compose (addVec2 v2) id v2 (* (1, 1) + (1, 1) *)

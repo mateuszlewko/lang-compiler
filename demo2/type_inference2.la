@@ -18,15 +18,15 @@ let rec factorial x =
     if x <= 1 then 1 
     else x * factorial (x - 1)
 
-(* compose function f n times *)
-let rec power f n = 
-    if n = 0 
-    then 
-        let id x = x 
-        id
-    else compose f (power f (n - 1))
+let id x = x 
 
-let _ : () = 
+(* compose function f n times *)
+let rec power f n x = 
+    if n > 0 
+    then compose f (power f (n - 1)) x
+    else id x
+
+let _ = 
     printnInt (120 * 120)
     printnInt (compose square factorial 5)
 

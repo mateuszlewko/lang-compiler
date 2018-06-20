@@ -24,6 +24,6 @@ let factorialF self n =
 
 let factorialFix n = fix factorialF n
 
-let _ : () = 
+let _ = 
     printnInt (factorialFix 5)
     printnInt (factorial 5)

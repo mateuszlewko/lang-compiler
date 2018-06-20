@@ -194,7 +194,7 @@ let rec expr env =
         match subs with []   -> var
                       | subs -> Substitute (subs, var), t in *)
 
-      if LT.is_generic t 
+      if LT.is_generic t && add_subs
       then  
         (* let env, new_t = fresh_type env in  *)
         (* printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t); *)
@@ -213,9 +213,10 @@ let rec expr env =
                     ~f:(fun m (u, v, both) -> 
                           LT.add_equality ~both u v m)  
                 else env.substitutions
-           (* mono_vars = BatMap.add new_t t env.mono_vars *)
+            ; mono_vars = List.fold subs ~init:env.mono_vars
+                            ~f:(fun m (_, v, _) -> BatMap.add v v m)  
           } in 
-        env, (Substitute (subs, var), t) 
+        env, (if add_subs then (Substitute (subs, var), t) else var)
       else 
          (* let env = 
           { env with 
@@ -232,10 +233,10 @@ let rec expr env =
     | Global -> var false env pref_name
     | AtLevel l when l = env.level -> 
       (* printf "var: %s is at level: %d\n" v l; *)
-      var true env v
+      var false env v
     | AtLevel l -> let free_vars = BatMultiMap.add l (v, t) env.free_vars in 
                    (* printf "var: %s is at lower level: %d\n" v l; *)
-                   var true { env with free_vars } v
+                   var false { env with free_vars } v
     end
   | LitExp l -> env, lit env l
   | LetExp { name; is_rec; args = []; ret_t; body } -> 
