@@ -24,7 +24,7 @@ let id x = x
 let rec power f n x = 
     if n > 0 
     then compose f (power f (n - 1)) x
-    else id x
+    else id x 
 
 let _ = 
     printnInt (120 * 120)

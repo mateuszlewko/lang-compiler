@@ -239,7 +239,7 @@ let make_mostly_same ?(initial_sets) subs t =
 
 let rec find_conc ?(find_eqs=false) subs curr =
   (* TODO: Improve this anyway *)
-  
+
   let subs = 
     if find_eqs
     then find_equalities subs |> shrink 
@@ -266,16 +266,17 @@ let rec find_conc ?(find_eqs=false) subs curr =
   and find funs prev curr : _ option =
     if not (is_generic curr)
     then (
-      List.iter funs (show %> printf "one of funs: %s\n");
+      (* List.iter funs (show %> printf "one of funs: %s\n"); *)
+      
       vis := 
         List.fold funs ~init:!vis 
           ~f:(fun m f -> BatMap.add f (Some curr) m);
 
-      printf "found: %s\n" (show curr);
+      (* printf "found: %s\n" (show curr);
 
       BatMap.iter (fun k -> 
         function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "vis %s -> none\n" (show k)) !vis;
+               | None   -> printf "vis %s -> none\n" (show k)) !vis; *)
 
       vis := (match prev with Some prev -> BatMap.add prev (Some curr) !vis 
                            | None      -> !vis);
@@ -286,10 +287,10 @@ let rec find_conc ?(find_eqs=false) subs curr =
     then 
       begin 
 
-      printf "curr A: %s\n" (show curr);
+      (* printf "curr A: %s\n" (show curr);
       BatMap.iter (fun k -> 
         function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "s vis %s -> none\n" (show k)) !vis;
+               | None   -> printf "s vis %s -> none\n" (show k)) !vis; *)
 
       match BatMap.find curr !vis with 
       | Some _ as res -> res 
@@ -301,7 +302,7 @@ let rec find_conc ?(find_eqs=false) subs curr =
       end
     else 
       begin 
-      printf "find: %s\n" (show curr);
+      (* printf "find: %s\n" (show curr); *)
 
       vis := BatMap.add curr None !vis;
 
