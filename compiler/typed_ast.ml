@@ -100,6 +100,36 @@ let rewrite_type env t =
   let (env, subs), t = re (env, BatMap.empty) t in 
   env, subs, t
 
+let rec replace_var_exp old_t new_t fn_name try_concrete expr_t = 
+  let rep   = replace_var_exp old_t new_t fn_name try_concrete in 
+  let rep_t t = 
+    let res_t = try_concrete t in 
+    if res_t <> t 
+    then printf "replaced type from %s to %s\n" (LT.show t) (LT.show res_t);
+    res_t in 
+
+  match expr_t with  
+  | (Var name), t when name =  fn_name 
+                    && t    =  old_t   -> 
+    printf "replaced var: %s, from t: %s to t: %s\n"
+      name (LT.show old_t) (LT.show new_t);
+    Var name, new_t
+  | SetVar (n, e), t                   -> SetVar (n, rep e), rep_t t 
+  | Value (n, e), t                    -> Value (n, rep e), rep_t t 
+  | App (e, es), t                     -> App (rep e, List.map es rep), rep_t t
+  | InfixOp (name, l, r), t            -> InfixOp (name, rep l, rep r), rep_t t 
+  | If {cond; then_body; else_body}, t -> 
+    If ({cond =  rep cond; then_body = rep then_body
+        ; else_body =  rep else_body}), rep_t t
+  | GepLoad (e, ixs)    , t            -> GepLoad (rep e, ixs), rep_t t
+  | Clone e, t                         -> Clone (rep e), rep_t t
+  | GepStore {src; dest; idx}, t       -> GepStore { src = src; dest = dest
+                                                   ; idx = idx}, rep_t t
+  | RecordLit es, t                    -> RecordLit (List.map es rep), rep_t t 
+  | Exprs es, t                        -> Exprs (List.map es rep), rep_t t
+  | Substitute (subs, e), t            -> Substitute (subs, rep e), rep_t t 
+  | other, t                           -> other, rep_t t
+
 let make_fn_t_concrete env ret_t fn_t body = 
   let original_fn_t = fn_t in 
 
@@ -599,6 +629,16 @@ and lit env =
   let args = List.zip_exn args_names (List.map arg_ts try_concrete) in 
 
   let gen_name = name_in env name in 
+  let body = 
+    if is_rec 
+    then begin
+      printf "replacing var_exps: %s, from t: %s, to t: %s\n"
+        gen_name (LT.show rec_fn_t) (LT.show fn_t);
+
+      List.map body (replace_var_exp rec_fn_t fn_t gen_name try_concrete)
+      end
+    else body in 
+
   let f        = { name = gen_name; gen_name; is_rec; args
                  ; body = Some body } in 
 

@@ -238,6 +238,8 @@ let make_mostly_same ?(initial_sets) subs t =
   !sets, res
 
 let rec find_conc ?(find_eqs=false) subs curr =
+  (* TODO: Improve this anyway *)
+  
   let subs = 
     if find_eqs
     then find_equalities subs |> shrink 
@@ -246,91 +248,113 @@ let rec find_conc ?(find_eqs=false) subs curr =
   let res_subs = ref subs in 
   printf "--------\n";
 
-  let rec find_first vis funs from curr =  
+  let vis = ref BatMap.empty in 
+
+  let rec find_first funs from curr =  
     match curr with 
     | x::xs ->
-      let vis, res = find vis funs from x in 
+      let res = find funs from x in 
       begin 
       match res with 
-      | None          -> find_first vis funs from xs 
-      | Some _ as res -> BatMap.add x res vis, res 
+      | None          -> find_first funs from xs 
+      | Some _ as res -> 
+        vis := BatMap.add x res !vis;
+        res 
       end
-    | []    -> vis, None 
+    | []    -> None 
 
-  and find vis funs prev curr =
+  and find funs prev curr : _ option =
     if not (is_generic curr)
     then (
       List.iter funs (show %> printf "one of funs: %s\n");
-      let vis = 
-        List.fold funs ~init:vis 
-          ~f:(fun m f -> BatMap.add f (Some curr) m) in 
+      vis := 
+        List.fold funs ~init:!vis 
+          ~f:(fun m f -> BatMap.add f (Some curr) m);
 
       printf "found: %s\n" (show curr);
 
-      (* BatMap.iter (fun k -> 
+      BatMap.iter (fun k -> 
         function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "vis %s -> none\n" (show k)) vis; *)
+               | None   -> printf "vis %s -> none\n" (show k)) !vis;
 
-      let vis = match prev with Some prev -> BatMap.add prev (Some curr) vis 
-                              | None      -> vis in 
-      vis, Some curr 
+      vis := (match prev with Some prev -> BatMap.add prev (Some curr) !vis 
+                           | None      -> !vis);
+
+      Some curr 
     )
-    else if BatMap.mem curr vis 
+    else if BatMap.mem curr !vis 
     then 
       begin 
-      (* BatMap.iter (fun k -> 
-        function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "s vis %s -> none\n" (show k)) vis; *)
 
-      vis, BatMap.find curr vis 
+      printf "curr A: %s\n" (show curr);
+      BatMap.iter (fun k -> 
+        function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
+               | None   -> printf "s vis %s -> none\n" (show k)) !vis;
+
+      match BatMap.find curr !vis with 
+      | Some _ as res -> res 
+      | None          -> 
+        let ns = BatMap.find_default [] curr subs |> List.stable_dedup
+                 |> List.map ~f:(flip (BatMap.find_default None) !vis) in 
+        
+        List.find ns Option.is_some |> Option.value ~default:None  
       end
     else 
       begin 
       printf "find: %s\n" (show curr);
 
-      let vis = BatMap.add curr None vis in 
+      vis := BatMap.add curr None !vis;
 
-      let check_ns vis funs curr = 
+      let add_curr res = 
+        if Option.is_some res 
+        then begin 
+          vis := BatMap.add curr res !vis;
+          res end
+        else res in 
+
+      let check_ns funs curr = 
         let ns = BatMap.find_default [] curr subs |> List.stable_dedup in
-        find_first vis funs (Some curr) ns in 
+        find_first funs (Some curr) ns |> add_curr in 
     
       match curr with 
-      | Fun [t]             -> find vis funs (Some curr) t
+      | Fun [t]             -> find funs (Some curr) t |> add_curr
       | Fun (t::ts) as fn_t -> 
-        let vis, res = check_ns vis (fn_t::funs) fn_t in 
+        let res = check_ns (fn_t::funs) fn_t in 
 
         begin 
         match res with 
-        | Some _ as res -> BatMap.add curr res vis, res 
+        | Some _ as res -> add_curr res
         | None          -> 
           let funs1 = t :: (BatList.map take_arg funs |> List.filter_opt) in 
           let funs2 = (Fun ts) :: 
                       (BatList.map (drop_args 1 BatSet.empty BatMap.empty) funs
                        |> List.filter_opt) in 
 
-          let vis, res1 = find vis funs1 None t in 
-          let vis, res  = find vis funs2 None (Fun ts) in 
+          let res1 = find funs1 None t in 
+          let res  = find funs2 None (Fun ts) in 
           begin 
           match res1, res with 
           | Some res1, Some (Fun res) -> 
             let res = Some (Fun (res1::res)) in 
-            BatMap.add curr res vis, res 
+            vis := BatMap.add curr res !vis; 
+            res 
           | Some res1, Some res       -> 
             let res = Some (Fun (res1::[res])) in 
-            BatMap.add curr res vis, res 
-          | _        , _              -> vis, None 
+            vis := BatMap.add curr res !vis;
+            res 
+          | _        , _              -> None 
           end 
         end 
-      | Generic _ as g -> check_ns vis funs g 
+      | Generic _ as g -> check_ns funs g 
       | concrete       -> assert false
         (* BatMap.add curr (Some concrete) vis, Some concrete *)
       end
     in 
   
-  let vis, t = find BatMap.empty [] None curr in 
+  let t = find [] None curr in 
   BatMap.iter (fun k -> 
     function Some v -> res_subs := add_equality k v !res_subs
-           | None   -> ()) vis;
+           | None   -> ()) !vis;
 
   !res_subs |> shrink, t
 
