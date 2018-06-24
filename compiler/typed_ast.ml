@@ -15,7 +15,10 @@ let add_raw env name (key_type : string -> key) ?(subs=[]) value =
   ; opened   = BatMap.add (key_type name) (value, pref_name, subs) env.opened }
 
 (** Adds new binding in current scope *)
-let add env name ?(subs=[]) value = 
+let add env name ?(subs=[]) ?(wrapping=`Wrap) value = 
+  let value = let x, y = value in x, y, wrapping in 
+  printf "adding binding %s to %s\n" name (show_bound value);
+
   add_raw env name (fun x -> Val x) ~subs value
 let add_type env name value  = add_raw env name (fun x -> Type x) value
 
@@ -98,6 +101,8 @@ let rewrite_type env t =
   env, subs, t
 
 let make_fn_t_concrete env ret_t fn_t body = 
+  let original_fn_t = fn_t in 
+
   let env, body = 
     let last_t = List.last_exn body |> snd in 
     match LT.valid_replacements ret_t last_t with 
@@ -137,7 +142,7 @@ let make_fn_t_concrete env ret_t fn_t body =
       begin 
       printf "making %s mostly same\n" (LT.show t);
 
-      let s, t = LT.make_mostly_same subs t in 
+      let s, t = LT.make_mostly_same ~initial_sets:!sets subs t in 
       sets := s;
       subs, t
       end
@@ -175,7 +180,12 @@ let make_fn_t_concrete env ret_t fn_t body =
   let subs, fn_t = try_concrete env.substitutions fn_t in 
   printf "once again fn_t: %s\n" (LT.show fn_t);
 
-  let env = { env with substitutions = subs } in 
+  let last_t = List.last_exn body |> snd in 
+  let body   = [Substitute ([original_fn_t, fn_t, true], 
+                  (Exprs body, last_t)), last_t] in 
+
+  let env = { env with substitutions = 
+                         LT.add_equality original_fn_t fn_t subs } in 
 
   LT.show_subs env.substitutions 
   |> printf "ALL SUBS:\n%s\n";
@@ -185,8 +195,8 @@ let make_fn_t_concrete env ret_t fn_t body =
 let rec expr env = 
   function 
   | VarExp v -> 
-    let (t, loc), pref_name, subs = find env v in
-    printf "found subs: %s for a pref name: %s\n" (show_subs subs) pref_name;
+    let (t, loc, wrap), pref_name, _ = find env v in
+    (* printf "found subs: %s for a pref name: %s\n" (show_subs subs) pref_name; *)
 
     let var add_subs env v = 
       let var = Var v, t in 
@@ -194,14 +204,16 @@ let rec expr env =
         match subs with []   -> var
                       | subs -> Substitute (subs, var), t in *)
 
-      if LT.is_generic t && add_subs
+      if LT.is_generic t && add_subs && wrap = `Wrap 
       then  
         (* let env, new_t = fresh_type env in  *)
         (* printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t); *)
         let env, subs, t = rewrite_type env t in 
         let subs = 
+          printf "t: %s for var %s\n" (LT.show t) pref_name;
           BatMap.bindings subs |> BatList.map (fun (k, v) -> 
-            printf "Introducing equality: %s %s\n" (LT.show k) (LT.show v);
+            printf "Introducing equality: %s %s for var %s\n" 
+              (LT.show k) (LT.show v) pref_name;
             k, v, true) in 
 
         let env = 
@@ -230,7 +242,7 @@ let rec expr env =
     
     begin 
     match loc with 
-    | Global -> var false env pref_name
+    | Global -> var true env pref_name
     | AtLevel l when l = env.level -> 
       (* printf "var: %s is at level: %d\n" v l; *)
       var false env v
@@ -289,7 +301,7 @@ let rec expr env =
                    map env (x::acc) xs
     in map env [] es
   | InfixOp (name, lhs, rhs)          -> 
-    let (op_t, loc), name, _ = find env name in 
+    let (op_t, loc, _), name, _ = find env name in 
    
     if loc <> Global 
     then sprintf "Non global operator: %s is not supported." name |> failwith;
@@ -367,7 +379,7 @@ let rec expr env =
 
     begin
     match t with 
-    | Some ((t, Global), _, _) -> env, (r, t)
+    | Some ((t, Global, _), _, _) -> env, (r, t)
     | _                     ->
       sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
       |> failwith
@@ -527,11 +539,17 @@ and lit env =
     | Some (fn_t, ret_t, arg_ts) -> env, fn_t, ret_t, arg_ts 
     | None                       -> fn_ret_args_type env fn in
 
+  let rec_fn_t = fn_t in 
+
   let args = List.zip_exn args_names arg_ts in 
-  let env  = if is_rec then add env name (fn_t, Global) else env in 
+  let env  = if is_rec 
+             then add ~wrapping:`DontWrap env name (fn_t, Global) 
+             else env in 
+
   let env  = List.fold args ~init:env 
                             ~f:(fun env (a, t) -> 
-                                  add env a (t, AtLevel env.level)) in 
+                                  add ~wrapping:`DontWrap env a 
+                                    (t, AtLevel env.level)) in 
   
   let env = { env with level = env.level + 1} in 
   let env, body = List.fold_map body ~init:env ~f:expr in
@@ -578,7 +596,7 @@ and lit env =
 
   let try_concrete t = try_concrete env.substitutions t |> snd in 
 
-  let args = List.zip_exn args_names (BatList.map try_concrete arg_ts) in 
+  let args = List.zip_exn args_names (List.map arg_ts try_concrete) in 
 
   let gen_name = name_in env name in 
   let f        = { name = gen_name; gen_name; is_rec; args
@@ -594,6 +612,7 @@ and lit env =
   let env = if clear_subs then { env with substitutions = BatMap.empty }
                           else env in 
   
+  (* TODO: add equality between old rec_fn_t and new fn_t (or args) *)
   env, (f, fn_t)
 
 and funexp env let_exp = 
@@ -709,9 +728,9 @@ and top env =
 
     let t   = LT.Record fields in
     let env = add_raw env name (const (Fields (BatSet.of_list fields)))
-              (t, Global) in 
+              (t, Global, `Wrap) in 
 
-    add_type env name (t, Global), []
+    add_type env name (t, Global, `Wrap), []
   | Class { declarations; name; type_name }    -> 
     let env = 
     List.fold declarations ~init:env 

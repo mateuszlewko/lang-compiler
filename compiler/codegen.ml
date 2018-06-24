@@ -216,6 +216,7 @@ module Codegen = struct
           printf "Calling poli!\n";
           printf "trying to convert types for call to: %s.\n" funexp.name;
           List.iter ts (LT.show %> printf "fn t: %s\n");
+          List.iter arg_ts (LT.show %> printf "arg t: %s\n");
 
           let subs, ts   = 
             List.fold_map ts ~init:env.substitutions ~f:convert_type in 

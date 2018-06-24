@@ -20,7 +20,7 @@ let find_type (env : TAD.environment) name  =
   try BatMap.find (TAD.Type (TAD.name_in env name)) env.prefixed |> Some
   with Not_found -> None
   end
-  |> Option.map ~f:(fst3 %> fst)
+  |> Option.map ~f:(fst3 %> fst3)
 
 let of_annotation ?(mono=false) env annotation =
   let rec of_basic =
@@ -207,7 +207,7 @@ let make_mostly_same ?(initial_sets) subs t =
     | None      -> ref BatMap.empty in  
 
   let rec find t =
-    printf "u-find: %s\n" (show t);
+    (* printf "u-find: %s\n" (show t); *)
 
     let f = BatMap.find_default t t !sets in 
     if t <> f 
@@ -267,9 +267,9 @@ let rec find_conc ?(find_eqs=false) subs curr =
 
       printf "found: %s\n" (show curr);
 
-      BatMap.iter (fun k -> 
+      (* BatMap.iter (fun k -> 
         function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "vis %s -> none\n" (show k)) vis;
+               | None   -> printf "vis %s -> none\n" (show k)) vis; *)
 
       let vis = match prev with Some prev -> BatMap.add prev (Some curr) vis 
                               | None      -> vis in 
@@ -278,9 +278,9 @@ let rec find_conc ?(find_eqs=false) subs curr =
     else if BatMap.mem curr vis 
     then 
       begin 
-      BatMap.iter (fun k -> 
+      (* BatMap.iter (fun k -> 
         function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "s vis %s -> none\n" (show k)) vis;
+               | None   -> printf "s vis %s -> none\n" (show k)) vis; *)
 
       vis, BatMap.find curr vis 
       end
