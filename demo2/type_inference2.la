@@ -18,13 +18,15 @@ let rec factorial x =
     if x <= 1 then 1 
     else x * factorial (x - 1)
 
-let id x = x 
 
 (* compose function f n times *)
 let rec power f n x = 
+    let id x = x 
+    
     if n > 0 
     then compose f (power f (n - 1)) x
-    else id x 
+    else 
+        id x 
 
 let _ = 
     printnInt (120 * 120)

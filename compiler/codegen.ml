@@ -192,8 +192,8 @@ module Codegen = struct
     (* printf "add %s to env.m\n" name; *)
     env, f_binding
   
-  let convert_type map t = 
-    match LT.find_concrete_lt map t with 
+  let convert_type ?(find_eqs=false) map t = 
+    match LT.find_concrete_lt ~find_eqs map t with 
     | subs, Some t -> subs, t
     | _   , None   -> sprintf "Couldn't find concrete type \
                          for: %s.\n" (LT.show t) 
@@ -219,7 +219,12 @@ module Codegen = struct
           List.iter arg_ts (LT.show %> printf "arg t: %s\n");
 
           let subs, ts   = 
-            List.fold_map ts ~init:env.substitutions ~f:convert_type in 
+            try List.fold_map ts ~init:env.substitutions
+                                 ~f:(convert_type ~find_eqs:false) 
+            with _ -> 
+              List.fold_map ts ~init:env.substitutions
+                               ~f:(convert_type ~find_eqs:true) in 
+
           let subs, fn_t = convert_type subs fn_t in 
 
           (* let arg_ts = List.map arg_ts (fun t -> 

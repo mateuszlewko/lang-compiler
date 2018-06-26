@@ -207,7 +207,7 @@ let make_mostly_same ?(initial_sets) subs t =
     | None      -> ref BatMap.empty in  
 
   let rec find t =
-    (* printf "u-find: %s\n" (show t); *)
+    printf "u-find: %s\n" (show t);
 
     let f = BatMap.find_default t t !sets in 
     if t <> f 
@@ -266,17 +266,17 @@ let rec find_conc ?(find_eqs=false) subs curr =
   and find funs prev curr : _ option =
     if not (is_generic curr)
     then (
-      (* List.iter funs (show %> printf "one of funs: %s\n"); *)
+      List.iter funs (show %> printf "one of funs: %s\n");
       
       vis := 
         List.fold funs ~init:!vis 
           ~f:(fun m f -> BatMap.add f (Some curr) m);
 
-      (* printf "found: %s\n" (show curr);
+      printf "found: %s\n" (show curr);
 
       BatMap.iter (fun k -> 
         function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "vis %s -> none\n" (show k)) !vis; *)
+               | None   -> printf "vis %s -> none\n" (show k)) !vis;
 
       vis := (match prev with Some prev -> BatMap.add prev (Some curr) !vis 
                            | None      -> !vis);
@@ -287,10 +287,10 @@ let rec find_conc ?(find_eqs=false) subs curr =
     then 
       begin 
 
-      (* printf "curr A: %s\n" (show curr);
+      printf "curr A: %s\n" (show curr);
       BatMap.iter (fun k -> 
         function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "s vis %s -> none\n" (show k)) !vis; *)
+               | None   -> printf "s vis %s -> none\n" (show k)) !vis;
 
       match BatMap.find curr !vis with 
       | Some _ as res -> res 
@@ -302,7 +302,7 @@ let rec find_conc ?(find_eqs=false) subs curr =
       end
     else 
       begin 
-      (* printf "find: %s\n" (show curr); *)
+      printf "find: %s\n" (show curr);
 
       vis := BatMap.add curr None !vis;
 
@@ -348,7 +348,6 @@ let rec find_conc ?(find_eqs=false) subs curr =
         end 
       | Generic _ as g -> check_ns funs g 
       | concrete       -> assert false
-        (* BatMap.add curr (Some concrete) vis, Some concrete *)
       end
     in 
   
@@ -408,8 +407,8 @@ let rec find_concrete_lt ?(preferred=BatMap.empty) substitutions =
     |> Fun |> Some
   | other             -> Some other *)
 
-let find_concrete_lt substitutions curr  =
-  find_conc substitutions curr 
+let find_concrete_lt ?(find_eqs=false) substitutions curr  =
+  find_conc ~find_eqs substitutions curr 
 
 let rec apply (env : TAD.environment) fn_t arg_ts = 
   let no_substitution t e = env, (e, t) in 

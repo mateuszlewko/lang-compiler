@@ -114,6 +114,7 @@ let rec replace_var_exp old_t new_t fn_name try_concrete expr_t =
     printf "replaced var: %s, from t: %s to t: %s\n"
       name (LT.show old_t) (LT.show new_t);
     Var name, new_t
+  | Var _, _ as var                    -> var
   | SetVar (n, e), t                   -> SetVar (n, rep e), rep_t t 
   | Value (n, e), t                    -> Value (n, rep e), rep_t t 
   | App (e, es), t                     -> App (rep e, List.map es rep), rep_t t
@@ -453,6 +454,7 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
     | None                       -> fn_ret_args_type env fn in
 
   let args = List.zip_exn args_names arg_ts in 
+  let rec_fn_t = fn_t in 
   
   let env = { env with level = env.level + 1 } in
   let lvl = AtLevel env.level in 
@@ -504,6 +506,17 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
 
   let global_fn_t = LT.merge extra_arg_ts fn_t in
   let g_name      = name ^ ".lifted" in
+
+  let body = 
+    if is_rec 
+    then begin
+      printf "replacing var_exps: %s, from t: %s, to t: %s\n"
+        g_name (LT.show rec_fn_t) (LT.show fn_t);
+
+      List.map body (replace_var_exp rec_fn_t fn_t g_name try_concrete)
+      end
+    else body in 
+
   let global_fn   = 
     let args = extra_args @ args in 
     printf "fun: %s, extra args:\n" g_name;
@@ -542,7 +555,7 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   printf "added nested subs: %s for name: %s\n" (show_subs subs) name;
 
   (* added new binding to parent scope *)
-  let env = add env name ~subs (fn_t, AtLevel env.level) in 
+  let env = add ~wrapping:`DontWrap env name ~subs (fn_t, AtLevel env.level) in 
 
   env, (fn_with_env, fn_t)
 
@@ -591,35 +604,6 @@ and lit env =
   LT.show_subs env.substitutions
   |> printf "inner funexp subs: %s\n";
 
-  (* TODO: Duplicated code *)
-  (* let env, body = 
-    let last_t = List.last_exn body |> snd in 
-    match LT.valid_replacements ret_t last_t with 
-    | []   -> env, body
-    | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
-              let substitutions = List.fold subs ~init:env.substitutions 
-                                  ~f:(fun m (u, v, both) -> 
-                                        LT.add_equality ~both u v m) in 
-              let body = [Substitute (subs, (Exprs body, last_t)), last_t] in 
-              { env with substitutions }, body in 
-
-  let try_concrete preferred t = 
-    LT.find_concrete_lt ~preferred env.substitutions t 
-    |> Option.value ~default:t in 
-                       
-  let concrete ts = 
-    List.folding_map ts ~init:(BatMap.empty, -1)
-              ~f:(fun (pref, ix) t -> 
-                    let t    = try_concrete pref t in 
-                    let pref = match t with 
-                                | Generic t -> BatMap.add t (ix - 1) pref
-                                | other     -> pref in 
-                    
-                    (pref, ix - 1), t) in 
-                    
-  let fn_t = match fn_t with 
-             | LT.Fun ts -> concrete ts |> LT.Fun
-             | other     -> other in  *)
   let env, body, fn_t, try_concrete = make_fn_t_concrete env ret_t fn_t body in
 
   printf "final fn_t: %s\n" (LT.show fn_t);
