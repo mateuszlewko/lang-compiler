@@ -45,8 +45,7 @@ let _ =
     printBool (neq v1 v1)
     printNl ()
 
-    let v2 = { x = 7; y = 2} 
-    printBool (neq v1 v2)
+    printBool (neq v1 { v1 with x = 1 } )
     printNl ()
 
     printBool (neq 1 2)
