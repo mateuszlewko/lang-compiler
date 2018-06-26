@@ -302,13 +302,15 @@ module Codegen = struct
 
   let insert_type t (_, v) = t, v 
 
-  let monomorphize (env : Env.t) extra_subs (generic_fun : Env.generic_fun) = 
-    let prev_subs = env.substitutions in 
-    let substitutions = List.fold extra_subs ~init:env.substitutions 
-                          ~f:(fun m (u, v, both) -> 
-                                LT.add_equality ~both u v m) in 
+  let merge_subs old_subs new_subs = 
+    List.fold new_subs ~init:old_subs
+                       ~f:(fun m (u, v, both) -> 
+                          LT.add_equality ~both u v m)
 
-    let env = { env with substitutions } in 
+  let monomorphize (env : Env.t) extra_subs (generic_fun : Env.generic_fun) = 
+    let prev_subs     = env.substitutions in 
+    let substitutions = merge_subs env.substitutions extra_subs in  
+    let env           = { env with substitutions } in 
     
     printf "doing mono\n";
     LT.show_subs env.substitutions
@@ -321,6 +323,8 @@ module Codegen = struct
     LT.show_subs env.substitutions    
     |> printf "subs here: %s\n";
     printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
+
+    List.iter args (TA.show_expr_t %> printf "arg ast: %s\n");
 
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
@@ -351,8 +355,6 @@ module Codegen = struct
 
     let subs, app_t = convert_type env.substitutions app_t in 
     let env = { env with substitutions = subs } in 
-
-    List.iter args (Ez.Value.show %> printf "arg val: %s\n");
 
     let typed t = insert_type (LT.to_ollvm app_t) t in 
 
@@ -411,9 +413,10 @@ module Codegen = struct
         unknown_apply { env with m } [g <-- load v |> Instr] g 
       | Class (c, type_name) ->
           LT.show_subs env.substitutions
-          |> printf "Current subs: %s\n";
+          |> printf "Current subs AA: %s\n";
+          let substitutions = merge_subs env.substitutions extra_subs in  
 
-          match LT.find_conc env.substitutions (Generic type_name) |> snd with 
+          match LT.find_conc substitutions (Generic type_name) |> snd with 
           | None        -> sprintf "Couldn't find concrete type for: %s" 
                            type_name |> failwith 
           | Some impl_t -> 

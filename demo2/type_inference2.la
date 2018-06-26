@@ -20,12 +20,12 @@ let rec factorial x =
 
 
 (* compose function f n times *)
-let rec power f n x = 
+let rec power f n = 
     if n > 0 
-    then compose f (power f (n - 1)) x
+    then compose f (power f (n - 1))
     else 
         let id x = x 
-        id x 
+        id 
 
 let _ = 
     printnInt (120 * 120)

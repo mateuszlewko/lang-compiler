@@ -1,0 +1,52 @@
+module Prelude = 
+    external ll_putint      : int -> () 
+    external ll_print_bool  : bool -> () 
+    external ll_print_line  : ()  -> () 
+    external ll_print_space : ()  -> () 
+
+    let printInt x = ll_putint x
+    let printNl = ll_print_line
+    let printSpace = ll_print_space
+    let printnInt x = 
+        printInt x 
+        printNl () 
+
+    let printBool b = ll_print_bool b
+
+open Prelude
+
+type Vec = { x : int; y : int }
+
+class Eq 'a where 
+    eq : 'a -> 'a -> bool 
+
+
+instance Eq Vec where 
+    let eq (l : Vec) (r : Vec) = 
+        if (l.x = r.x) && (l.y = r.y) 
+        then true 
+        else false
+
+instance Eq int where
+    let eq a b = a = b 
+
+let not x = 
+    if x 
+    then false 
+    else true 
+
+let neq x y = not (eq x y)
+
+let _ = 
+    let v1 = { x = 5; y = 12}  
+    
+    printBool (neq v1 v1)
+    printNl ()
+
+    let v2 = { x = 7; y = 2} 
+    printBool (neq v1 v2)
+    printNl ()
+
+    printBool (neq 1 2)
+    printNl () 
+   
