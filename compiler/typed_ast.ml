@@ -447,6 +447,9 @@ let rec expr env =
 and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
+ 
+  let prev_free_vars = env.free_vars in 
+  let env = { env with free_vars = BatMultiMap.empty } in 
 
   let env, fn_t, ret_t, arg_ts = 
     match fn_tys with 
@@ -545,7 +548,10 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
       Value (name, (app, fn_t)) in
 
   (* remove vars defined in current scope *)
-  let free_vars = BatMultiMap.remove_all env.level env.free_vars in 
+  let free_vars = BatMultiMap.remove_all env.level env.free_vars
+                  |> BatMultiMap.enum |> BatList.of_enum in
+  let free_vars = List.fold free_vars ~init:prev_free_vars 
+                    ~f:(fun m (k, v) -> BatMultiMap.add k v m) in 
   let env       = { env with level = env.level - 1; free_vars } in
   let subs      = 
     BatMap.bindings env.substitutions 

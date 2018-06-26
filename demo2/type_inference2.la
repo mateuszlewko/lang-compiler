@@ -21,11 +21,10 @@ let rec factorial x =
 
 (* compose function f n times *)
 let rec power f n x = 
-    let id x = x 
-    
     if n > 0 
     then compose f (power f (n - 1)) x
     else 
+        let id x = x 
         id x 
 
 let _ = 
