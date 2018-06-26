@@ -420,8 +420,11 @@ module Codegen = struct
           | None        -> sprintf "Couldn't find concrete type for: %s" 
                            type_name |> failwith 
           | Some impl_t -> 
+            printf "Inst for name: %s in class %s found instance with type: %s\n"
+              name c (LT.show impl_t);
+
             BatMap.keys env.classes 
-            |> BatEnum.iter (Env.show_instance_key %> printf "inst: %s\n");
+            |> BatEnum.iter (Env.show_instance_key %> printf "+ inst: %s\n");
 
             try BatMap.find (c, impl_t, name) env.classes 
                 |> extract_found name t 
@@ -670,8 +673,11 @@ module Codegen = struct
 
   let gen_instance env expr class_name impl_t definitions = 
     (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
-    let add env (def, t) = 
-      let b, env = gen_let env expr def t in 
+    let add env ((def : TA.funexp), t) = 
+      let gen_name = sprintf "c_%s_%s_%s" class_name (LT.mangle_name impl_t) 
+                      def.gen_name in 
+                      
+      let b, env = gen_let env expr { def with gen_name } t in 
       env, ((class_name, impl_t, def.name), b)
       in 
 
