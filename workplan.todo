@@ -16,7 +16,7 @@
 
 // 2-3 weeks
 ✔ 6a. Type classes (Implementing Type Classes.pdf) @done(18-06-04 01:19)
-❑ 6b. Type inference with type classes
+✔ 6b. Type inference with type classes @done(18-06-26 20:12)
 
 // 2-4 weeks
 ❑ Thesis
@@ -25,10 +25,10 @@
 
 Optional:
     // 2-4 weeks
-    ❑ Reference type, var
     ❑ Lambda-exprs
     ✘ Pattern matching, Union type @cancelled(18-06-08 19:24)
     ❑ Additional types: float, char, string
+    ✘ Reference type, var @cancelled(18-06-26 20:12)
     ✘ Tuples, pattern matching for tuples @cancelled(18-06-08 19:24)
     ✘ Function keyword, case ... of ... @cancelled(18-06-08 19:24)
 
