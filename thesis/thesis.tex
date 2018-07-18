@@ -11,7 +11,8 @@
 % Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
 % zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
 % polecenia \fmlinebreak.
-\polishtitle    {Tytuł}
+\polishtitle    {Implementacja języka funkcyjnego z rodziny ML z użyciem 
+                 systemu kompilacji LLVM}
 \englishtitle   {English title}
 \polishabstract { TODO polish abstract}
 \englishabstract{ TODO english abstract}
@@ -20,9 +21,9 @@
 % w przypadku kilku promotorow, lub koniecznosci podania ich afiliacji, linie
 % w ponizszym poleceniu mozna zlamac poleceniem \fmlinebreak
 \advisor        {dr hab. Dariusz Biernacki}
-%\date          {}                     % Data zlozenia pracy
+\date          {}                     % Data zlozenia pracy
 % Dane do oswiadczenia o autorskim wykonaniu
-%\transcriptnum {}                     % Numer indeksu
+% \transcriptnum {283197}                     % Numer indeksu
 %\advisorgen    {dr. Jana Kowalskiego} % Nazwisko promotora w dopelniaczu
 %%%%%
 
@@ -45,6 +46,29 @@
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
 
 \chapter{Wprowadzenie}
+
+Pierwsze prace nad językiem ML zaczął Robin Milner na początku lat 70. W~1984, 
+dzięki jego inicjatywie, powstał Standard ML - ustandaryzowana wersja języka ML.
+Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, inferencje
+typów oraz moduły parametryczne \cite{smlproposal}. Są to elementy, które cechują
+większość dzisiejszych funkcyjnych języków programowania. Od tego czasu powstało 
+wiele języków z rodziny ML. Jednymi z najpopularniejszych są: OCaml, F\# oraz 
+dialekty SMLa. 
+
+\section{Klasy typów}
+Większość języków z rodziny ML w celu lepszego ustrukturyzowania 
+programu stosuje system modułów. Pozwala on na podzielenie programu na 
+niezależne~od~siebie funkcjonalności.
+Klasy typów, których głównym cele jest wprowadzenie 
+ad-hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
+\cite{modules_vs_typeclasses}. 
+Są obecne w językach takich jak Haskell, Scala czy Rust, jednak  
+
+\section{Implementacja języka funkcyjnego}
+
+\section{LLVM}
+W tej pracy zastanowię się nad sposobem implementacji 
+
 // Co zrobiłem, po co, dlaczego
 // co to {let polymorphism, type class}
 \section{Język ML}
@@ -112,7 +136,7 @@ $\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ g
 
 1. Po co? Jak działa u mnie
 
-\chapter{Generowanie kodu}
+\section{Generowanie kodu}
 \section{Częściowa aplikacja}
 
 \subsection{Opis działania}
@@ -162,8 +186,18 @@ Implementacja, porównanie do rekordów w F\#.
 
 %%%%% BIBLIOGRAFIA
 
-% \begin{thebibliography}{1}
-% \bibitem{example} \ldots
-% \end{thebibliography}
+\begin{thebibliography}{1}
+
+\bibitem{smlproposal} 
+The Standard ML Core Language, by Robin Milner, July 1984.
+\\\texttt{http://sml-family.org/history/SML-proposal-7-84.pdf}
+
+\bibitem{modules_vs_typeclasses} 
+ML Modules and Haskell Type Classes:
+A Constructive Comparison
+Stefan Wehr and Manuel M. T. Chakravarty
+\\\texttt{https://www.cse.unsw.edu.au/~chak/papers/modules-classes.pdf}
+
+\end{thebibliography}
 
 \end{document}
