@@ -5,6 +5,30 @@
 
 \usepackage[utf8]{inputenc}
 
+\usepackage{listings}
+% \usepackage{color}
+
+% \definecolor{dkgreen}{rgb}{0,0.6,0}
+% \definecolor{gray}{rgb}{0.5,0.5,0.5}
+% \definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+%   numberstyle=\tiny\color{gray},
+%   keywordstyle=\color{blue},
+%   commentstyle=\color{dkgreen},
+%   stringstyle=\color{mauve},
+  breaklines=false,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
 %%%%% DANE DO STRONY TYTUŁOWEJ
 % Niezaleznie od jezyka pracy wybranego w opcjach klasy, tytul i streszczenie
 % pracy nalezy podac zarowno w jezyku polskim, jak i angielskim.
@@ -41,30 +65,6 @@
 % ...
 %%%%%
 
-\usepackage{listings}
-\usepackage{color}
-
-\definecolor{dkgreen}{rgb}{0,0.6,0}
-\definecolor{gray}{rgb}{0.5,0.5,0.5}
-\definecolor{mauve}{rgb}{0.58,0,0.82}
-
-\lstset{frame=tb,
-  language=Java,
-  aboveskip=3mm,
-  belowskip=3mm,
-  showstringspaces=false,
-  columns=flexible,
-  basicstyle={\small\ttfamily},
-  numbers=none,
-  numberstyle=\tiny\color{gray},
-  keywordstyle=\color{blue},
-  commentstyle=\color{dkgreen},
-  stringstyle=\color{mauve},
-  breaklines=true,
-  breakatwhitespace=true,
-  tabsize=3
-}
-
 \begin{document}
 
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
@@ -80,7 +80,7 @@ wiele języków z rodziny ML. Jednymi z najpopularniejszych są: OCaml, F\# oraz
 dialekty SMLa. 
 
 \section{Klasy typów}
-Większość języków z rodziny ML w celu lepszego ustrukturyzowania 
+Większość języków z rodziny ML w celu lepszego ustrukturyzowania
 programu stosuje system modułów. Pozwala on na podzielenie programu na 
 niezależne~od~siebie funkcjonalności.
 Klasy typów, których głównym cele jest wprowadzenie 
@@ -113,12 +113,12 @@ funkcyjnych.
 \section{Infrastruktura LLVM}
 W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
 niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. Jest to zbiór 
-narzędzi i bibliotek wykorzysywanych przez wiele współeczesnych kompilatorów. LLVM dostarcza 
+narzędzi i bibliotek wykorzystywanych przez wiele współczesnych kompilatorów. LLVM dostarcza 
 kompilator LLVM IR, który jest niskopoziomowym językiem stworzonym na potrzeby pisania 
 kompilatorów. Przykładowy program napisany w LLVM IR:
 
-\lstset{language=llvm}
-\begin{lstlisting}
+% \lstset{language=llvm}
+\begin{lstlisting}[frame=single]
 @.str = internal constant [14 x i8] c"hello, world\0A\00"
 
 declare i32 @printf(i8*, ...)
@@ -136,14 +136,21 @@ podstawowych bloków, przypisań oraz wywołań funkcji. Podstawowe bloki kodu j
 mogą być zagnieżdżone. 
 
 W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
-udostępniającej interfejs potrzebny do tworzenia elmentów wygenerowanego kodu. System LLVM 
-jest odpowiedzlany za ostatni etap procesu kompilacj, zamianę kodu pośredniego (LLVM IR) na 
+udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. System LLVM 
+jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) na 
 assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej (etykiety) 
 można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
-stanie przeprowadzić na nim pewne otymalizacje, przed wygenerowaniem kodu maszynowego. 
+stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu maszynowego. 
 
 \section{Klasy typów}
 
+Jako pierwsze pojawiły się w języku Haskell. Początkowo zostały użyte w celu 
+umożliwienia przeładowania operatorów arytmetycznych i równości. Od tego czasu, znaleziono dla nich więcej zastosowań w różnych językach programowania. 
+
+Sposób ich użycia zaprezentuję na przykładzie języka Haskell. 
+W celu stworzenia klasy typów $C$ dla typu ogólnego $a$, należy 
+zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Instancje 
+klasy definiuje się dla typu konkretnego
 
 // Co zrobiłem, po co, dlaczego
 // co to {let polymorphism, type class}
@@ -167,7 +174,7 @@ stanie przeprowadzić na nim pewne otymalizacje, przed wygenerowaniem kodu maszy
 wzajemnie rekurencyjne funkcje na top levelu, klasy typów, proste moduły, 
 wyrażanie na top levelu, efekty uboczne, inferencja typów, anotacje.
 
-\section{Klasy typów}
+% \section{Klasy typów}
 
 1. Wprowadzenie czym są 
 
