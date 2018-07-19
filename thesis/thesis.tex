@@ -41,6 +41,30 @@
 % ...
 %%%%%
 
+\usepackage{listings}
+\usepackage{color}
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
 \begin{document}
 
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
@@ -82,19 +106,48 @@ aby moja implementacja prostego języka funkcyjnego, była porównywalna wydajno
 z popularnymi rozwiązaniami. Omówię i porównam sposoby w jaki zdecydowałem się 
 zaimplementować podstawowe cechy języków funkcyjnych, a w szczególności: częściową 
 aplikację, zagnieżdżone funkcje, polimorfizm i klasy typów. Moje rozwiązania będą 
-bazować na pomysłach z różnych języków programowania, w tym imperatywnych. Powyższe 
-cechy omówię najdokładniej, ponieważ odbiegają od rozwiązań w popularnych językach
+bazować na pomysłach z różnych języków programowania, w tym imperatywnych. Wspomniane 
+cechy omówię dokładniej, ponieważ odbiegają od rozwiązań stosowanych w popularnych językach
 funkcyjnych.
 
 \section{Infrastruktura LLVM}
 W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
-niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. 
+niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. Jest to zbiór 
+narzędzi i bibliotek wykorzysywanych przez wiele współeczesnych kompilatorów. LLVM dostarcza 
+kompilator LLVM IR, który jest niskopoziomowym językiem stworzonym na potrzeby pisania 
+kompilatorów. Przykładowy program napisany w LLVM IR:
+
+\lstset{language=llvm}
+\begin{lstlisting}
+@.str = internal constant [14 x i8] c"hello, world\0A\00"
+
+declare i32 @printf(i8*, ...)
+
+define i32 @main(i32 %argc, i8** %argv) nounwind {
+entry:
+    %tmp1 = getelementptr [14 x i8], [14 x i8]* @.str, i32 0, i32 0
+    %tmp2 = call i32 (i8*, ...) @printf( i8* %tmp1 ) nounwind
+    ret i32 0
+}
+\end{lstlisting}
+
+LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych globalnych, 
+podstawowych bloków, przypisań oraz wywołań funkcji. Podstawowe bloki kodu jak i funkcje nie 
+mogą być zagnieżdżone. 
+
+W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
+udostępniającej interfejs potrzebny do tworzenia elmentów wygenerowanego kodu. System LLVM 
+jest odpowiedzlany za ostatni etap procesu kompilacj, zamianę kodu pośredniego (LLVM IR) na 
+assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej (etykiety) 
+można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
+stanie przeprowadzić na nim pewne otymalizacje, przed wygenerowaniem kodu maszynowego. 
 
 // Co zrobiłem, po co, dlaczego
 // co to {let polymorphism, type class}
 \section{Język ML}
 1. Dlaczego ML, jakie są inne języki ML
 2. Bazowanie na $ F\# $
+
 
 \chapter{Cechy języka $lang$}
 
