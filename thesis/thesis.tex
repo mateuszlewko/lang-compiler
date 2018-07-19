@@ -62,12 +62,33 @@ niezależne~od~siebie funkcjonalności.
 Klasy typów, których głównym cele jest wprowadzenie 
 ad-hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
 \cite{modules_vs_typeclasses}. 
-Są obecne w językach takich jak Haskell, Scala czy Rust, jednak  
+Są obecne w językach takich jak Haskell, Scala czy Rust. Fakt, że pojawiają się
+w nowych językach ogólnego zastosowania, świadczy o ich atrakcyjności z punktu 
+widzenia programisty. Mimo to nieznane są żadne popularne języki ML korzystającego
+z tego rozwiązania. Jedynym z celów tej pracy jest wprowadzenie klas typów do 
+prostego języka funkcyjnego, bazującego na podstawowych cechach rodziny ML. W tym 
+celu stworzyłem kompilator języka $Lang$, wymyślonego na potrzeby tej pracy.
 
-\section{Implementacja języka funkcyjnego}
+\section{Efektywna implementacja języka funkcyjnego}
+Drugim celem tej pracy jest implementacja głównych cech języków funkcyjnych w
+możliwie optymalny sposób. Skupię się na optymalizacji czasu wykonania programu,
+ kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać do kodu 
+maszynowego, gdyż daje to lepszą wydajność otrzymanego programu. Stanowi to też 
+większe wyzwanie przy kompilacji języka funkcyjnego, niż napisanie interpretera, 
+ze względu na jego wysoką poziomowość. Oczywiście, trudnym będzie uzyskanie 
+podobnej lub lepszej wydajności niż popularne kompilatory języków funkcyjnych,
+gdyż te stosują dużą liczbę skomplikowanych optymalizacji. Skupię się nad tym, 
+aby moja implementacja prostego języka funkcyjnego, była porównywalna wydajnością 
+z popularnymi rozwiązaniami. Omówię i porównam sposoby w jaki zdecydowałem się 
+zaimplementować podstawowe cechy języków funkcyjnych, a w szczególności: częściową 
+aplikację, zagnieżdżone funkcje, polimorfizm i klasy typów. Moje rozwiązania będą 
+bazować na pomysłach z różnych języków programowania, w tym imperatywnych. Powyższe 
+cechy omówię najdokładniej, ponieważ odbiegają od rozwiązań w popularnych językach
+funkcyjnych.
 
-\section{LLVM}
-W tej pracy zastanowię się nad sposobem implementacji 
+\section{Infrastruktura LLVM}
+W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
+niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. 
 
 // Co zrobiłem, po co, dlaczego
 // co to {let polymorphism, type class}
