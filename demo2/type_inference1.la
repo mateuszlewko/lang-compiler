@@ -18,9 +18,7 @@ let rec factorial x =
 let rec fix f n = f (fix f) n
 
 let factorialF self n = 
-    if n = 0 
-    then 1 
-    else n * (self (n - 1))
+    if n = 0 then 1 else n * (self (n - 1))
 
 let factorialFix n = fix factorialF n
 
