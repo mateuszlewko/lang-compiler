@@ -111,6 +111,15 @@ cechy omówię dokładniej, ponieważ odbiegają od rozwiązań stosowanych w po
 funkcyjnych.
 
 \section{Infrastruktura LLVM}
+% TODO: 
+% 1. Co to jest? 
+
+% 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
+
+% 3. Jak działa kompilowanie do LLVM? 
+
+% 4. Krótki opis high-ollvm 
+
 W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
 niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. Jest to zbiór 
 narzędzi i bibliotek wykorzystywanych przez wiele współczesnych kompilatorów. LLVM dostarcza 
@@ -142,33 +151,106 @@ assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej
 można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
 stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu maszynowego. 
 
+TODO: 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
+
 \section{Klasy typów}
 
 Jako pierwsze pojawiły się w języku Haskell. Początkowo zostały użyte w celu 
-umożliwienia przeładowania operatorów arytmetycznych i równości. Od tego czasu, znaleziono dla nich więcej zastosowań w różnych językach programowania. 
+umożliwienia przeładowania operatorów arytmetycznych i równości. Od tego czasu, 
+znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
+Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji, definiowania 
+funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
+do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
+$cechy$ (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
+nie pozwalają na implementacje polimorfizmu wyższych rzędów (ang. 
+Higher-kinder polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
+Haskella nie definiuje nowego typu, jedynie pozwala na ograniczenie typu do 
+instancji klasy. $Cecha$ z Rusta może być użyta jak zwykły typ, przykładowo 
+można stworzyć listę zawierające obiekty, które są różnymi instancjami 
+(implementacjami) $cechy$. W Haskellu istnieją także rozszerzenia, które 
+pozwalają na definicje klas z wieloma parametrami. 
 
-Sposób ich użycia zaprezentuję na przykładzie języka Haskell. 
+% Jakich językach i czym się różnią
+
+Istnieje wiele wariantów klas typów oraz rozwiązań do nich podobnych, dlatego w swoim kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje, 
+umożliwiającą $ad-hoc$ polimorfizm.
+
+Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella. 
 W celu stworzenia klasy typów $C$ dla typu ogólnego $a$, należy 
-zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Instancje 
-klasy definiuje się dla typu konkretnego
+zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Dla danego 
+typu i klasy może istnieć co najwyżej jedna instancja. 
+
+% \lstset{language=llvm}
+\begin{lstlisting}[frame=single, caption=Przykładowa definicja klasy typów.]
+class Eq a where
+  (==) :: a -> a -> Bool
+  (/=) :: a -> a -> Bool
+\end{lstlisting}
+
+W powyższym przykładzie definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
+~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Eq$, jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa instancja dla typu $Bool$, mogłaby wyglądać następująco:
+
+\begin{lstlisting}[frame=single, caption=Instancja klasy $Eq$ dla typu $Bool$.]
+instance Eq Bool where
+  True == True = True 
+  False == False = True 
+  _ == _ = False
+  l /= r = not (l == r)
+\end{lstlisting}
+
+\section{Let-polimorfizm}
+
+Istnieją funkcje, których implementacja jest taka sama, niezależenie od typu dla
+którego ją aplikujemy. Przykładowo, funkcja obliczają długość generycznej listy 
+nie zależy od typu elementów, które się w niej znajdują. Funkcja $map :: (a 
+\rightarrow b) \rightarrow [a] \rightarrow [b]$, transformująca zawartość listy 
+z użyciem podanej funkcji mapującej, także nie zależy od zawartości listy. Nie 
+oznacza to jednak, że podana funkcja mapująca i lista mogą mieć dowolny typ. 
+Funkcja mapująca $(a \rightarrow b)$ musi przyjmować taki sam typ, jaki znajduje się w liście. W statycznie typowanym języku, kompilator, musi mieć 
+pewność, że taki warunek zachodzi. Aby uniknąć powielania kodu, w większości języków funkcyjnych 
+występuje \textit{let-polimorfizm}. 
+
+Dzięki \textit{let-polimorfizmowi}, przy definicji funkcji, dany argument może 
+mieć \newline ogólny typ, jeśli później w ciele tej funkcji, nie zostanie on
+ukonkretniony. 
+Wprowadzenie \textit{let-polimorfizmu} do języka, wymaga nie tylko jego obsługi 
+w procesie generowania kodu (kompilacji), ale też przy etapie inferencji typów.
+Każdy inferowany typ musi być najbardziej ogólny. W swoim kompilatorze 
+zaimplementowałem oba te elementy. Omówię i porównam swoje rozwiązanie z rozwiązaniami występującymi w innych językach.
+
+% TODO: Można rozszerzyć inferencje typów o let polimorfizm
+
+\section{Rozwijanie funkcji oraz częściowa aplikacja}
 
 // Co zrobiłem, po co, dlaczego
 // co to {let polymorphism, type class}
-\section{Język ML}
-1. Dlaczego ML, jakie są inne języki ML
-2. Bazowanie na $ F\# $
+% \section{Język ML}
+% 1. Dlaczego ML, jakie są inne języki ML
+% 2. Bazowanie na $ F\# $
 
-
-\chapter{Cechy języka $lang$}
+% \chapter{Cechy języka $lang$}
 
 // Cechy z przykładami
 
+% \subsection{Składnia}
 
-\subsection{Składnia}
+\chapter{Języka $lang$}
+
+\subsection{Podstawowe wyrażania}
+
+\subsection{Definicje funkcji}
+
+\subsection{Rekordy}
+
+\subsection{Klasy typów}
+
+\subsection{Moduły}
+
+\subsection{Tablice}
+
+\subsection{Wołanie funkcji z $C$}
 
 1. Opis, szczegóły składni, (przykłady: każda cecha języka i krótki przykład)
-
-\section{Cechy języka}
 
 1. Proste wyrażenia, rekurencja, let-polymorphism, rekordy,
 wzajemnie rekurencyjne funkcje na top levelu, klasy typów, proste moduły, 
@@ -182,16 +264,6 @@ wyrażanie na top levelu, efekty uboczne, inferencja typów, anotacje.
 
 3. Opis tego co zostało zaimplementowane, porównanie do innych języków, (Haskell,
 Rust, Scala)
-
-\section{Infrastruktura LLVM}
-
-1. Co to jest? 
-
-2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
-
-3. Jak działa kompilowanie do LLVM? 
-
-4. Krótki opis high-ollvm 
 
 \chapter{Kompilator}
 \section{Etapy kompilacji}
@@ -221,7 +293,7 @@ $\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ g
 1. Po co? Jak działa u mnie
 
 \section{Generowanie kodu}
-\section{Częściowa aplikacja}
+\subsection{Częściowa aplikacja}
 
 \subsection{Opis działania}
 
@@ -281,6 +353,10 @@ ML Modules and Haskell Type Classes:
 A Constructive Comparison
 Stefan Wehr and Manuel M. T. Chakravarty
 \\\texttt{https://www.cse.unsw.edu.au/~chak/papers/modules-classes.pdf}
+
+\bibitem{no_hkt_in_rust} 
+Higher kinded polymorphism - Rust Github issues.
+\\\texttt{https://github.com/rust-lang/rfcs/issues/324}
 
 \end{thebibliography}
 
