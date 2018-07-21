@@ -37,7 +37,7 @@
 % polecenia \fmlinebreak.
 \polishtitle    {Implementacja języka funkcyjnego z rodziny ML z użyciem 
                  systemu kompilacji LLVM}
-\englishtitle   {English title}
+\englishtitle   {Implementation of ML-family functional language, using LLVM compiler infrastructure}
 \polishabstract { TODO polish abstract}
 \englishabstract{ TODO english abstract}
 % w pracach wielu autorow nazwiska mozna oddzielic poleceniem \and
@@ -162,7 +162,7 @@ Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji, definiowan
 funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
 do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
 $cechy$ (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
-nie pozwalają na implementacje polimorfizmu wyższych rzędów (ang. 
+nie pozwalają na implementacje polimorfizmu wyższych rzędów \cite{no_hkt_in_rust} (ang. 
 Higher-kinder polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
 Haskella nie definiuje nowego typu, jedynie pozwala na ograniczenie typu do 
 instancji klasy. $Cecha$ z Rusta może być użyta jak zwykły typ, przykładowo 
@@ -222,19 +222,50 @@ zaimplementowałem oba te elementy. Omówię i porównam swoje rozwiązanie z ro
 
 \section{Rozwijanie funkcji oraz częściowa aplikacja}
 
-// Co zrobiłem, po co, dlaczego
-// co to {let polymorphism, type class}
+Częściowa aplikacja występuje wtedy, gdy po zaaplikowaniu mniejszej liczby 
+argumentów niż wynosi arność funkcji, otrzymujemy nową funkcje. Przykładowo 
+dla funkcji $f: (A \times B) \rightarrow C$ po zaaplikowaniu pierwszego 
+argumentu $a : A$, otrzymujemy funkcję $g : B \rightarrow C$. W szczególności,
+dla dowolnego $b : B$, zachodzi: $g(b) = f(a, b)$. Funkcja $g$, która jest 
+częściowo zaaplikowaną funkcją $f$, musi zapamiętać zaaplikowane dotychczas 
+argumenty. 
+
+Częściowa aplikacja jest spotykana nie tylko w językach funkcyjnych. 
+Przykładowo, biblioteka standardowa języka $\verb!C++!$ dostarcza funkcję
+$bind$ \cite{cpp_bind}, która pozwala na zaaplikowanie części argumentów. 
+Częściową aplikacje można osiągnąć poprzez rozwinięcie funkcji (ang. currying) 
+do wielu funkcji jednoargumentowych. Na poniższym fragmencie kodu języka 
+Javascript znajduje się przykład takiego rozwiązania.
+
+% \lstset{language=javascript}
+\begin{lstlisting}[frame=single, caption=Rozwinięcie funkcji w Javascriptcie.]
+var add = x => (y => x + y);
+var add3 = add(3);
+
+console.log(add3(12)); // 15
+console.log(add(3)(12)); // 15
+\end{lstlisting}
+
+Javascript nie jest językiem funkcyjnym, a funkcje w nim zdefiniowane są w 
+zwiniętej formie. Z tego powodu konieczne jest zastosowanie rozwlekłej składni, 
+takiej jak w ostatniej linii przytoczonego przykładu.
+
+W praktyce taka metoda realizacji częściowej aplikacji byłaby bardzo 
+nieefektywna. Bardziej optymalny, ale też i złożony sposób implementacji 
+aplikacji częściowej zaprezentuję w rozdziale poświęconym implementacji 
+kompilatora.
+
+% // Co zrobiłem, po co, dlaczego
+% // co to {let polymorphism, type class}
 % \section{Język ML}
 % 1. Dlaczego ML, jakie są inne języki ML
 % 2. Bazowanie na $ F\# $
 
 % \chapter{Cechy języka $lang$}
-
-// Cechy z przykładami
-
 % \subsection{Składnia}
 
 \chapter{Języka $lang$}
+// Cechy z przykładami
 
 \subsection{Podstawowe wyrażania}
 
@@ -357,6 +388,10 @@ Stefan Wehr and Manuel M. T. Chakravarty
 \bibitem{no_hkt_in_rust} 
 Higher kinded polymorphism - Rust Github issues.
 \\\texttt{https://github.com/rust-lang/rfcs/issues/324}
+
+\bibitem{cpp_bind} 
+std::bind - C++ Reference
+\\\texttt{https://en.cppreference.com/w/cpp/utility/functional/bind}
 
 \end{thebibliography}
 
