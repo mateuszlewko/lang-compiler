@@ -8,6 +8,10 @@
 \usepackage{listings}
 \usepackage[epsilon]{backnaur}
 \usepackage{url}
+% \usepackage{tikz}
+% \usetikzlibrary{calc,trees,positioning,arrows,chains,shapes.geometric,%
+%     decorations.pathreplacing,decorations.pathmorphing,shapes,%
+%     matrix,shapes.symbols}
 
 % \usepackage{titlesec}
 % \titlespacing*{\section}{0pt}{1.1\baselineskip}{\baselineskip}
@@ -514,11 +518,43 @@ TODO: Gramatyka external
 \chapter{Kompilator}
 \section{Etapy kompilacji}
 
-1. Jakie są etapy (lexer $\rightarrow$ parser $\rightarrow$ untyped ast $\rightarrow$ 
-typed ast bez zagnieżdżonych funkcji $\rightarrow$ generowanie kodu (ast high-ollvm)
-$\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ gcc i external) 
+Cały proces kompilacji, od momentu wczytania pliku z kodem źródłowym, do 
+wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
+\begin{enumerate}
+  \item Analiza leksykalna, w efekcie której otrzymujemy ciąg tokenów.
+  TODO: w jakim pliku.
+  \item Otrzymany ciąg jest następnie poddany analizie składniowej 
+  (ang. parsing), która zgodnie z podaną gramatyką generuje \textit{drzewo 
+  składni abstrakcyjnej (ang. abstract syntax tree)}. Węzły tego drzewa 
+  zawierają jedno z wyrażeń, lecz nie posiadają informacji o typie tego
+  wyrażenia. TODO: W jakim pliku.
+  \item Następnie, wykonywana jest transformacja drzewa składni, która:
 
-2. Krótko o każdym etapie
+  \begin{enumerate}
+    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka $Lang$ (na późniejszym etapie, wyrażenia będą miał typ 
+    z \textit{LLVM IR}). 
+    \item Eliminuje zagnieżdżone wyrażenia $let$.
+    \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
+    ich w pełni kwalifikowanych nazw (ang. fully qualified name).
+  \end{enumerate}
+
+  \item Generowanie drzewa wyrażeń z LLVM IR. Jest to największy etap z całego 
+  procesu kompilacji. Zamienia skomplikowane wyrażenia wysokopoziomowego języka
+  na proste wyrażenia LLVM IR, które już łatwo mogą być przetłumaczone na 
+  niskopoziomowe instrukcje.
+
+  \item Konwersja drzewa wyrażeń LLVM IR na kod LLVM IR. Odbywa się to dzięki 
+  interfejsowi programistycznemu (ang. api), udostępnionym przez oficjalną 
+  bibliotekę LLVM dla $OCamla$.
+
+
+\end{enumerate}
+
+% 1. Jakie są etapy (lexer $\rightarrow$ parser $\rightarrow$ untyped ast $\rightarrow$ 
+% typed ast bez zagnieżdżonych funkcji $\rightarrow$ generowanie kodu (ast high-ollvm)
+% $\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ gcc i external) 
+
+% 2. Krótko o każdym etapie
 
 \section{Analiza leksykalna}
 
