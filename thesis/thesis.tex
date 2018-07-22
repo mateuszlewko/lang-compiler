@@ -394,9 +394,72 @@ zdefiniowane w jednej linii, o ile jego ciało jest pojedyńczym wyrażeniem pro
 
 \section{Rekordy}
 
+\subsection{Deklaracja rekordu}
+
+\begin{bnf*}
+  \bnfprod{record-decl}
+    { \bnfts{type} \bnfpn{identifier} \bnfts{=} \bnfts{'\{'} 
+      \bnfpn{field-decl}+ \bnfts{'\}'} 
+    }\\
+  \bnfprod{field-decl}
+    { \bnfpn{identifier} \bnfts{:} \bnfpn{identifier}+
+      \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{:} \bnfpn{identifier}+
+      \bnfts{;}
+    }\\
+\end{bnf*}
+
+\subsection{Literał rekordu}
+
+Literał może być zdefiniowany w jednym lub wielu wierszach. W przypadku 
+definicji w jednym wierszu, kolejne pola muszą być oddzielone średnikami. 
+Średnik może być pominięty jeśli kolejne pola są oddzielone nową linią. 
+Dle definicji wielowierszowej, klamra otwierająca i zamykająca muszą być w tej 
+samej kolumnie.
+
+\begin{bnf*}
+\bnfprod{record-lit}
+  { \bnfts{ type } \bnfpn{identifier} \bnfts{=} \bnfts{'\{'} 
+    \bnfpn{field-lit}+ \bnfts{'\}'} 
+  }\\
+\bnfprod{field-lit}
+  { \bnfpn{identifier} \bnfts{ = } \bnfpn{simple-exp}
+    \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{ = } \bnfpn{simple-exp}
+    \bnfts{ ; }
+  }\\
+\end{bnf*}
+
+\subsection{Uaktualnianie rekordu}
+
+Rekordy w $Langu$, podobnie jak rekordy w $F\#$ i OCamlu, są trwałe. 
+Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu. Dlatego to
+wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
+
+\begin{bnf*}
+\bnfprod{record-update}
+  { \bnfts{ \{ } \bnfpn{simple-exp} \bnfts{ with } 
+    \bnfpn{field-update}+ \bnfts{ \} } 
+  }\\
+\bnfprod{field-update}
+  { \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
+    \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
+    \bnfts{;}
+    TODO: samo pole 
+  }\\
+\end{bnf*}
+
 \section{Klasy typów}
 
+\subsection{Deklaracja klasy}
+
+\subsection{Deklaracja instancji}
+
 \section{Moduły}
+
+Moduły w $Langu$ spełniają takie zadanie jak te w $F\#$ -- służą jako 
+przestrzeń nazw dla logiczne związanych definicji. Nie są odpowiednikiem 
+systemu modułów SMLa czy OCamla, które są dużo bardziej zaawansowane.
+Moduł zawiera zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
+modułów oraz deklaracje funkcji zewnętrznych.
 
 \section{Tablice}
 
