@@ -488,20 +488,28 @@ $[|$ i kończący $|]$, muszą być w tej samej kolumnie.
 
 \section{Wołanie funkcji z $C$}
 
-1. Opis, szczegóły składni, (przykłady: każda cecha języka i krótki przykład)
+Mała część funkcjonalności języka została zaimplementowana z użyciem 
+zewnętrznych funkcji w $C$ (wypisywanie oraz operacje na tablicy). Dlatego 
+koniecznym było dołożenie wyrażeń pozwalających zadeklarować zewnętrzny symbol 
+wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Typy 
+$Langa$ są dosłownie tłumaczone na typy w $C$, z wyjątkiem typu $unit$, który jest zamieniany na $bool$ (o rozmiarze jeden bajt).
 
-1. Proste wyrażenia, rekurencja, let-polymorphism, rekordy,
-wzajemnie rekurencyjne funkcje na top levelu, klasy typów, proste moduły, 
-wyrażanie na top levelu, efekty uboczne, inferencja typów, anotacje.
+TODO: Gramatyka external
 
-% \section{Klasy typów}
+% 1. Opis, szczegóły składni, (przykłady: każda cecha języka i krótki przykład)
 
-1. Wprowadzenie czym są 
+% 1. Proste wyrażenia, rekurencja, let-polymorphism, rekordy,
+% wzajemnie rekurencyjne funkcje na top levelu, klasy typów, proste moduły, 
+% wyrażanie na top levelu, efekty uboczne, inferencja typów, anotacje.
 
-2. Dlaczego? Jakie są alternatywy
+% % \section{Klasy typów}
 
-3. Opis tego co zostało zaimplementowane, porównanie do innych języków, (Haskell,
-Rust, Scala)
+% 1. Wprowadzenie czym są 
+
+% 2. Dlaczego? Jakie są alternatywy
+
+% 3. Opis tego co zostało zaimplementowane, porównanie do innych języków, (Haskell,
+% Rust, Scala)
 
 \chapter{Kompilator}
 \section{Etapy kompilacji}
@@ -577,6 +585,12 @@ Implementacja, porównanie do rekordów w F\#.
 2. Sposoby implementowania, porównanie do pracy TODO
 
 3. Jak zostały zaimplementowane, dlaczego tak
+
+\chapter{Podsumowanie}
+
+\section{Wnioski}
+
+\section{Dalsze prace}
 
 \chapter{Instrukcja obsługi}
 
