@@ -3,6 +3,7 @@
 % drugiej stronie pracy ma byc skladany wzor oswiadczenia o autorskim wykonaniu.
 \documentclass[declaration,shortabstract]{iithesis}
 
+% \usepackage{syntax}
 \usepackage[utf8]{inputenc}
 \usepackage{listings}
 \usepackage[epsilon]{backnaur}
@@ -82,7 +83,7 @@
 Pierwsze prace nad językiem ML zaczął Robin Milner na początku lat 70. W~1984, 
 dzięki jego inicjatywie, powstał Standard ML - ustandaryzowana wersja języka ML.
 Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, inferencje
-typów oraz moduły parametryczne \cite{smlproposal}. Są to elementy, które cechują
+typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy, które cechują
 większość dzisiejszych funkcyjnych języków programowania. Od tego czasu powstało 
 wiele języków z rodziny ML. Jednymi z najpopularniejszych są: OCaml, F\# oraz 
 dialekty SMLa. 
@@ -264,7 +265,7 @@ let add x y = x + y
 print_int (add 3 12)
 \end{lstlisting}
 
-Funkcja $add$ w języku w OCaml jest już w postaci rozwiniętej więc jej 
+Funkcja $add$ w języku w OCaml jest już w postaci rozwiniętej, więc jej 
 deklaracja i wywołanie mają bardziej atrakcyjną formę, niż w poprzednim 
 przykładzie. Dlatego zdecydowałem się ją zaimplementować.
 
@@ -290,7 +291,8 @@ do rodziny ML. Dzięki zastosowaniu składni czułej na wcięcia, która eliminu
 konieczność użycia wielu słów kluczowych, jest jednym z  prostszych języków z 
 tej rodziny. Przy tworzeniu nowego języka funkcyjnego, kierowałem się głównie 
 jego prostotą. Poza zapożyczeniem składni $F\#$ dla podstawowych wyrażeń, 
-rozszerzyłem ją o wyrażenia koniecznie do realizacji klas typów i ich instancji.
+funkcji i typów rozszerzyłem ją o wyrażenia koniecznie do realizacji klas typów
+i ich instancji.
 % Jedną z najpopularniejszych funkcjonalności, zasugerowaną przez użytkowników, są
 % typy klas \cite{fslang_typeclass}. 
 % To było jedną inspiracją do całego projektu 
@@ -316,6 +318,11 @@ czynności na etapie lexera, tak jak to ma miejsce w $F\#$. Dokładniejszy opis
 sposobu parsowania składni bazującej na wcięciach, w tym i innych językach,
 znajduje się w rozdziale TODO: rozdział. 
 
+Dla prostoty zapisu przyjąłem że:
+\begin{enumerate}
+  \item * to wystąpienie poprzedzającego wyrażenia zero lub więcej razy,
+  \item + to wystąpienie poprzedzającego wyrażenia jeden lub więcej razy.
+\end{enumerate}
 
 \begin{bnf*}
   \bnfprod{simple-if-exp}
@@ -324,17 +331,17 @@ znajduje się w rozdziale TODO: rozdział.
     }\\
   \bnfprod{if-exp}
     { \bnfts{ if } \bnfpn{simple-exp} \bnfpn{newline} \bnfts{ then } 
-      \bnfpn{body-exp}* \bnfpn{elif-exp}* \bnfpn{else-exp}
+      \bnfpn{body-exp}+ \bnfpn{elif-exp}\ast \bnfpn{else-exp}
     }\\
   \bnfprod{simple-else-exp}
     {\bnfts{ else } \bnfpn{simple-exp} \bnfor \bnfes}\\
   \bnfprod{simple-elif-exp}
     {\bnfts{ elif } \bnfpn{simple-exp} \bnfts{ then } \bnfpn{simple-exp} \bnfor \bnfes}\\
   \bnfprod{elif-exp}
-    {\bnfts{ elif } \bnfpn{body-exp}* \bnfor \bnfpn{simple-elif-exp} 
+    {\bnfts{ elif } \bnfpn{body-exp}+ \bnfor \bnfpn{simple-elif-exp} 
      \bnfor \bnfes}\\
   \bnfprod{else-exp}
-    {\bnfts{ else } \bnfpn{body-exp}* \bnfor \bnfpn{simple-else-exp} 
+    {\bnfts{ else } \bnfpn{body-exp}+ \bnfor \bnfpn{simple-else-exp} 
      \bnfor \bnfes}\\
   \bnfprod{newline}
     {\bnftd{nowa linia}}
@@ -343,8 +350,47 @@ znajduje się w rozdziale TODO: rozdział.
 \subsection{Wyrażenia arytmetyczne i logiczne}
 Wyrażenia arytmetyczne i logiczne mają taką samą składnię jak w pozostałych
 językach z rodziny ML.
+\begin{bnf*}
+  \bnfprod{bool-exp}
+    { \bnfpn{simple-exp} \bnfpn{bool-op} \bnfpn{simple-exp} 
+    }\\
+  \bnfprod{arith-exp}
+    { \bnfpn{simple-exp} \bnfpn{arith-op} \bnfpn{arith-exp} 
+    }\\
+  \bnfprod{arith-op}
+    { \bnfts{+} \bnfor \bnfts{-} \bnfor \bnfts{*}
+      \bnfor \bnfts{/} 
+    }\\
+  \bnfprod{bool-op}
+    { \bnfts{\&\&} \bnfor \bnfts{$\|$} 
+    }\\
+\end{bnf*}
 
-\section{Deklaracja funkcji}
+\section{Deklaracja funkcji (wyrażenie let)}
+
+Argumenty funkcji muszą być w tym samym wierszu co słowo $let$. Po znaku 
+$=$, ciało może być złożonym wyrażeniem o ile zaczyna się w następnym wierszu i 
+jest w późniejszej kolumnie niż słowo $let$. Wyrażenie $let$ może być 
+zdefiniowane w jednej linii, o ile jego ciało jest pojedyńczym wyrażeniem prostym.
+
+\begin{bnf*}
+  \bnfprod{let-exp}
+    { \bnfts{let} \bnfpn{identifier}+ \bnfts{=} \bnfpn{simple-exp} 
+      \bnfor \bnfts{let} \bnfpn{identifier}+ \bnfts{=} 
+      \bnfpn { newline } \bnfpn{body-exp}
+    }\\
+\end{bnf*}
+
+
+% \begin{grammar}
+% \begin{lstlisting}
+% % <expression> ::= ['$+$' | '$-$'] <term> \{('$+$' | '$-$' ) <term>\}
+
+% % <term> ::= <factor>* \{('$*$' | '$/$') <factor>\}
+
+% % <factor> ::= "number" | <identifier>  | '(' <expression> ')'
+% \end{lstlisting}
+% \end{grammar}
 
 \section{Rekordy}
 
@@ -446,11 +492,21 @@ Implementacja, porównanie do rekordów w F\#.
 
 3. Jak zostały zaimplementowane, dlaczego tak
 
+\chapter{Instrukcja obsługi}
+
+\section{Instalacja}
+
+\section{Sposób użycia z przykładami}
+
+\section{Użyte narzędzia i biblioteki}
+
+\section{Struktura projektu}
+
 %%%%% BIBLIOGRAFIA
 
 \begin{thebibliography}{1}
 
-\bibitem{smlproposal} 
+\bibitem{sml_proposal} 
 The Standard ML Core Language, by Robin Milner, July 1984.
 \\\texttt{http://sml-family.org/history/SML-proposal-7-84.pdf}
 
