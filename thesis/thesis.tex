@@ -373,6 +373,9 @@ $=$, ciało może być złożonym wyrażeniem o ile zaczyna się w następnym wi
 jest w późniejszej kolumnie niż słowo $let$. Wyrażenie $let$ może być 
 zdefiniowane w jednej linii, o ile jego ciało jest pojedyńczym wyrażeniem prostym.
 
+TODO: Let z argumentami z adnotacjami.
+TODO: Rekurencja
+
 \begin{bnf*}
   \bnfprod{let-exp}
     { \bnfts{let} \bnfpn{identifier}+ \bnfts{=} \bnfpn{simple-exp} 
@@ -381,6 +384,9 @@ zdefiniowane w jednej linii, o ile jego ciało jest pojedyńczym wyrażeniem pro
     }\\
 \end{bnf*}
 
+\subsection{Wzajemnie rekurencyjne wyrażenia let}
+
+TODO: 
 
 % \begin{grammar}
 % \begin{lstlisting}
@@ -449,6 +455,9 @@ wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
 
 \section{Klasy typów}
 
+Jako, że w językach z rodziny ML nie występują klasy typów, ich składnie 
+zdecydowałem się zapożyczyć z Haskella.
+
 \subsection{Deklaracja klasy}
 
 \subsection{Deklaracja instancji}
@@ -456,12 +465,26 @@ wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
 \section{Moduły}
 
 Moduły w $Langu$ spełniają takie zadanie jak te w $F\#$ -- służą jako 
-przestrzeń nazw dla logiczne związanych definicji. Nie są odpowiednikiem 
-systemu modułów SMLa czy OCamla, które są dużo bardziej zaawansowane.
-Moduł zawiera zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
-modułów oraz deklaracje funkcji zewnętrznych.
+przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem 
+systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
+Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
+modułów oraz deklaracje funkcji zewnętrznych. Nazwa modułu musi się zaczynać 
+z wielkiej litery. 
+
+TODO: Gramatyka modułu
 
 \section{Tablice}
+
+Zaimplementowane zostały jedynie tablice zawierające typ $int$. Tablice są 
+ulotną strukturą danych. Na poziomie języka można stworzyć literał tablicy.
+Zmiana i odczytanie komórki tablicy, bądź utworzenie niezainicjalizowanej tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane $C$. Tablice w 
+langu są reprezentowane tak samo jak języku w $C$, jako spójny ciąg w pamięci.
+
+Elementami literału tablicy, mogą być proste wyrażenia, oddzielone średnikiem. 
+Podobnie jak w \newline $OCamlu$ i $F\#$ tablica zaczyna się od symbolu $[|$, a kończy symbolem $|]$.
+
+\textbf{Uwaga.} Dla wielowierszowego literału tablicy, symbol rozpoczynający 
+$[|$ i kończący $|]$, muszą być w tej samej kolumnie.
 
 \section{Wołanie funkcji z $C$}
 
