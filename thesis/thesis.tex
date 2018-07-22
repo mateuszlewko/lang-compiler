@@ -547,7 +547,6 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   interfejsowi programistycznemu (ang. api), udostępnionym przez oficjalną 
   bibliotekę LLVM dla $OCamla$.
 
-
 \end{enumerate}
 
 % 1. Jakie są etapy (lexer $\rightarrow$ parser $\rightarrow$ untyped ast $\rightarrow$ 
@@ -558,9 +557,15 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 
 \section{Analiza leksykalna}
 
-1. Czego użyłem. 
+Do przeprowadzania analizy leksykalnej skorzystałem z biblioteki 
+\textit{sedlex}. Jest to generator lekserów dla języka OCaml.
 
-2. Analiza wcięć 
+\subsection{Analiza wcięć}
+ 
+Istnieje wiele języków programowania, realizujących ideę składni czułej na 
+wcięcia. Sposób w jaki działa to w $F\#$ jest jednym z bardziej zaawansowanych,
+bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp.
+W $F\#$ istnieje także możliwość mieszania słów kluczowych 
 
 \section{Parsowanie}
 
@@ -571,7 +576,7 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 3. Gramatyka
 
 \section{Inferencja typów}
-
+????
 1. Po co? Jak działa u mnie
 
 \section{Generowanie kodu}
