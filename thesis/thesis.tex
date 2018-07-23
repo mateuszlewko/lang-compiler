@@ -564,16 +564,33 @@ Do przeprowadzania analizy leksykalnej skorzystałem z biblioteki
  
 Istnieje wiele języków programowania, realizujących ideę składni czułej na 
 wcięcia. Sposób w jaki działa to w $F\#$ jest jednym z bardziej zaawansowanych,
-bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp.
-W $F\#$ istnieje także możliwość mieszania słów kluczowych 
+bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp., 
+bez użycia znaków przełamania wiersza bądź słów kluczowych znanych 
+z języka OCaml (\textit{begin}, \textit{end}, \textit{;}). W $F\#$ istnieje 
+także możliwość mieszania tych słów kluczowych z wcięciami. 
+
+Analiza wcięć w $Langu$ jest zbliżona do tej w $Pythonie$. Dla każdego wiersza, 
+na bieżąco jest obliczany numer kolumny pierwszego znaku (wcięcie). Długości 
+wcięć z poprzednich wierszy są trzymane na stosie. Na początku na stosie
+znajduję się wcięcie długości 0. Gdy wcięcie w obecnym wierszu jest większe od 
+ostatniego na stosie, generowany jest token \textit{INDENT}, oznaczający 
+początek wciętego bloku. Gdy wcięcie jest mniejsze od ostatniego na stosie, 
+wszystkie większe są zdejmowane ze stosu i dla każdego zdjętego, generowany 
+jest token \textit{DEDENT}. Oznacza on koniec wciętego bloku. Po zdjęciu 
+wszystkich większych wcięć, ostatnie wcięcie, które zostanie na stosie musi być 
+równe obecnemu wcięciu, w szczególności może być równe $0$. W przeciwnym 
+przypadku, kod źródłowy jest źle wcięty i kompilator zwróci błąd.
 
 \section{Parsowanie}
 
-1. Czego użyłem, coś o Menhirze, dlaczego Menhir 
-
-2. Wyzwania (składnia bazująca na wcięciach)
-
-3. Gramatyka
+Popularnym narzędziem do generowania parserów jest \textit{Menhir}. Na 
+\newline podstawie podanej gramatyki \textit{LR(1)}, generuje kod $OCamla$, 
+który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operatory: $
++$, $?$, $\ast$. Zdecydowałem się skorzystać z tego narzędzia ze względu na 
+łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
+ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
+{ocamlyacc}. Całość gramatyki znajduje się w pliku 
+\path{lang-compiler/compiler/parsing/grammar.mly}.
 
 \section{Inferencja typów}
 ????
