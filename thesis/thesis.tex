@@ -590,24 +590,37 @@ który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operato
 łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
 ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
 {ocamlyacc}. Całość gramatyki znajduje się w pliku 
-\path{lang-compiler/compiler/parsing/grammar.mly}.
+\path{lang-compiler/compiler/parsing/grammar.mly}. 
+TODO: Może coś o kontekstach w F\#
 
-\section{Inferencja typów}
-????
-1. Po co? Jak działa u mnie
+% \section{Generowanie kodu}
+\section{Częściowa aplikacja i funkcje}
 
-\section{Generowanie kodu}
-\subsection{Częściowa aplikacja}
+Jak wspomniałem we wprowadzeniu, generowanie wszystkich funkcji w rozwiniętej 
+formie (każda funkcja przyjmuje tylko jeden argument) jest nieoptymalne pod
+względem długości kodu jak i szybkości jego wykonania. Pomimo że, aplikacja 
+częściowa jest bardzo przydatną cechą języków funkcyjnych, to często funkcje
+wywoływane są ze wszystkimi argumentami. W takich przypadkach chcielibyśmy 
+korzystać z wywołania funkcji, które jest tak szybkie jak w \textit{C}. 
+W kompilatorze \textit{Langa} pracowałem nad rozwiązaniem, które w pozostałych 
+przypadkach korzystałoby z przekazywania argumentów funkcji przez rejestry i 
+pozwalałoby na przekazywanie typów o różnych rozmiarach przez wartość. 
+
 
 \subsection{Opis działania}
+TODO: Co to unknown i know call 
 
-1. Dlaczego jest to nietrywialne
+TODO: generowanie każdej funkcji
 
-2. Jakie miałem cele 
+TODO: wywoływanie funkcji, przypadki
 
-3. Jak to działa u mnie 
+% 1. Dlaczego jest to nietrywialne
 
-4. Przykład (wygenerowanego pseudo-kodu)
+% 2. Jakie miałem cele 
+
+% 3. Jak to działa u mnie 
+
+% 4. Przykład (wygenerowanego pseudo-kodu)
 
 \subsection{Porównanie z innymi implementacjami}
 
@@ -635,6 +648,10 @@ Implementacja, porównanie do rekordów w F\#.
 2. Sposoby implementacji w różnych językach, zalety i wady 
 
 3. Sposób implementacji u mnie
+
+\section{Inferencja typów}
+????
+1. Po co? Jak działa u mnie
 
 \section{Klasy typów}
 
