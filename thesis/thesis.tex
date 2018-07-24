@@ -606,13 +606,62 @@ W kompilatorze \textit{Langa} pracowałem nad rozwiązaniem, które w pozostały
 przypadkach korzystałoby z przekazywania argumentów funkcji przez rejestry i 
 pozwalałoby na przekazywanie typów o różnych rozmiarach przez wartość. 
 
-
 \subsection{Opis działania}
-TODO: Co to unknown i know call 
+
+Podzielmy wszystkie wywołania funkcji na dwie grupy. Wywołania do znanych 
+(ang. known call) i nie znanych funkcji (ang. unknown call). Znane funkcje to 
+takie, których definicję można łatwo wskazać na etapie kompilacji. 
+Na poniższym przykładzie, wywołana funkcja TODO: jest statycznie znana.
+
+\begin{lstlisting}[frame=single, caption=Wywołanie statycznie znanej funkcji.]
+TODO: Known call example
+\end{lstlisting}
+
+Przykładem nieznanych funkcji są funkcje, które: 
+\begin{itemize}
+  \item zostały podane jako argument,
+  \item są wynikiem wywołania funkcji,
+  \item są wynikiem częściowej aplikacji funkcji.
+\end{itemize}
+
+W tym przykładzie wywołane funkcje $a$, $b$ i $c$ są nieznane.
+
+\begin{lstlisting}[frame=single, caption=Przykłady statycznie 
+nieznanej funkcji.]
+TODO: Unknown call example
+\end{lstlisting}
+
+\subsubsection{Wywołanie funkcji znanej}
+
+Gdy funkcja, którą chcemy wywołać jest znana, możemy wyróżnić trzy przypadki 
+ze względu na liczbę zaaplikowanych argumentów względem liczby argumentów
+w definicji funkcji.
+
+\begin{enumerate}
+  \item Liczba zaaplikowanych argumentów jest mniejsza od liczby zdefiniowanych 
+  argumentów. W tym przypadku utworzony zostaje obiekt reprezentujący częściowo
+  zaaplikowaną funkcję. Zostaną w nim zapisane zaaplikowane argumenty oraz 
+  wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt zostaną 
+  utworzone na stercie.
+  \item Zaaplikowanych argumentów jest tyle co zdefiniowanych. Funkcja zostanie
+  wywołana w stylu z $C$. Jest to najbardziej optymalny przypadek wywołania 
+  funkcji i nie powoduje on zaalokowania żadnej dodatkowej pamięci. Jeśli 
+  początkowe argumenty mieszczą się w rejestrach to mogą zostać przez nie 
+  przekazane.
+  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $n$ to będzie liczba 
+  zdefiniowanych argumentów. Najpierw nastąpi wywołanie znanej funkcji z 
+  pierwszymi $n$ argumentami. Do wyniku pierwszego wywołania, który teraz jest
+  nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym momencie 
+  zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
+\end{enumerate}
+
+\subsubsection{Wywołanie funkcji nieznanej}
+
+% TODO: Co to unknown i know call 
 
 TODO: generowanie każdej funkcji
 
-TODO: wywoływanie funkcji, przypadki
+TODO: wywoływanie funkcji, przypadki z przykładami
 
 % 1. Dlaczego jest to nietrywialne
 
@@ -621,6 +670,8 @@ TODO: wywoływanie funkcji, przypadki
 % 3. Jak to działa u mnie 
 
 % 4. Przykład (wygenerowanego pseudo-kodu)
+
+\subsubsection{Generowanie funkcji}
 
 \subsection{Porównanie z innymi implementacjami}
 
@@ -632,7 +683,7 @@ Porównanie z pracą "Making a fast curry: ..."
 
 1. Co to są zagnieżdżone funkcje 
 
-2. Na czym polega trudność w ich implementacji 
+2. Na czym polega trudność w ich implementacji
 
 3. Jak zostały zaimplementowane: lambda lifting + closure conversion + 
 wykorzystanie aplikacji częściowej
