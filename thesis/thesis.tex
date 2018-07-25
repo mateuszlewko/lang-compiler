@@ -569,7 +569,8 @@ bez użycia znaków przełamania wiersza bądź słów kluczowych znanych
 z języka OCaml (\textit{begin}, \textit{end}, \textit{;}). W $F\#$ istnieje 
 także możliwość mieszania tych słów kluczowych z wcięciami. 
 
-Analiza wcięć w $Langu$ jest zbliżona do tej w $Pythonie$. Dla każdego wiersza, 
+Analiza wcięć w $Langu$ jest zbliżona do tej w \textit{Pythonie}
+\cite{python_indentation}. Dla każdego wiersza, 
 na bieżąco jest obliczany numer kolumny pierwszego znaku (wcięcie). Długości 
 wcięć z poprzednich wierszy są trzymane na stosie. Na początku na stosie
 znajduję się wcięcie długości 0. Gdy wcięcie w obecnym wierszu jest większe od 
@@ -676,7 +677,7 @@ zawierającą następujące pola:
   \item liczba bajtów w środowisku,
   \item liczba obecnie zaaplikowanych argumentów
   \item pozostała liczba argumentów koniecznych do zaaplikowana, aby należało 
-  wywołać wskazywana funkcje.
+  wywołać wskazywaną funkcje.
 \end{itemize}
 
 Definicja takiej struktury w $C$ wyglądałaby następująco:
@@ -691,17 +692,37 @@ struct function {
 };
 \end{lstlisting}
 
-Wskaźnik na funkcje $fn$, przed wywołaniem musi zostać zrzutowany 
+Wskaźnik na funkcje \textit{fn}, przed wywołaniem musi zostać zrzutowany na 
+prawidłowy typ. Dla aplikacji funkcji, których wynikiem jest funkcja, typ 
+wynikowy funkcji \textit{fn} to struktura \textit{function}. Jako argumenty 
+funkcji \textit{fn}, poza argumentami podanymi w aplikacji funkcji, przekazane 
+zostaną dodatkowo: wskaźnik na środowisko i liczba aplikowanych argumentów.
+Funkcja wołana jest odpowiedzialna za nadmiarowe argumenty i przekazanie ich 
+dalej.
+
+Aplikacja funkcji nie zawsze musi się wiązać z faktycznym wywołaniem funkcji.
+Na poniższym przykładzie w pierwszym przypadku funkcja \textit{TODO:}
+zostanie wywołana, a w drugim, pomimo aplikacji tych samych argumentów, nic nie 
+zostanie wywołane.
+\begin{lstlisting}[frame=single, caption=Wywołanie funkcji zależy od podanego
+argumentu. OCaml.]
+TODO: Przykład z wywołaniem i nie wywołaniem częściowo 
+zaaplikowanej funkcji  
+\end{lstlisting}
+
+Dla każdego wywołania nieznanej funkcji, generowany jest dodatkowy kod, który
+jest odpowiedzialny za sprawdzenie, czy aplikowaną funkcje faktycznie trzeba 
+wywołać, czy jedynie dopisać dodatkowe argumenty do środowiska.
+
 TODO: o dynamicznych przypadkach
 
+TODO: wywoływanie funkcji, przypadki z przykładami
 TODO: Przykład w pseudokodzie? Może algorytm
-
 
 % TODO: Co to unknown i know call 
 
 TODO: generowanie każdej funkcji
 
-TODO: wywoływanie funkcji, przypadki z przykładami
 
 % 1. Dlaczego jest to nietrywialne
 
@@ -793,6 +814,10 @@ std::bind - C++ Reference
 \bibitem{fslang_typeclass} 
 TODO: FS lang, user voice - type classes
 \\\texttt{https://fslang.uservoice.com/forums/245727-f-language/filters/top}
+
+\bibitem{python_indentation} 
+Indentation. Python Reference Manual.
+\\\texttt{https://docs.python.org/2.5/ref/indentation.html}
 
 \end{thebibliography}
 
