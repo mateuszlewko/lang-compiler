@@ -653,9 +653,49 @@ w definicji funkcji.
   pierwszymi $n$ argumentami. Do wyniku pierwszego wywołania, który teraz jest
   nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym momencie 
   zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
+
+TODO: Coś o tym że funkcje / symbole trzymane są w środowisku z informacją 
+known / unknown.
 \end{enumerate}
 
 \subsubsection{Wywołanie funkcji nieznanej}
+
+Wywołania funkcji nieznanych podzielimy na takie, których wynikiem jest dowolna
+funkcja $ a \rightarrow b $ i takie których wynikiem jest wartość. Podczas
+fazy inferencji typów, obliczany jest typ każdego wyrażenia, więc kompilator
+jest w stanie określić do której grupy należy dana aplikacja funkcji. Każda 
+nieznana lub częściowo zaaplikowana funkcja jest reprezentowana przez strukturę 
+(taką jak w $C$), 
+zawierającą następujące pola:
+
+\begin{itemize}
+  \item wskaźnik na funkcje,
+  \item wskaźnik na środowisko (zapamiętane argumenty), które jest pamiętane 
+  jako spójny ciąg bajów. TODO: Można też tablice wskaźników na argumenty i 
+  dlaczego tak nie zrobiłem
+  \item liczba bajtów w środowisku,
+  \item liczba obecnie zaaplikowanych argumentów
+  \item pozostała liczba argumentów koniecznych do zaaplikowana, aby należało 
+  wywołać wskazywana funkcje.
+\end{itemize}
+
+Definicja takiej struktury w $C$ wyglądałaby następująco:
+
+\begin{lstlisting}[frame=single, caption=Rozwinięta funkcja w OCamlu.]
+struct function {
+    void (*fn)();
+    uchar *args;
+    uchar left_args;
+    uchar arity;
+    int used_bytes;   
+};
+\end{lstlisting}
+
+Wskaźnik na funkcje $fn$, przed wywołaniem musi zostać zrzutowany 
+TODO: o dynamicznych przypadkach
+
+TODO: Przykład w pseudokodzie? Może algorytm
+
 
 % TODO: Co to unknown i know call 
 
