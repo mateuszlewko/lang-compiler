@@ -685,9 +685,9 @@ Definicja takiej struktury w $C$ wyglądałaby następująco:
 \begin{lstlisting}[frame=single, caption=Rozwinięta funkcja w OCamlu.]
 struct function {
     void (*fn)();
-    uchar *args;
-    uchar left_args;
-    uchar arity;
+    unsinged char *args;
+    unsinged char left_args;
+    unsinged char arity;
     int used_bytes;   
 };
 \end{lstlisting}
@@ -744,8 +744,58 @@ o różnym rozmiarze, przez ich wartość a nie przez wskaźnik. W obecnej
 implementacji istnieje tylko kilka typów o różnej długości: \textit{bool},
 \textit{int} i \textit{rekord}. Rekordy mają taki sam rozmiar, ponieważ są 
 przekazywane przez wskaźnik do ich zawartości zapamiętanej na stercie, ale 
-łatwo rozszerzyć język od typy o dowolnej długości.
+łatwo rozszerzyć język o typy o dowolnej długości. 
 
+Takie założenie komplikuje implementację częściowej aplikacji funkcji. Aby 
+zrozumieć dlaczego, weźmy dwie instancje struktury \textit{function}, dla 
+funkcji o typie \textit{int $\rightarrow$ bool $\rightarrow$ int 
+$\rightarrow$ bool}. Niech pierwsza zostanie częściowo zaaplikowana dwoma 
+argumentami o typach \textit{int} i \textit{bool}, a druga pierwszym argumentem
+o typie \textit{int}. W kolejnym kroku, chcąc wywołać obie funkcje, do 
+pierwszej struktury aplikujemy pozostały argument o typie \textit{int}, a do 
+drugiej pozostałe dwa o typach \textit{bool} i \textit{int}. Wskaźnik \textit
+{fn} z pierwszej struktury zostałby zrzutowany na wskaźnik na funkcję 
+przyjmującą jako pierwszy argument zmienną typu \textit{int}, a funkcja 
+wskazywana przez \textit{fn} z drugiej struktury przyjmowałaby jako pierwszy 
+argument typ \textit{bool}. Nie można dopuścić do takiej sytuacji. Nasuwa się 
+możliwe rozwiązanie, w którym w momencie gdy dochodzi do wywołania funkcji (co 
+może być sprawdzone w czasie działania programu dzięki polu 
+\textit{left\_args}) można przekazać wszystkie argumenty znajdujące sie w 
+środowisku. Wtedy typ zrzutowanych funkcji wskazywanych przez \textit{fn} byłby 
+taki sam, niezależnie od tego ile dotychczas argumentów zostało zaaplikowanych.
+Jednak, argumenty w środowisku są zapamiętane przez wartość w tablicy, \textit
+{args} a ich reprezentacja nie jest jednorodna, co uniemożliwia ich przekazanie.
+Jednorodną reprezentacje wszystkich argumentów można uzyskać poprzez 
+reprezentowanie ich przez wskaźnik, ale takiego rozwiązania chciałem uniknąć.
+Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych 
+aplikowanych jako ostatnie, w środowisku. Wywoływana funkcja, wie już w czasie 
+kompilacji jakich argumentów (i o jakim rozmiarze), spodziewać się w środowisku,
+więc jest w stanie je z niego odzyskać. To rozwiązanie rozwiązuje wspomniany 
+problem, lecz wykonuje niepotrzebne zapisywanie i ładowanie argumentów 
+zaaplikowanych jako ostatnie. Moje rozwiązanie unika tej operacji. 
+
+W tym celu, poza generowaniem właściwej funkcji, generowane są także funkcje 
+wejściowe (ang. entry point), które będą używane w przypadku wywoływania 
+nieznanej funkcji. 
+Funkcja wejściowa przyjmuje: 
+\begin{itemize}
+  \item wskaźnik na środowisko \textit{unsigned char$\ast$},
+  \item liczbę przekazywanych argumentów \textit{unsigned char} (obsługiwane jest maksymalnie 255 argumentów),
+  \item część argumentów oryginalnej funkcji.
+\end{itemize}
+Załóżmy, że oryginalna funkcja przyjmuje $n$ argumentów: $a_1$, $a_2$, ...,
+$a_n$. Wtedy, dla takiej funkcji zostanie wygenerowanych $n$ funkcji 
+wejściowych, gdzie $i-ta$ funkcja będzie przyjmowała sufiks ciągu oryginalnych
+argumentów, od argumentu $i-tego$.
+
+Dla oryginalnej funkcji, tworzona jest globalna tablica wskaźników na wszystkie 
+jej funkcje wyjściowe. Funkcje są zapamiętane po kolei, tj. 
+wskaźnik na pierwszą funkcję wyjściową jest pierwszym elementem tablicy. 
+Gdy tworzona jest instancja struktury \textit{function}, jak wskaźnik na 
+funkcję do wywołania ustawiany jest wskaźnik na początek tablicy funkcji 
+wejściowych. Oznacza to, że typ pola \textit{fn} w języku \textit{C} to 
+\textit{void (**fn)()}, oraz że przed wywołaniem funkcji ze struktury, należy 
+zdereferować (ang. dereference) wskaźnik.  
 
 \subsection{Porównanie z innymi implementacjami}
 
