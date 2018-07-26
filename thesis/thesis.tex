@@ -704,17 +704,22 @@ Aplikacja funkcji nie zawsze musi się wiązać z faktycznym wywołaniem funkcji
 Na poniższym przykładzie w pierwszym przypadku funkcja \textit{TODO:}
 zostanie wywołana, a w drugim, pomimo aplikacji tych samych argumentów, nic nie 
 zostanie wywołane.
-\begin{lstlisting}[frame=single, caption=Wywołanie funkcji zależy od podanego
-argumentu. OCaml.]
+\begin{lstlisting}[frame=single, caption={To czy funkcja zostanie wywołana,
+nie jest wiadome w czasie kompilacj.}]
 TODO: Przykład z wywołaniem i nie wywołaniem częściowo 
 zaaplikowanej funkcji  
 \end{lstlisting}
 
-Dla każdego wywołania nieznanej funkcji, generowany jest dodatkowy kod, który
-jest odpowiedzialny za sprawdzenie, czy aplikowaną funkcje faktycznie trzeba 
-wywołać, czy jedynie dopisać dodatkowe argumenty do środowiska.
+Dla każdego wywołania nieznanej funkcji, generowany jest dodatkowy \newline
+kod, który jest odpowiedzialny za sprawdzenie, czy aplikowaną funkcje 
+faktycznie trzeba wywołać, czy jedynie zapisać dodatkowe argumenty do 
+środowiska. Aby to sprawdzić, porównywana jest liczba argumentów pozostałych do 
+wywołania funkcji (\textit{left\_args}) z liczbą zaaplikowanych argumentów.
+Jeśli liczba pozostałych argumentów jest większa, to wszystkie argumenty 
+zostaną skopiowane do pola \textit{args} w strukturze \textit{function}, a 
+odpowiednie jej pola uaktualnione.
 
-TODO: o dynamicznych przypadkach
+% TODO: o dynamicznych przypadkach
 
 TODO: wywoływanie funkcji, przypadki z przykładami
 TODO: Przykład w pseudokodzie? Może algorytm
@@ -733,6 +738,14 @@ TODO: generowanie każdej funkcji
 % 4. Przykład (wygenerowanego pseudo-kodu)
 
 \subsubsection{Generowanie funkcji}
+
+Jednym z założeń implementacji tego języka, była możliwość przekazywania typów
+o różnym rozmiarze, przez ich wartość a nie przez wskaźnik. W obecnej 
+implementacji istnieje tylko kilka typów o różnej długości: \textit{bool},
+\textit{int} i \textit{rekord}. Rekordy mają taki sam rozmiar, ponieważ są 
+przekazywane przez wskaźnik do ich zawartości zapamiętanej na stercie, ale 
+łatwo rozszerzyć język od typy o dowolnej długości.
+
 
 \subsection{Porównanie z innymi implementacjami}
 
