@@ -812,13 +812,18 @@ oryginalnej jest funkcja, następuje jeden z dwóch przypadków sprawdzanych w
 czasie działania programu.
 
 \begin{enumerate}
-  \item Nie ma więcej pozostałych argumentów, funkcja wyjściowa jako swój 
-  wynik może zwrócić wynik funkcji oryginalnej.
-  \item Pozostałych argumentów jest mniej niż wartość pola \textit{left\_args}.
+  \item Nie ma pozostało więcej argumentów do zaaplikowania, 
+  funkcja wyjściowa jako swój wynik może zwrócić wynik funkcji oryginalnej.
+  \item Pozostałych argumentów jest mniej lub tyle samo niż wynosi 
+  wartość pola \textit{left\_args} ze struktury otrzymanej jako wynik 
+  pierwszego wywołania.
   Należy zapisać pozostałe argumenty do środowiska i uaktualnić pola struktury 
   \textit{function}.
-  \item Pozostałych argumentów 
 \end{enumerate}
+
+Po wywołaniu funkcji należy jeszcze sprawdzić czy nie została zwrócona 
+struktura, którą od razu można wywołać (taka która ma pole \textit{left\_args} 
+równe $0$). Taki wynik mógł powstać w funkcji wołanej w drugim przypadku.
 
 \subsection{Porównanie z innymi implementacjami}
 
@@ -828,26 +833,26 @@ Porównanie z pracą "Making a fast curry: ..."
 
 \section{Zagnieżdżone funkcje}
 
-Zagnieżdżone funkcje są nieodłączną częścią języków funkcyjnych. Ich implemntacja wykorzystuje 
-\textit{closure conversion}, które zostało wykorzystane przy częsciowej aplikacji funkcji. 
+Zagnieżdżone funkcje są nieodłączną częścią języków funkcyjnych. Ich implementacja wykorzystuje 
+\textit{closure conversion}, które zostało wykorzystane przy częściowej aplikacji funkcji. 
 Ideą \textit{closure conversion} jest pamiętanie funkcji wraz z jej domknięciem. 
-\textit{Closure conversion} dodaje duży narzut pamięciowyi czasowy na wygenerowany program,
+\textit{Closure conversion} dodaje duży narzut pamięciowy i czasowy na wygenerowany program,
 dlatego należy ustalić dlaczego taka operacja jest potrzebna.
 
-Zdefiniujmy funkcje \textit{make_adder} w \textit{Ocamlu}, która będzie zwracać zagnieżdżona funkcje.
-Ciało zagnieżdżononej funkcji \textit{add} odwołuje się do zmiennej z zewnętrznego zakresu.
+Zdefiniujmy funkcje \textit{make\_adder} w \textit{OCamlu}, która będzie zwracać zagnieżdżona funkcje.
+Ciało zagnieżdżonej funkcji \textit{add} odwołuje się do zmiennej z zewnętrznego zakresu.
 
 \begin{lstlisting}[frame=single, caption={Zagnieżdżona funkcja w \textit{OCamlu}}]
 let make_adder x = 
-  let add y = x + y in 
-  add 
+    let add y = x + y in 
+    add 
   
- let _ = 
-  let add1 = make_adder 1 in 
-  let add5 = make_adder 5 in 
-  
-  print_int (add1 1);
-  print_int (add5 5) 
+let _ = 
+    let add1 = make_adder 1 in 
+    let add5 = make_adder 5 in 
+    
+    print_int (add1 1);
+    print_int (add5 5) 
 \end{lstlisting}
 Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$. 
 
@@ -866,27 +871,43 @@ Powyższy kod nie jest poprawnym programem w języku \textit{OCaml}, oraz
 nie mógbły zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
 Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie w którym 
 wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
-Na poniższym przykładzie zostało przedstwione jak mogłaby wyglądać taka transformacja.
+Na poniższym przykładzie zostało przedstawione jak mogłaby wyglądać taka transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
 let global_x = ref 0
 
 let add y = !x + y 
 let make_adder x = 
-  global_x := x
-  add 
+    global_x := x
+    add 
 \end{lstlisting}
 Powyższe przekształcenia nie wprowadzają dużego narzutu na wynikowy program i rozwiązują 
-problem z zasięgiem $x$. Ten kod jednak nie zwróci poprawnego wyniku. Drugie 
-wywołanie \textit{make_adder} dla argumentu 5, nadpisze jego pierwszą wartość z której korzysta
-pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowsku funkcji 
+problem z zasięgiem symbolu $x$. Ten kod jednak nie zwróci poprawnego wyniku, przy założeniu o statycznym zasięgu widoczności (ang. static scoping). Drugie 
+wywołanie \textit{make\_adder} dla argumentu 5, nadpisze jego pierwszą wartość z której korzysta
+pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
 \textit{add}, w momencie w którym jest zwracana. 
 
 W \textit{Langu}, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
 już zaimplementowaną częściową aplikację. W czasie analizy programu dla każdego 
 zagnieżdżonego wyrażenia \textit{let} wyznaczam jego zmienne wolne. Zmienne wolne
-zostaną dodane jako dodatkowe argumenty, przed tymi podanymi przez użytkownika.
-Następnie, wyrażenie pod 
+zostaną dodane jako dodatkowe argumenty, przed tymi podanymi pierwotnie.
+Następnie, symbol pod którym wyrażenie \textit{let} było zapamiętane w 
+środowisku, zostaje związany z częściową aplikacją zmienny wolnych 
+do oryginalnej funkcji (rozszerzonej o dodatkowe argumenty -- zmienne wolne).
+Poniżej została na funkcji \textit{add} została wykonana ta transformacja.
+
+\begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
+let make_adder x = 
+    let add_extended_with_free_vars x y = x + y
+    let add = add_extended_with_free_vars x
+
+    add
+\end{lstlisting}
+
+Po tym etapie, funkcję \textit{add\_extended\_with\_free\_vars} można przenieść 
+na najwyższy poziom (\textit{lambda lifting}). \textit{add} jest teraz zwykłym 
+przypisaniem wyrażenia do zmiennej, więc może być łatwo przetłumaczone na 
+niskopoziomowy kod.
 
 % 1. Co to są zagnieżdżone funkcje 
 
