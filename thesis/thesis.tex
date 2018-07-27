@@ -830,13 +830,47 @@ Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$.
 
 Niskopoziomowy język, taki jaki \textit{LLVM IR} nie obsługuje zagnieżdżonych funkcji, można w
 nim zadeklarować jedynie procedury na takim samym, najwyższym poziomie (ang. top level). 
+Konieczna jest transformacja wyrażeń \textit{let}, polegająca na przeniesieniu ich na najwyższy poziom. 
+Jeśli wykonamy taką transformacje na funkcji \textit{add}, bez dodatkowych zmian, to zmienna $x$,
+przesanie być dostępna z ciała funkcji.
 
-1. Co to są zagnieżdżone funkcje 
+\begin{lstlisting}[frame=single, caption={Po przeniesieniu funkcji \textit{add} na najwyższy poziom}]
+let add y = x + y 
+let make_adder x = add 
+\end{lstlisting}
 
-2. Na czym polega trudność w ich implementacji
+Powyższy kod nie jest poprawnym programem w języku \textit{OCaml}, oraz 
+nie mógbły zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
+Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie w którym 
+wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
+Na poniższym przykładzie zostało przedstwione jak mogłaby wyglądać taka transformacja.
 
-3. Jak zostały zaimplementowane: lambda lifting + closure conversion + 
-wykorzystanie aplikacji częściowej
+\begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
+let global_x = ref 0
+
+let add y = !x + y 
+let make_adder x = 
+  global_x := x
+  add 
+\end{lstlisting}
+Powyższe przekształcenia nie wprowadzają dużego narzutu na wynikowy program i rozwiązują 
+problem z zasięgiem $x$. Ten kod jednak nie zwróci poprawnego wyniku. Drugie 
+wywołanie \textit{make_adder} dla argumentu 5, nadpisze jego pierwszą wartość z której korzysta
+pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowsku funkcji 
+\textit{add}, w momencie w którym jest zwracana. 
+
+W \textit{Langu}, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
+już zaimplementowaną częściową aplikację. W czasie analizy programu dla każdego 
+zagnieżdżonego wyrażenia \textit{let} wyznaczam jego zmienne wolne. Zmienne wolne
+zostaną dodane jako dodatkowe argumenty, przed tymi podanymi przez użytkownika.
+Następnie, wyrażenie pod 
+
+% 1. Co to są zagnieżdżone funkcje 
+
+% 2. Na czym polega trudność w ich implementacji
+
+% 3. Jak zostały zaimplementowane: lambda lifting + closure conversion + 
+% wykorzystanie aplikacji częściowej
 
 \section{Rekordy}
 
