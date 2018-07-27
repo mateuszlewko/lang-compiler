@@ -721,7 +721,7 @@ odpowiednie jej pola uaktualnione.
 
 % TODO: o dynamicznych przypadkach
 
-TODO: wywoływanie funkcji, przypadki z przykładami
+% TODO: wywoływanie funkcji, przypadki z przykładami
 TODO: Przykład w pseudokodzie? Może algorytm
 
 % TODO: Co to unknown i know call 
@@ -780,22 +780,45 @@ nieznanej funkcji.
 Funkcja wejściowa przyjmuje: 
 \begin{itemize}
   \item wskaźnik na środowisko \textit{unsigned char$\ast$},
-  \item liczbę przekazywanych argumentów \textit{unsigned char} (obsługiwane jest maksymalnie 255 argumentów),
+  \item liczbę przekazywanych argumentów \textit{unsigned char} 
+  (obsługiwane jest maksymalnie 255 argumentów),
   \item część argumentów oryginalnej funkcji.
 \end{itemize}
-Załóżmy, że oryginalna funkcja przyjmuje $n$ argumentów: $a_1$, $a_2$, ...,
-$a_n$. Wtedy, dla takiej funkcji zostanie wygenerowanych $n$ funkcji 
+Załóżmy, że oryginalna funkcja ma typ: $a_1 \rightarrow a_2 \rightarrow ...
+\rightarrow a_n \rightarrow t$. Wtedy, dla takiej funkcji zostanie wygenerowanych $n$ funkcji 
 wejściowych, gdzie $i-ta$ funkcja będzie przyjmowała sufiks ciągu oryginalnych
-argumentów, od argumentu $i-tego$.
+argumentów, od $i-tego$ argumentu. Jeśli funkcja oryginalna zwraca funkcję to 
+jej argumenty także będą uwzględnione w funkcji wejściowej.
 
 Dla oryginalnej funkcji, tworzona jest globalna tablica wskaźników na wszystkie 
-jej funkcje wyjściowe. Funkcje są zapamiętane po kolei, tj. 
-wskaźnik na pierwszą funkcję wyjściową jest pierwszym elementem tablicy. 
+jej funkcje wejściowe. Funkcje są zapamiętane po kolei, tj. 
+wskaźnik na pierwszą funkcję wejściową jest pierwszym elementem tablicy, na 
+drugą, drugim itd. 
 Gdy tworzona jest instancja struktury \textit{function}, jak wskaźnik na 
 funkcję do wywołania ustawiany jest wskaźnik na początek tablicy funkcji 
 wejściowych. Oznacza to, że typ pola \textit{fn} w języku \textit{C} to 
-\textit{void (**fn)()}, oraz że przed wywołaniem funkcji ze struktury, należy 
-zdereferować (ang. dereference) wskaźnik.  
+\textit{void ($\ast\ast$fn)()}, oraz że przed wywołaniem funkcji ze struktury,
+należy zdereferować (ang. dereference) wskaźnik. Wskaźnik na wołaną funkcją 
+musi być w każdym momencie programu aktualny, tzn musi odpowiadać liczbie 
+początkowych argumentów zapamiętanych w środowisku. Dlatego gdy kolejne 
+argumenty są aplikowane, wskaźnik jest zwiększany. 
+
+% \subsubsection{Funkcje wejściowe}
+% TODO: Ciało funkcji wejściowych
+
+Funkcje wejściowe są odpowiedzialne za odczytanie argumentów ze środowiska i 
+przekazanie ich do wywołania oryginalnej funkcji. Jeśli wynikiem funkcji 
+oryginalnej jest funkcja, następuje jeden z dwóch przypadków sprawdzanych w
+czasie działania programu.
+
+\begin{enumerate}
+  \item Nie ma więcej pozostałych argumentów, funkcja wyjściowa jako swój 
+  wynik może zwrócić wynik funkcji oryginalnej.
+  \item Pozostałych argumentów jest mniej niż wartość pola \textit{left\_args}.
+  Należy zapisać pozostałe argumenty do środowiska i uaktualnić pola struktury 
+  \textit{function}.
+  \item Pozostałych argumentów 
+\end{enumerate}
 
 \subsection{Porównanie z innymi implementacjami}
 
