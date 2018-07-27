@@ -918,7 +918,18 @@ niskopoziomowy kod.
 
 \section{Rekordy}
 
-Implementacja, porównanie do rekordów w F\#.
+Rekordy są podstawowym sposobem na tworzenie własnych typów danych w wielu 
+językach programowania. Do \textit{Langa} zostały wprowadzone głównie po ty, 
+aby urozmaici przykłady zastosowania klas typów. 
+
+Jako że LLVM IR wspiera struktury, które są odpowiednikiem implementowanych 
+rekordów, dodanie ich do języka nie stanowiło problemu. W obecnej 
+implementacji 
+wszystkie struktury alokowane są na stercie i przekazywane przez wskaźnik.
+Pola struktury są pamiętane przez ich wartość, chyba że polem jest inna 
+struktura. Są trwałym typem danych, więc aktualizacja pól struktury 
+z wyrażeniem \textit{with}, powoduje skopiowane jej zawartości do nowej 
+instancji.
 
 \section{Let polimorfizm}
 
