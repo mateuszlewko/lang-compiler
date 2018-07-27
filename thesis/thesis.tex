@@ -805,6 +805,32 @@ Porównanie z pracą "Making a fast curry: ..."
 
 \section{Zagnieżdżone funkcje}
 
+Zagnieżdżone funkcje są nieodłączną częścią języków funkcyjnych. Ich implemntacja wykorzystuje 
+\textit{closure conversion}, które zostało wykorzystane przy częsciowej aplikacji funkcji. 
+Ideą \textit{closure conversion} jest pamiętanie funkcji wraz z jej domknięciem. 
+\textit{Closure conversion} dodaje duży narzut pamięciowyi czasowy na wygenerowany program,
+dlatego należy ustalić dlaczego taka operacja jest potrzebna.
+
+Zdefiniujmy funkcje \textit{make_adder} w \textit{Ocamlu}, która będzie zwracać zagnieżdżona funkcje.
+Ciało zagnieżdżononej funkcji \textit{add} odwołuje się do zmiennej z zewnętrznego zakresu.
+
+\begin{lstlisting}[frame=single, caption={Zagnieżdżona funkcja w \textit{OCamlu}}]
+let make_adder x = 
+  let add y = x + y in 
+  add 
+  
+ let _ = 
+  let add1 = make_adder 1 in 
+  let add5 = make_adder 5 in 
+  
+  print_int (add1 1);
+  print_int (add5 5) 
+\end{lstlisting}
+Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$. 
+
+Niskopoziomowy język, taki jaki \textit{LLVM IR} nie obsługuje zagnieżdżonych funkcji, można w
+nim zadeklarować jedynie procedury na takim samym, najwyższym poziomie (ang. top level). 
+
 1. Co to są zagnieżdżone funkcje 
 
 2. Na czym polega trudność w ich implementacji
