@@ -920,7 +920,7 @@ niskopoziomowy kod.
 
 Rekordy są podstawowym sposobem na tworzenie własnych typów danych w wielu 
 językach programowania. Do \textit{Langa} zostały wprowadzone głównie po ty, 
-aby urozmaici przykłady zastosowania klas typów. 
+aby urozmaicić przykłady zastosowania klas typów. 
 
 Jako że LLVM IR wspiera struktury, które są odpowiednikiem implementowanych 
 rekordów, dodanie ich do języka nie stanowiło problemu. W obecnej 
@@ -1035,8 +1035,22 @@ konkretnych są zapamiętywane.
 % 3. Sposób implementacji u mnie
 
 \section{Inferencja typów}
-????
-1. Po co? Jak działa u mnie
+
+Inferencja typów zwalnia programistę z obowiązku wyspecyfikowania typów 
+każdej deklaracji, pozostawiając wszystkie zalety statycznego systemu typów.
+W \textit{Langu} działa ona następująco. Na początku każdemu argumentowi,
+który nie został oznaczony przez użytkownika typem konkretny, zostaje 
+przypisany różny typ ogólny. Podczas inferencji w ciele funkcji, dla 
+każdego wyrażenia, dla którego może być wywnioskowane jakieś ograniczenie 
+(np. warunek w \textit{if} powinien mieć typ \textit{bool}), odpowiednia 
+równość między typami zostaje zapisana w drzewie ast tej funkcji. Po 
+przetworzeniu funkcji, zostaje zbudowany graf równości między typami. 
+Sprawdzane jest czy któreś argumenty w ciele funkcji zostały ukonkretnione, 
+jeśli tak to definicja funkcji jest aktualizowana, jeśli nie to typ pozostaje
+ogólny. Graf równości typów jest także używany w celu znalezienia konkretnych 
+typów przy wywoływaniu polimorficznej funkcji (dzieję się to w fazie 
+generowania kodu). 
+TODO: O optymalizacji z union finda.
 
 \section{Klasy typów}
 
