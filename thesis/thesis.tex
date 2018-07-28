@@ -961,12 +961,78 @@ funkcyjnych).
 Do języków które stosują powyższą metodę należą m. in. Java i Haskell.
 W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
 leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
-ich wartość (ang. unboxed), takie jak \textit{\#Int} i \textit{\#Double}. 
-Jednak nie mogą być one użyte w funkcjach polimorficznych. 
+ich wartość (ang. unboxed types), takie jak \textit{\#Int} i 
+\textit{\#Double}. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
+W fazie optymalizacji, kompilator \textit{GHC} może zamienić typ boxed 
+na unboxed, ale nie jest to gwarantowane. Jako że kierowałem się wydajnością
+przy implementacji kompilatora \textit{Langa}, to rozwiązanie nie jest 
+satysfakcjonujące.
+
+\textit{OCaml} reprezentuje \textit{inty} i wskaźniki na jednym słowie 
+maszynowym. To czy do funkcji został przekazany wskaźnik czy \textit{int}
+przez wartość jest rozpoznawane na podstawie najniższego bitu, który jest 
+traktowany jak znacznik. Jeśli wynosi $1$ to dana wartość jest \textit{intem}.
+To rozwiązania pozwala na uniknięcie większości narzutu przy wykonywaniu 
+operacji na typach prymitywnych, ale wiąże się z niestandardowym podejście do 
+arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość obiektów 
+dłuższych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
+rozwiązania, nie zdecydowałem sie go zaimplementować.
+
+Języki takie jak \textit{C++} i \textit{Rust} oraz kompilator \textit{SMLa} 
+MLton, wyspecjalizowują każdą polimorficzną funkcję przed fazą generowania 
+kodu. Ten proces nazywany jest monomorfizacją. Polega on na utworzenia osobnej 
+implementacji polimorficznej funkcji dla każdego konkretnego typu który został 
+podstawiony pod typ ogólny. W \textit{C++} użytkownik może explicite podać 
+dla jakich typów ukonkretnia daną funkcje, bądź może być to wykryte przez 
+kompilator.
+
+\begin{lstlisting}[frame=single, caption={Polimorficzna funkcja w 
+\textit{C++} z użyciem szablonów (ang. template)}]
+template<class Type1, class Type2>
+void foo(Type1 t1, Type2 t2)
+{
+    // ...
+}
+
+int main() {
+    foo<std::string, int>("hello world", 42);
+    foo("hello world2", 24);
+    foo(1.0, 4.0);
+}
+\end{lstlisting}
+
+Dla funkcji \textit{foo} z powyższego przykładu zostaną wygenerowane dwie 
+implementacje, a oryginalne wywołania funkcji zostaną już w fazie kompilacje
+zamienione na wywołania odpowiednich, wyspecjalizowanych wersji tej funkcji.
+Takie rozwiązanie pozwala na przekazanie dowolnego typu przez jego wartość, 
+bez zmian jego reprezentacji. Jednak nie jest ono pozbawione kompromisów. 
+Statyczna monomorfizacja funkcji, nie pozwala na zastosowanie polimorficznej
+rekurencji. Dodatkowo, zwiększa długość wygenerowanego kodu, tym samym 
+wydłużając czas kompilacji i zwiększać rozmiar wynikowego programu. Kolejną 
+wadą w praktycznych zastosowaniach, jest fakt, że wysokopoziomowy kod 
+implementacji funkcji polimorficznej musi być opublikowany wraz z wygenerowaną 
+bibliotekę, aby istniała możliwość użycia wywołania tej funkcji dla typów dla 
+których nie byłą wcześniej ukonkretniona. Mimo to, język \textit{C++} cieszy 
+się ogromną popularnością, a system szablonów jest szeroko używany, także w 
+zastosowaniach produkcyjnych. 
+
+W \textit{Langu} postanowiłem zaimplementować rozwiązanie bazujące na 
+monomorfizacji. Jest ono zgodne z założeniami projektu oraz dobrze współgra z 
+pozostałymi rozwiązaniami. W trakcie inferencji typów każda polimorficzna 
+funkcja z \textit{Langa} jest reprezentowana w kompilatorze jako funkcja z 
+ukonkretnień typów ogólnych w implementację. Gdy w fazie generacji kodu 
+dochodzi do wywołania funkcji polimorficznej, muszą być znane wszystkie 
+ukonkretnienia. Wtedy wywoływana jest funkcja generująca implementację na 
+podstawie typów konkretnych. Implementacje funkcji dla tych samych typów 
+konkretnych są zapamiętywane.
+
+% znanej funkcji jest zapamiętywane dla jakich typów została ukonkretniona. 
+% Następnie w fazie generowania kodu, dla każdego różnego zbioru ukonkretnień 
+% typów ogólnych, tworzona jest odpowiednia implementacja funkcji. Programista 
+% nie wybiera, która implementacja
 
 % 2. Sposoby implementacji w różnych językach, zalety i wady 
-
-3. Sposób implementacji u mnie
+% 3. Sposób implementacji u mnie
 
 \section{Inferencja typów}
 ????
