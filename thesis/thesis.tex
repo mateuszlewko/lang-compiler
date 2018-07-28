@@ -933,9 +933,38 @@ instancji.
 
 \section{Let polimorfizm}
 
-1. Krótki opis, czym jest let-polimorfizm
+% 1. Krótki opis, czym jest let-polimorfizm
 
-2. Sposoby implementacji w różnych językach, zalety i wady 
+Bez let polimorfizmu, którego odpowiednikiem w językach imperatywnych jest 
+polimorfizm parametryczny, ciężko wyobrazić sobie nowoczesny język. 
+Mimo wygody jaką dostarcza programiście, często wiąże sie z dodatkowym
+obciążeniem czasowym i pamięciowym. Polimorficzna funkcja 
+\lstinline[language=Caml]!let identity x = x! może być użyta niezależenie
+od typu podanego argumentu. Jednak, jeśli funkcja \textit{identity} 
+jest aplikowana do argumentów typu \textit{int} i textit{float}, to nie jest 
+jasne jak powinien wyglądać jej wygenerowany kod. Argument typu \textit{float}
+zostałby przekazany przez specjalny rejestr dla liczb zmiennoprzecinkowych, 
+inny od tego dla argumentu typu \textit{int}. W wygenerowanym kodzie jasno
+należy określić jaki wariant będzie wspierać dana funkcja. Dlatego wiele 
+języków rozwiązuje ten problem poprzez jednorodną reprezentację wszystkich 
+typów, które mogą być użyte w funkcjach polimorficznych. Jednorodna 
+reprezentacja sprowadza się do alokowania wartości obiektu na stercie, a 
+następnie przekazywanie wskaźnika na ten obiekt. Wszystkie wskaźniki 
+niezależnie od typu i rozmiaru obiektu na który wskazują, mają ten sam 
+rozmiar i są przekazywane w ten sam sposób. Niesie to ze sobą kilka wad.
+Przykładowo, dla każdego \textit{inta} który sam zajmuje $4$ bajty,
+dodatkowo alokowane jest $8$ bajtów na wskaźnik do niego. Jako, że jest 
+zaalokowany na stercie, będzie musiał być ręcznie zwolniony przez programistę 
+lub przez automatyczne odśmiecanie pamięci (które często występuje w językach 
+funkcyjnych).
+
+Do języków które stosują powyższą metodę należą m. in. Java i Haskell.
+W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
+leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
+ich wartość (ang. unboxed), takie jak \textit{\#Int} i \textit{\#Double}. 
+Jednak nie mogą być one użyte w funkcjach polimorficznych. 
+
+% 2. Sposoby implementacji w różnych językach, zalety i wady 
 
 3. Sposób implementacji u mnie
 
@@ -996,6 +1025,12 @@ TODO: FS lang, user voice - type classes
 \bibitem{python_indentation} 
 Indentation. Python Reference Manual.
 \\\texttt{https://docs.python.org/2.5/ref/indentation.html}
+
+\bibitem{levity_polymorphism} 
+Levity Polymorphism.
+\\\texttt{https://www.microsoft.com/en-us/research/wp-content/\newline
+uploads/2016/11/levity-pldi17.pdf}
+
 
 \end{thebibliography}
 
