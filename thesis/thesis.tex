@@ -1146,7 +1146,25 @@ jak są klasy bazowe:
 http://okmij.org/ftp/Computation/typeclass.html
 
 Metoda przekazywania słownika nie niesie ze sobą dużego narzutu na czas 
-kompilacji i wykonywania programu. Co prawda wymaga 
+kompilacji i wykonywania programu. Wymaga dodania co najmniej
+jednego argumentu do funkcji polimorficznych korzystających z klas typów. 
+Jednak w implementacji klas typów w \textit{Langu}, ze względu na decyzje 
+podjęte w poprzednich cechach języka (monomorfizacja dla let polimorfizmu), 
+nie skorzystałem z tej metody. Po przeprowadzeniu monomorfizacji w kodzie nie 
+występują żadne funkcje polimorficzne. Jedyne co należy zrobić w kolejnej 
+fazie, to sprawdzić czy dla danego typu i klasy istnieje instancja. Jeśli tak 
+to użycie każdej metody z tej klasy dla konkretnego typu, należy zamienić 
+na wywołanie odpowiedniej implementacji. Po tym przekształceniu, kod jest 
+pozbawiony wszystkich konstrukcji klas typów, zawiera jedynie ich 
+implementacje i wywołania odpowiednich metod. Oczywistą zaletą tego rozwiązania
+jest fakt, że te wysoko poziomowe abstrakcje nie wiążą ze sobą żadnego kosztu.
+Jest to istotna cecha w praktycznych zastosowania, bo pozwala na swobodne 
+korzystanie z wysokopoziomowych konstrukcji języka, bez rozważania nad ich 
+wpływem na wydajność. Jednak wady nad tym rozwiązaniem ciążą wszystkie wady 
+monomorfizacji: brak rekurencji polimorficznej, brak polimorfizmu wyższych 
+rzędów (ang. higher-rank polymorphism) oraz konieczność kompilacji całego kodu 
+programu na raz. Z podobnego rozwiązania przy implementacji klas typów 
+korzysta \textit{MLton}.
 
 % 2. Sposoby implementowania, porównanie do pracy TODO
 
