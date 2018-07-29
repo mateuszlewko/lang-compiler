@@ -85,12 +85,18 @@
 \chapter{Wprowadzenie}
 
 Pierwsze prace nad językiem ML zaczął Robin Milner na początku lat 70. W~1984, 
-dzięki jego inicjatywie, powstał Standard ML - ustandaryzowana wersja języka ML.
-Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, inferencje
-typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy, które cechują
-większość dzisiejszych funkcyjnych języków programowania. Od tego czasu powstało 
-wiele języków z rodziny ML. Jednymi z najpopularniejszych są: OCaml, F\# oraz 
-dialekty SMLa. 
+dzięki jego inicjatywie, powstał Standard ML --- ustandaryzowana wersja języka 
+ML. Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, 
+inferencje typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy,
+które cechują większość dzisiejszych języków programowania 
+wywodzących się z \textit{SMLa}, takich jak \textit{OCaml} i \textit{F\#}. W swojej 
+pracy zaimplementowałem kompilator języka funkcyjnego \textit{Lang}, 
+bazującego na języku F\#. Zaimplementowałem w nim najważniejsze cechy języków 
+z rodziny ML, starając się uniknąć wad rozwiązań z popularnych kompilatorów. 
+Ponadto wprowadziłem do niego typy klas zamiast skomplikowanego systemu 
+modułów. Porównam swoje rozwiązania z innymi rozwiązaniami i omówię kompromisy na które się zdecydowałem.
+
+% tych podstawowych cechach języków z rodziny ML. Ponadto 
 
 \section{Klasy typów}
 Większość języków z rodziny ML w celu lepszego ustrukturyzowania
