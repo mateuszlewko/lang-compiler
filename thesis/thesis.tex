@@ -89,12 +89,13 @@ dzięki jego inicjatywie, powstał Standard ML --- ustandaryzowana wersja język
 ML. Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, 
 inferencje typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy,
 które cechują większość dzisiejszych języków programowania 
-wywodzących się z \textit{SMLa}, takich jak \textit{OCaml} i \textit{F\#}. W swojej 
-pracy zaimplementowałem kompilator języka funkcyjnego \textit{Lang}, 
+wywodzących się z \textit{SMLa}, takich jak \textit{OCaml} i \textit{F\#}. W 
+swojej pracy zaimplementowałem kompilator języka funkcyjnego \textit{Lang}, 
 bazującego na języku F\#. Zaimplementowałem w nim najważniejsze cechy języków 
 z rodziny ML, starając się uniknąć wad rozwiązań z popularnych kompilatorów. 
-Ponadto wprowadziłem do niego typy klas zamiast skomplikowanego systemu 
-modułów. Porównam swoje rozwiązania z innymi rozwiązaniami i omówię kompromisy na które się zdecydowałem.
+Ponadto wprowadziłem do niego \textit{klasy typów} zamiast skomplikowanego 
+systemu modułów. Porównam swoje rozwiązania z innymi rozwiązaniami i omówię 
+kompromisy na które się zdecydowałem.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
 
@@ -107,72 +108,14 @@ ad-hoc polimorfizmu do języka, mogą po części także spełnić to zadanie
 \cite{modules_vs_typeclasses}. 
 Są obecne w językach takich jak Haskell, Scala czy Rust. Fakt, że pojawiają się
 w nowych językach ogólnego zastosowania, świadczy o ich atrakcyjności z punktu 
-widzenia programisty. Mimo to nieznane są żadne popularne języki ML korzystającego
-z tego rozwiązania. Jedynym z celów tej pracy jest wprowadzenie klas typów do 
-prostego języka funkcyjnego, bazującego na podstawowych cechach rodziny ML. W tym 
-celu stworzyłem kompilator języka $Lang$, wymyślonego na potrzeby tej pracy.
+widzenia programisty. 
+% Mimo to nieznane są żadne popularne języki ML korzystającego
+% z tego rozwiązania. 
+% Jedynym z celów tej pracy jest wprowadzenie klas typów do 
+% prostego języka funkcyjnego, bazującego na podstawowych cechach rodziny ML. W tym 
+% celu stworzyłem kompilator języka $Lang$, wymyślonego na potrzeby tej pracy.
 
-\section{Efektywna implementacja języka funkcyjnego}
-Drugim celem tej pracy jest implementacja głównych cech języków funkcyjnych w
-możliwie optymalny sposób. Skupię się na optymalizacji czasu wykonania programu,
- kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać do kodu 
-maszynowego, gdyż daje to lepszą wydajność otrzymanego programu. Stanowi to też 
-większe wyzwanie przy kompilacji języka funkcyjnego, niż napisanie interpretera, 
-ze względu na jego wysoką poziomowość. Oczywiście, trudnym będzie uzyskanie 
-podobnej lub lepszej wydajności niż popularne kompilatory języków funkcyjnych,
-gdyż te stosują dużą liczbę skomplikowanych optymalizacji. Skupię się nad tym, 
-aby moja implementacja prostego języka funkcyjnego, była porównywalna wydajnością 
-z popularnymi rozwiązaniami. Omówię i porównam sposoby w jaki zdecydowałem się 
-zaimplementować podstawowe cechy języków funkcyjnych, a w szczególności: częściową 
-aplikację, zagnieżdżone funkcje, polimorfizm i klasy typów. Moje rozwiązania będą 
-bazować na pomysłach z różnych języków programowania, w tym imperatywnych. Wspomniane 
-cechy omówię dokładniej, ponieważ odbiegają od rozwiązań stosowanych w popularnych językach
-funkcyjnych.
-
-\section{Infrastruktura LLVM}
-% TODO: 
-% 1. Co to jest? 
-
-% 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
-
-% 3. Jak działa kompilowanie do LLVM? 
-
-% 4. Krótki opis high-ollvm 
-
-W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
-niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. Jest to zbiór 
-narzędzi i bibliotek wykorzystywanych przez wiele współczesnych kompilatorów. LLVM dostarcza 
-kompilator LLVM IR, który jest niskopoziomowym językiem stworzonym na potrzeby pisania 
-kompilatorów. Przykładowy program napisany w LLVM IR:
-
-% \lstset{language=llvm}
-\begin{lstlisting}[frame=single]
-@.str = internal constant [14 x i8] c"hello, world\0A\00"
-
-declare i32 @printf(i8*, ...)
-
-define i32 @main(i32 %argc, i8** %argv) nounwind {
-entry:
-    %tmp1 = getelementptr [14 x i8], [14 x i8]* @.str, i32 0, i32 0
-    %tmp2 = call i32 (i8*, ...) @printf( i8* %tmp1 ) nounwind
-    ret i32 0
-}
-\end{lstlisting}
-
-LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych globalnych, 
-podstawowych bloków, przypisań oraz wywołań funkcji. Podstawowe bloki kodu jak i funkcje nie 
-mogą być zagnieżdżone. 
-
-W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
-udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. System LLVM 
-jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) na 
-assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej (etykiety) 
-można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
-stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu maszynowego. 
-
-TODO: 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
-
-\section{Klasy typów}
+% \subsection{Klasy typów}
 
 Jako pierwsze pojawiły się w języku Haskell. Początkowo zostały użyte w celu 
 umożliwienia przeładowania operatorów arytmetycznych i równości. Od tego czasu, 
@@ -216,6 +159,72 @@ instance Show Bool where
   _ == _ = False
   l /= r = not (l == r)
 \end{lstlisting}
+
+\section{Efektywna implementacja języka funkcyjnego}
+
+Drugim celem tej pracy jest implementacja głównych cech języków funkcyjnych w
+możliwie optymalny sposób. Skupię się na optymalizacji czasu wykonania 
+programu, kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać 
+do kodu maszynowego, gdyż daje to lepszą wydajność otrzymanego programu. 
+Stanowi to jednak duże wyzwanie przy kompilacji języka funkcyjnego, ze względu 
+na konieczność translacji abstrakcyjnych i wysokopoziomowych konstrukcji do 
+języka niskiego poziomu. Uzyskanie 
+podobnej lub lepszej wydajności niż popularne kompilatory języków funkcyjnych
+jest trudne,
+gdyż te stosują dużą liczbę skomplikowanych optymalizacji. Skupię się nad tym, 
+aby moja implementacja prostego języka funkcyjnego, była porównywalna 
+wydajnością 
+z popularnymi rozwiązaniami, bez dodatkowych optymalizacji. Omówię i porównam 
+sposoby w jaki zdecydowałem się 
+zaimplementować:
+% podstawowe cechy języków funkcyjnych, a w szczególności 
+częściową aplikację, zagnieżdżone funkcje, polimorfizm i klasy typów. Moje 
+rozwiązania będą bazować na pomysłach z różnych języków programowania, w tym 
+imperatywnych. Wspomniane cechy omówię dokładniej, ponieważ odbiegają od 
+rozwiązań stosowanych w popularnych językach funkcyjnych.
+
+\section{Infrastruktura LLVM}
+% TODO: 
+% 1. Co to jest? 
+
+% 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
+
+% 3. Jak działa kompilowanie do LLVM? 
+
+% 4. Krótki opis high-ollvm 
+
+W celu uproszczeniu konstrukcji nowego kompilatora i ułatwienia pracy z generowaniem 
+niskopoziomowego kodu, zdecydowałem się skorzystać z infrastruktury LLVM. Jest to zbiór 
+narzędzi i bibliotek wykorzystywanych przez wiele współczesnych kompilatorów. LLVM dostarcza 
+kompilator LLVM IR, który jest niskopoziomowym językiem stworzonym na potrzeby pisania 
+kompilatorów. Przykładowy program napisany w LLVM IR:
+
+% \lstset{language=llvm}
+\begin{lstlisting}[frame=single]
+@.str = internal constant [14 x i8] c"hello, world\0A\00"
+
+declare i32 @printf(i8*, ...)
+
+define i32 @main(i32 %argc, i8** %argv) nounwind {
+entry:
+    %tmp1 = getelementptr [14 x i8], [14 x i8]* @.str, i32 0, i32 0
+    %tmp2 = call i32 (i8*, ...) @printf( i8* %tmp1 ) nounwind
+    ret i32 0
+}
+\end{lstlisting}
+
+LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych globalnych, 
+podstawowych bloków, przypisań oraz wywołań funkcji. Podstawowe bloki kodu jak i funkcje nie 
+mogą być zagnieżdżone. 
+
+W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
+udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. System LLVM 
+jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) na 
+assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej (etykiety) 
+można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
+stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu maszynowego. 
+
+TODO: 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
 
 \section{Let-polimorfizm}
 
