@@ -195,16 +195,16 @@ typu i klasy może istnieć co najwyżej jedna instancja.
 
 % \lstset{language=llvm}
 \begin{lstlisting}[frame=single, caption=Przykładowa definicja klasy typów.]
-class Eq a where
+class Show a where
   (==) :: a -> a -> Bool
   (/=) :: a -> a -> Bool
 \end{lstlisting}
 
-W powyższym przykładzie definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
-~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Eq$, jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa instancja dla typu $Bool$, mogłaby wyglądać następująco:
+W powyższym przykładzie definiujemy klasę $Show$ zawierającą dwa operatory:~$==$ 
+~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Show$, jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa instancja dla typu $Bool$, mogłaby wyglądać następująco:
 
-\begin{lstlisting}[frame=single, caption=Instancja klasy $Eq$ dla typu $Bool$.]
-instance Eq Bool where
+\begin{lstlisting}[frame=single, caption=Instancja klasy $Show$ dla typu $Bool$.]
+instance Show Bool where
   True == True = True 
   False == False = True 
   _ == _ = False
@@ -989,8 +989,7 @@ kompilator.
 \begin{lstlisting}[frame=single, caption={Polimorficzna funkcja w 
 \textit{C++} z użyciem szablonów (ang. template)}]
 template<class Type1, class Type2>
-void foo(Type1 t1, Type2 t2)
-{
+void foo(Type1 t1, Type2 t2) {
     // ...
 }
 
@@ -1054,11 +1053,104 @@ TODO: O optymalizacji z union finda.
 
 \section{Klasy typów}
 
-1. Czym są? Po co? 
+% 1. Czym są? Po co? 
 
-2. Sposoby implementowania, porównanie do pracy TODO
+Najpopularniejszą implementacją klas typów, jest ta zastosowana w Haskellu. 
+Jej idea polega na przekazywaniu słownika (rekordu) z implementacjami funkcji 
+z danej instancji klasy (ang. dictionary passing). Przedstawię w jaki sposób 
+działa ta implementacja, porównując kod używający klas typów w Haskellu i 
+odpowiadający mu kod w OCamlu (w którym nie ma klas typów).
 
-3. Jak zostały zaimplementowane, dlaczego tak
+\noindent\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Deklaracja klasy typów w Haskellu, frame=tlrb]{Name}
+class Show a where 
+    show :: a -> String
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Deklracja odpowiednika klasy typów w OCamlu z
+użyciem metody przekazywania słownika, frame=tlrb]{Name}
+type 'a show = { 
+    show : 'a -> string 
+} 
+\end{lstlisting}
+\end{minipage}
+
+W przypadku Haskella zdefiniowaliśmy klasę typów \textit{Show} z metodą 
+\textit{show} o typie $a \rightarrow String$. W przypadku \textit
+{OCamla} musieliśmy stworzyć polimorficzny rekord z jednym polem \textit{show}.
+Instancja tego rekordu będzie instancją tej klasy dla danego typu. 
+
+Na poniższym przykładzie w OCamlu, obie instancje \textit{Show}, zwracają 
+rekord z odpowiednimi implementacjami zapisanymi w polach rekordu. 
+
+\noindent\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Instancja klasy w Haskellu, frame=tlrb]{Name}
+instance Show String where
+    show s = "'" ++ s ++ "'"
+
+instance Show Bool where
+    show True = "true"
+    show False = "false" 
+
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
+let show_string = {
+    show = fun s -> "'" ^ s ^ "'"
+}
+
+let show_bool = {
+    show = function 
+           | false -> "false"
+           | true  -> "true"
+}
+
+\end{lstlisting}
+\end{minipage}
+
+Funkcja, która korzysta z typu który jest instancją klasy, musi przyjmować 
+dodatkowy argument będą słownikiem z implementacją metod klasy. 
+
+\noindent\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Instancja klasy w Haskellu, frame=tlrb]{Name}
+printArg :: Show a => a -> IO ()
+printArg arg = 
+    putStrLn ("arg: " ++ show arg)
+
+main1 = printArg True
+main2 = printArg "Hello World"
+\end{lstlisting}
+\end{minipage}\hfill
+\begin{minipage}{.45\textwidth}
+\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
+let printArg show_instance arg = 
+    show_instance.show arg
+    |> printf "arg: %s" 
+
+let main1 = 
+    printArg show_bool true 
+
+let main2 = 
+    printArg show_string "Hello"
+\end{lstlisting}
+\end{minipage}
+
+Zasadnicza różnica między symulowaniem klas typów w języku ich nie 
+wspierającym, a użyciem ich w Haskellu, jest to, że to do użytkownika należy 
+udowodnienie istnienia instancji klasy dla danego typu.
+
+TODO: O tym że to może być bardziej uciążliwe \newline
+jak są klasy bazowe: 
+http://okmij.org/ftp/Computation/typeclass.html
+
+Metoda przekazywania słownika nie niesie ze sobą dużego narzutu na czas 
+kompilacji i wykonywania programu. Co prawda wymaga 
+
+% 2. Sposoby implementowania, porównanie do pracy TODO
+
+% 3. Jak zostały zaimplementowane, dlaczego tak
 
 \chapter{Podsumowanie}
 
