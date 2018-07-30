@@ -103,8 +103,8 @@ kompromisy na które się zdecydowałem.
 Większość języków z rodziny ML w celu lepszego ustrukturyzowania
 programu stosuje system modułów. Pozwala on na podzielenie programu na 
 niezależne~od~siebie funkcjonalności.
-Klasy typów, których głównym cele jest wprowadzenie 
-ad-hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
+Klasy typów, których głównym celem jest wprowadzenie 
+ad--hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
 \cite{modules_vs_typeclasses}. 
 Są obecne w językach takich jak Haskell, Scala czy Rust. Fakt, że pojawiają się
 w nowych językach ogólnego zastosowania, świadczy o ich atrakcyjności z punktu 
@@ -120,22 +120,23 @@ widzenia programisty.
 Jako pierwsze pojawiły się w języku Haskell. Początkowo zostały użyte w celu 
 umożliwienia przeładowania operatorów arytmetycznych i równości. Od tego czasu, 
 znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
-Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji, definiowania 
+Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji i definiowania 
 funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
 do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
-$cechy$ (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
+\textit{cechy} (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
 nie pozwalają na implementacje polimorfizmu wyższych rzędów \cite{no_hkt_in_rust} (ang. 
 Higher-kinder polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
 Haskella nie definiuje nowego typu, jedynie pozwala na ograniczenie typu do 
-instancji klasy. $Cecha$ z Rusta może być użyta jak zwykły typ, przykładowo 
+instancji klasy. \textit{Cecha} z Rusta może być użyta jak zwykły typ, przykładowo 
 można stworzyć listę zawierające obiekty, które są różnymi instancjami 
-(implementacjami) $cechy$. W Haskellu istnieją także rozszerzenia, które 
+(implementacjami) \textit{cechy}. W Haskellu istnieją także rozszerzenia, które 
 pozwalają na definicje klas z wieloma parametrami. 
 
 % Jakich językach i czym się różnią
 
-Istnieje wiele wariantów klas typów oraz rozwiązań do nich podobnych, dlatego w swoim kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje, 
-umożliwiającą $ad-hoc$ polimorfizm.
+Istnieje wiele wariantów klas typów oraz rozwiązań do nich podobnych, dlatego w swoim 
+kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje z jednym 
+parametrem, wprowadzając ad--hoc polimorfizm do języka.
 
 Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella. 
 W celu stworzenia klasy typów $C$ dla typu ogólnego $a$, należy 
@@ -150,7 +151,9 @@ class Show a where
 \end{lstlisting}
 
 W powyższym przykładzie definiujemy klasę $Show$ zawierającą dwa operatory:~$==$ 
-~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Show$, jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa instancja dla typu $Bool$, mogłaby wyglądać następująco:
+~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Show$, 
+jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa 
+instancja dla typu $Bool$, mogłaby wyglądać następująco:
 
 \begin{lstlisting}[frame=single, caption=Instancja klasy $Show$ dla typu $Bool$.]
 instance Show Bool where
@@ -179,9 +182,10 @@ sposoby w jaki zdecydowałem się
 zaimplementować:
 % podstawowe cechy języków funkcyjnych, a w szczególności 
 częściową aplikację, zagnieżdżone funkcje, polimorfizm i klasy typów. Moje 
-rozwiązania będą bazować na pomysłach z różnych języków programowania, w tym 
-imperatywnych. Wspomniane cechy omówię dokładniej, ponieważ odbiegają od 
-rozwiązań stosowanych w popularnych językach funkcyjnych.
+rozwiązania bazują na pomysłach z różnych języków programowania, w tym 
+imperatywnych. 
+% Wspomniane cechy omówię dokładniej, ponieważ odbiegają od 
+% rozwiązań stosowanych w popularnych językach funkcyjnych.
 
 \section{Infrastruktura LLVM}
 % TODO: 
@@ -219,12 +223,16 @@ mogą być zagnieżdżone.
 
 W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
 udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. System LLVM 
-jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) na 
-assembler. Cały kod jest w postaci Single Static Assignment, do jednej zmiennej (etykiety) 
-można przypisać tylko jedno wyrażenie. Dzięki takiej formie kodu pośredniego, LLVM jest w 
-stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu maszynowego. 
+jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) 
+na assembler. Cały kod jest w postaci Single Static Assignment. Oznacza to że, 
+do jednej zmiennej (etykiety) można przypisać tylko jedno wyrażenie. 
+Dzięki takiej formie kodu pośredniego, LLVM jest w 
+stanie przeprowadzić na nim pewne optymalizacje, przed wygenerowaniem kodu 
+maszynowego. 
 
-TODO: 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
+% \subsection{Alternatywy}
+
+% TODO: 2. Dlaczego LLVM i jakie są inne opcje (C, asembler)? 
 
 \section{Let-polimorfizm}
 
@@ -236,15 +244,15 @@ z użyciem podanej funkcji mapującej, także nie zależy od zawartości listy. 
 oznacza to jednak, że podana funkcja mapująca i lista mogą mieć dowolny typ. 
 Funkcja mapująca $(a \rightarrow b)$ musi przyjmować taki sam typ, jaki znajduje się w liście. W statycznie typowanym języku, kompilator, musi mieć 
 pewność, że taki warunek zachodzi. Aby uniknąć powielania kodu, w większości języków funkcyjnych 
-występuje \textit{let-polimorfizm}. 
+występuje \textit{let--polimorfizm}. 
 
-Dzięki \textit{let-polimorfizmowi}, przy definicji funkcji, dany argument może 
-mieć \newline ogólny typ, jeśli później w ciele tej funkcji, nie zostanie on
-ukonkretniony. 
-Wprowadzenie \textit{let-polimorfizmu} do języka, wymaga nie tylko jego obsługi 
+Dzięki \textit{let--polimorfizmowi}, w definicji funkcji, dany argument może 
+mieć ogólny typ, jeśli nie został on ukonkretniony w jej ciele.
+Wprowadzenie \textit{let--polimorfizmu} do języka, wymaga nie tylko jego obsługi 
 w procesie generowania kodu (kompilacji), ale też przy etapie inferencji typów.
 Każdy inferowany typ musi być najbardziej ogólny. W swoim kompilatorze 
-zaimplementowałem oba te elementy. Omówię i porównam swoje rozwiązanie z rozwiązaniami występującymi w innych językach.
+zaimplementowałem oba te elementy. 
+% Omówię i porównam swoje rozwiązanie z rozwiązaniami występującymi w innych językach.
 
 % TODO: Można rozszerzyć inferencje typów o let polimorfizm
 
@@ -305,13 +313,13 @@ kompilatorze, zaprezentuję w~rozdziale poświęconym jego implementacji.
 \chapter{Język $lang$}
 
 \section{Inspiracja}
-Składnia języka $lang$ jest w większości zapożyczona z języka $F\#$, należącego
+Składnia języka $lang$ jest w większości zapożyczona z języka $\verb!F#!$, należącego
 do rodziny ML. Dzięki zastosowaniu składni czułej na wcięcia, która eliminuje 
 konieczność użycia wielu słów kluczowych, jest jednym z  prostszych języków z 
 tej rodziny. Przy tworzeniu nowego języka funkcyjnego, kierowałem się głównie 
-jego prostotą. Poza zapożyczeniem składni $F\#$ dla podstawowych wyrażeń, 
+jego prostotą. Poza zapożyczeniem składni $\verb!F#!$ dla podstawowych wyrażeń, 
 funkcji i typów rozszerzyłem ją o wyrażenia koniecznie do realizacji klas typów
-i ich instancji.
+i ich instancji. Ich składnia została zaczerpnięta z Haskella.
 % Jedną z najpopularniejszych funkcjonalności, zasugerowaną przez użytkowników, są
 % typy klas \cite{fslang_typeclass}. 
 % To było jedną inspiracją do całego projektu 
@@ -321,27 +329,23 @@ i ich instancji.
 
 \subsection{Wyrażenia warunkowe}
 
-Składnia wyrażeń warunkowych jest bardzo podobna do tej w $F\#$. W języku $Lang$
-istnieją jednak pewne uproszczenia względem $F\#$. 
+Składnia wyrażeń warunkowych jest bardzo podobna do tej w $\verb!F#!$. W języku $Lang$
+istnieją jednak pewne uproszczenia względem $\verb!F#!$. 
 Warunek musi być prostym wyrażeniem zawierającym operacje arytmetyczne i logiczne
-oraz wywołania funkcji. Nie może zawierać przykładowo: wielolinijkowych wyrażeń
-$if$ i wyrażeń $let$. Ciało warunku może być złożonym wyrażeniem, takim jak 
+lub wywołania funkcji. Nie może zawierać przykładowo: wielolinijkowych wyrażeń
+\textit{if} i wyrażeń \textit{let}. Ciało warunku może być złożonym wyrażeniem, takim jak 
 ciało funkcji, o ile występuje w nowej lini i jest wcięte bardziej niż 
-token $if$. TODO: Więcej o wcięciach
+token \textit{if}. 
+% TODO: Więcej o wcięciach
 Poniższa gramatyka, prezentują zbliżoną formę do rzeczywistej składni języka.
 Dokładny opis gramatyki znajduje się w pliku 
 \path{lang-compiler/compiler/parsing/grammar.mly}. Jest bardziej skomplikowany
-ze względu na rozpoznawanie bloków kodu z takim samym poziomem wcięcia na
-poziomie parsera. Lepszym pod względem czytelności, jest wykonanie tej 
-czynności na etapie lexera, tak jak to ma miejsce w $F\#$. Dokładniejszy opis 
-sposobu parsowania składni bazującej na wcięciach, w tym i innych językach,
-znajduje się w rozdziale TODO: rozdział. 
+ze względu na rozpoznawanie wciętych bloków kodu na
+poziomie parsera. Lepszym pod względem czytelności gramatyki, 
+jest wykonanie tej czynności na etapie lexera, tak jak to ma miejsce w $\verb!F#!$. Dokładniejszy opis 
+sposobu parsowania składni bazującej na wcięciach znajduje się w rozdziale \ref{wciecia_omowienie}. 
 
-Dla prostoty zapisu przyjąłem że:
-\begin{enumerate}
-  \item * to wystąpienie poprzedzającego wyrażenia zero lub więcej razy,
-  \item + to wystąpienie poprzedzającego wyrażenia jeden lub więcej razy.
-\end{enumerate}
+Poniższa gramatyka jest w notacji \textit{EBNF}.
 
 \begin{bnf*}
   \bnfprod{simple-if-exp}
@@ -366,6 +370,27 @@ Dla prostoty zapisu przyjąłem że:
     {\bnftd{nowa linia}}
 \end{bnf*}
 
+\begin{lstlisting}[frame=single, caption=Przykłady wyrażeń warunkowych.]
+let isZero x = if x = 0 then true else false
+
+let rec factorial x = 
+    if x = 0 
+    then 1 
+    else x * factorial (x - 1)
+
+let rec pow x n = 
+    if (n = 0) && (x = 0)
+    then 
+      0 
+    elif n = 0 
+    then 
+      one ()
+    elif n = 1 
+    then x
+    else 
+      mult x (pow x (n - 1))
+\end{lstlisting}
+
 \subsection{Wyrażenia arytmetyczne i logiczne}
 Wyrażenia arytmetyczne i logiczne mają taką samą składnię jak w pozostałych
 językach z rodziny ML.
@@ -385,27 +410,61 @@ językach z rodziny ML.
     }\\
 \end{bnf*}
 
+
+\begin{lstlisting}[frame=single, caption=Przykłady wyrażeń arytmetycznych i 
+logicznych.]
+let isZero x = x = 0 
+let add5 x = x + 5
+let mod2 x = x - ((x / 2) * 2)
+let alwaysTrue x = (mod2 x = 0) || (mod2 (x + 1) = 0)
+\end{lstlisting}
+
 \section{Deklaracja funkcji (wyrażenie let)}
 
-Argumenty funkcji muszą być w tym samym wierszu co słowo $let$. Po znaku 
+Argumenty funkcji muszą być w tym samym wierszu co słowo \textit{let}. Po znaku 
 $=$, ciało może być złożonym wyrażeniem o ile zaczyna się w następnym wierszu i 
-jest w późniejszej kolumnie niż słowo $let$. Wyrażenie $let$ może być 
-zdefiniowane w jednej linii, o ile jego ciało jest pojedyńczym wyrażeniem prostym.
+jest w późniejszej kolumnie niż słowo \textit{let}. Wyrażenie \textit{let} może być 
+zdefiniowane w jednej linii, o ile jego ciało jest pojedynczym wyrażeniem prostym.
+Standardowo dla języków z rodziny ML, należy explicite zaznaczyć słowem 
+kluczowym \textit{rec} jeśli funkcja jest rekurencyjna. Dodatkowo, do argumentów
+funkcji jak i jej wyniku można dodać adnotację typu.
 
-TODO: Let z argumentami z adnotacjami.
-TODO: Rekurencja
+\begin{lstlisting}[frame=single, caption=Deklaracja funkcji z anotacjami.]
+let compose (f : 'b -> 'c) (g : 'a -> b) (x : 'a) : 'c = f (g x)
 
-\begin{bnf*}
-  \bnfprod{let-exp}
-    { \bnfts{let} \bnfpn{identifier}+ \bnfts{=} \bnfpn{simple-exp} 
-      \bnfor \bnfts{let} \bnfpn{identifier}+ \bnfts{=} 
-      \bnfpn { newline } \bnfpn{body-exp}
-    }\\
-\end{bnf*}
+let printInt (x : int) : () = ll_putint x (* funkcja wewnętrzna *)
+
+let _ = 
+    printnInt (120 * 120)
+    printnInt (compose square factorial 5)
+\end{lstlisting}
+
+
+% TODO: Let z argumentami z adnotacjami.
+% TODO: Rekurencja
+
+% \begin{bnf*}
+%   \bnfprod{let-exp}
+%     { \bnfts{let} \bnfpn{identifier}+ \bnfts{=} \bnfpn{simple-exp} 
+%       \bnfor \bnfts{let} \bnfpn{identifier}+ \bnfts{=} 
+%       \bnfpn { newline } \bnfpn{body-exp}
+%     }\\
+% \end{bnf*}
 
 \subsection{Wzajemnie rekurencyjne wyrażenia let}
 
-TODO: 
+Możliwe jest także zdefiniowanie globalnych (ang. top level) funkcji wzajemnie 
+rekurencyjnych z użyciem słowa \textit{and}. Deklaracja pierwszej funkcji 
+musi zaczynać się od \textit{let rec}, a kolejne od \textit{and}.
+
+\begin{lstlisting}[frame=single, caption=Funkcje wzajemnie rekurencyjne.]
+let rec even x = 
+    if x = 0
+    then 0
+    else odd (x - 1)
+
+and odd x = 1 + (even (x - 1))
+\end{lstlisting}
 
 % \begin{grammar}
 % \begin{lstlisting}
@@ -433,6 +492,16 @@ TODO:
     }\\
 \end{bnf*}
 
+\begin{lstlisting}[frame=single, caption=Definicja rekordu.]
+type simple  = { a : int; b : int    }
+type complex = { n : int; s : simple }
+
+type point3d = 
+  { x : int 
+    y : int; z : int 
+  }
+\end{lstlisting}
+
 \subsection{Literał rekordu}
 
 Literał może być zdefiniowany w jednym lub wielu wierszach. W przypadku 
@@ -453,11 +522,22 @@ samej kolumnie.
   }\\
 \end{bnf*}
 
+\begin{lstlisting}[frame=single, caption=Literał rekordu.]
+let s : simple = { a = 0; b = 1}
+
+let p3 : point3 = 
+  { x = 10
+    y = 1000000 
+    z = -10 
+  }
+\end{lstlisting}
+
 \subsection{Uaktualnianie rekordu}
 
-Rekordy w $Langu$, podobnie jak rekordy w $F\#$ i OCamlu, są trwałe. 
-Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu. Dlatego to
-wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
+Rekordy w $Langu$, podobnie jak rekordy w $\verb!F#!$ i OCamlu, są trwałe. 
+Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu. 
+% Dlatego to
+% wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
 
 \begin{bnf*}
 \bnfprod{record-update}
@@ -468,9 +548,18 @@ wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
   { \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
     \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
     \bnfts{;}
-    TODO: samo pole 
   }\\
 \end{bnf*}
+% TODO: samo pole 
+
+\begin{lstlisting}[frame=single, caption=Uaktualnianie rekordu.]
+let s : simple = { a = 0; b = 1}
+
+let add (curr : complex) : simple = 
+    {  curr.s with a = curr.s.b
+                    b = curr.s.a + curr.s.b 
+    }
+\end{lstlisting}
 
 \section{Klasy typów}
 
@@ -479,18 +568,64 @@ zdecydowałem się zapożyczyć z Haskella.
 
 \subsection{Deklaracja klasy}
 
+Deklaracja klasy została zaadoptowana z Haskella.
+
+\begin{lstlisting}[frame=single, caption=Deklaracja klasy.]
+class Print 'a where 
+    print : 'a -> ()
+  
+class Pow 'a where 
+    one  : () -> 'a
+    mult : 'a -> 'a -> 'a
+\end{lstlisting}
+
 \subsection{Deklaracja instancji}
+
+\begin{lstlisting}[frame=single, caption=Instancja klasy.]
+instance Pow int where
+    let one () = 1 
+    let mult x y = x * y
+
+instance Print int where 
+    let print x = printInt x 
+
+instance Print Vec where 
+    let print (v : Vec) = 
+        printInt v.x 
+        printSpace ()
+        printInt v.y
+\end{lstlisting}
 
 \section{Moduły}
 
-Moduły w $Langu$ spełniają takie zadanie jak te w $F\#$ -- służą jako 
+Moduły w $Langu$ spełniają takie zadanie jak te w $\verb!F#!$ -- służą jako 
 przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem 
 systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
 Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
 modułów oraz deklaracje funkcji zewnętrznych. Nazwa modułu musi się zaczynać 
 z wielkiej litery. 
 
-TODO: Gramatyka modułu
+\begin{lstlisting}[frame=single, caption=Tworzenie i importowanie modułów.]
+module Prelude = 
+    module Internal = 
+        external ll_putint      : int -> () 
+        external ll_print_bool  : bool -> () 
+        external ll_print_line  : ()  -> () 
+        external ll_print_space : ()  -> () 
+
+    let printInt x = Internal.ll_putint x
+
+    open Internal 
+    
+    let printNl = ll_print_line
+    let printSpace = ll_print_space
+    let printBool b = ll_print_bool b
+
+open Prelude
+open Prelude.Internal
+\end{lstlisting}
+
+% TODO: Gramatyka modułu
 
 \section{Tablice}
 
@@ -500,10 +635,21 @@ Zmiana i odczytanie komórki tablicy, bądź utworzenie niezainicjalizowanej tab
 langu są reprezentowane tak samo jak języku w $C$, jako spójny ciąg w pamięci.
 
 Elementami literału tablicy, mogą być proste wyrażenia, oddzielone średnikiem. 
-Podobnie jak w \newline $OCamlu$ i $F\#$ tablica zaczyna się od symbolu $[|$, a kończy symbolem $|]$.
+Podobnie jak w $OCamlu$ i $\verb!F#!$ tablica zaczyna się od symbolu~$[|$, a kończy symbolem~$|]$.
 
 \textbf{Uwaga.} Dla wielowierszowego literału tablicy, symbol rozpoczynający 
 $[|$ i kończący $|]$, muszą być w tej samej kolumnie.
+
+
+\begin{lstlisting}[frame=single, caption=Tablice.]
+let arr : int array = [| 1; 2; 0 + (6 / 2); add 1 3|]
+
+let multiLineArr : int array = 
+  [|1; 2;
+    0 + (6 / 2)
+    add 1 3
+  |]
+\end{lstlisting}
 
 \section{Wołanie funkcji z $C$}
 
@@ -511,9 +657,15 @@ Mała część funkcjonalności języka została zaimplementowana z użyciem
 zewnętrznych funkcji w $C$ (wypisywanie oraz operacje na tablicy). Dlatego 
 koniecznym było dołożenie wyrażeń pozwalających zadeklarować zewnętrzny symbol 
 wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Typy 
-$Langa$ są dosłownie tłumaczone na typy w $C$, z wyjątkiem typu $unit$, który jest zamieniany na $bool$ (o rozmiarze jeden bajt).
+$Langa$ są dosłownie tłumaczone na typy w $C$, z wyjątkiem typu $unit$, który jest 
+zamieniany na $bool$ (o rozmiarze jeden bajt).
 
-TODO: Gramatyka external
+
+\begin{lstlisting}[frame=single, caption=Interfejs zewnętrzny.]
+external set_array_elem : int array -> int -> int -> () 
+\end{lstlisting}
+
+% TODO: Gramatyka external
 
 % 1. Opis, szczegóły składni, (przykłady: każda cecha języka i krótki przykład)
 
@@ -548,7 +700,7 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   \begin{enumerate}
     \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka $Lang$ (na późniejszym etapie, wyrażenia będą miał typ 
     z \textit{LLVM IR}). 
-    \item Eliminuje zagnieżdżone wyrażenia $let$.
+    \item Eliminuje zagnieżdżone wyrażenia \textit{let}.
     \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
     ich w pełni kwalifikowanych nazw (ang. fully qualified name).
   \end{enumerate}
@@ -575,13 +727,13 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 Do przeprowadzania analizy leksykalnej skorzystałem z biblioteki 
 \textit{sedlex}. Jest to generator lekserów dla języka OCaml.
 
-\subsection{Analiza wcięć}
+\subsection{Analiza wcięć} \label{wciecia_omowienie}
  
 Istnieje wiele języków programowania, realizujących ideę składni czułej na 
-wcięcia. Sposób w jaki działa to w $F\#$ jest jednym z bardziej zaawansowanych,
+wcięcia. Sposób w jaki działa to w $\verb!F#!$ jest jednym z bardziej zaawansowanych,
 bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp., 
 bez użycia znaków przełamania wiersza bądź słów kluczowych znanych 
-z języka OCaml (\textit{begin}, \textit{end}, \textit{;}). W $F\#$ istnieje 
+z języka OCaml (\textit{begin}, \textit{end}, \textit{;}). W $\verb!F#!$ istnieje 
 także możliwość mieszania tych słów kluczowych z wcięciami. 
 
 Analiza wcięć w $Langu$ jest zbliżona do tej w \textit{Pythonie}

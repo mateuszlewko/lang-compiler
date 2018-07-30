@@ -13,6 +13,11 @@ open Prelude
 type simple  = { a : int; b : int    }
 type complex = { n : int; s : simple }
 
+type point3d = 
+  { x : int 
+    y : int; z : int 
+  }
+
 let rec next_fib (curr : complex) n : complex = 
     let succ_fib () : complex =
         let s : simple = 
