@@ -952,8 +952,9 @@ może być sprawdzone w czasie działania programu dzięki polu
 \textit{left\_args}) można przekazać wszystkie argumenty znajdujące sie w 
 środowisku. Wtedy typ zrzutowanych funkcji wskazywanych przez \textit{fn} byłby 
 taki sam, niezależnie od tego ile dotychczas argumentów zostało zaaplikowanych.
-Jednak, argumenty w środowisku są zapamiętane przez wartość w tablicy, \textit
-{args} a ich reprezentacja nie jest jednorodna, co uniemożliwia ich przekazanie.
+Jednak, argumenty w środowisku są zapamiętane przez wartość w tablicy \textit
+{args}, a ich reprezentacja nie jest jednorodna (mogą mieć różny rozmiar), 
+co uniemożliwia ich przekazanie.
 Jednorodną reprezentacje wszystkich argumentów można uzyskać poprzez 
 reprezentowanie ich przez wskaźnik, ale takiego rozwiązania chciałem uniknąć.
 Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych 
@@ -1018,7 +1019,7 @@ równe $0$). Taki wynik mógł powstać w funkcji wołanej w drugim przypadku.
 
 1. Push/enter vs eval/apply
 
-Porównanie z pracą "Making a fast curry: ..."
+TODO: Porównanie z pracą "Making a fast curry: ..."
 
 \section{Zagnieżdżone funkcje}
 
@@ -1150,8 +1151,8 @@ funkcyjnych).
 Do języków które stosują powyższą metodę należą m. in. Java i Haskell.
 W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
 leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
-ich wartość (ang. unboxed types), takie jak $\verb!#Int!$ i 
-$\verb!#Double!$. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
+ich wartość (ang. unboxed types), takie jak $\verb!Int#!$ i 
+$\verb!Double#!$. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
 W fazie optymalizacji, kompilator \textit{GHC} może zamienić typ boxed 
 na unboxed, ale nie jest to gwarantowane. Jako że kierowałem się wydajnością
 przy implementacji kompilatora \textit{Langa}, to rozwiązanie nie jest 
