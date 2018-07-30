@@ -688,13 +688,17 @@ external set_array_elem : int array -> int -> int -> ()
 Cały proces kompilacji, od momentu wczytania pliku z kodem źródłowym, do 
 wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 \begin{enumerate}
-  \item Analiza leksykalna, w efekcie której otrzymujemy ciąg tokenów.
-  TODO: w jakim pliku.
+  \item Analiza leksykalna, w efekcie której otrzymujemy ciąg tokenów. 
+  Implementacja w pliku: 
+  \path{lang-compiler/compiler/parsing/lexer.cppo.sedlex.ml}
+
   \item Otrzymany ciąg jest następnie poddany analizie składniowej 
   (ang. parsing), która zgodnie z podaną gramatyką generuje \textit{drzewo 
   składni abstrakcyjnej (ang. abstract syntax tree)}. Węzły tego drzewa 
   zawierają jedno z wyrażeń, lecz nie posiadają informacji o typie tego
-  wyrażenia. TODO: W jakim pliku.
+  wyrażenia. Implementacja w pliku: \newline
+  \path{lang-compiler/compiler/parsing/grammar.mly}
+ 
   \item Następnie, wykonywana jest transformacja drzewa składni, która:
 
   \begin{enumerate}
@@ -704,15 +708,19 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
     \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
     ich w pełni kwalifikowanych nazw (ang. fully qualified name).
   \end{enumerate}
+  Implementacja w pliku: 
+  \path{lang-compiler/compiler/typed_ast.ml}
 
   \item Generowanie drzewa wyrażeń z LLVM IR. Jest to największy etap z całego 
   procesu kompilacji. Zamienia skomplikowane wyrażenia wysokopoziomowego języka
   na proste wyrażenia LLVM IR, które już łatwo mogą być przetłumaczone na 
   niskopoziomowe instrukcje.
+  Implementacja w pliku: 
+  \path{lang-compiler/compiler/codegen.ml}
 
   \item Konwersja drzewa wyrażeń LLVM IR na kod LLVM IR. Odbywa się to dzięki 
   interfejsowi programistycznemu (ang. api), udostępnionym przez oficjalną 
-  bibliotekę LLVM dla $OCamla$.
+  bibliotekę LLVM dla OCamla.
 
 \end{enumerate}
 
@@ -759,7 +767,7 @@ który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operato
 ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
 {ocamlyacc}. Całość gramatyki znajduje się w pliku 
 \path{lang-compiler/compiler/parsing/grammar.mly}. 
-TODO: Może coś o kontekstach w F\#
+% TODO: Może coś o kontekstach w F\#
 
 % \section{Generowanie kodu}
 \section{Częściowa aplikacja i funkcje}
@@ -779,10 +787,12 @@ pozwalałoby na przekazywanie typów o różnych rozmiarach przez wartość.
 Podzielmy wszystkie wywołania funkcji na dwie grupy. Wywołania do znanych 
 (ang. known call) i nie znanych funkcji (ang. unknown call). Znane funkcje to 
 takie, których definicję można łatwo wskazać na etapie kompilacji. 
-Na poniższym przykładzie, wywołana funkcja TODO: jest statycznie znana.
+Na poniższym przykładzie, wywołana funkcja \textit{double} jest statycznie znana.
 
-\begin{lstlisting}[frame=single, caption=Wywołanie statycznie znanej funkcji.]
-TODO: Known call example
+\begin{lstlisting}[frame=single, caption=Wywołanie statycznie znanej funkcji.] 
+let double x = x + x
+let main = 
+  printInt (double 4)
 \end{lstlisting}
 
 Przykładem nieznanych funkcji są funkcje, które: 
@@ -796,7 +806,18 @@ W tym przykładzie wywołane funkcje $a$, $b$ i $c$ są nieznane.
 
 \begin{lstlisting}[frame=single, caption=Przykłady statycznie 
 nieznanej funkcji.]
-TODO: Unknown call example
+let getIdentity () = 
+  let id x = x 
+  id
+
+let apply f x = f x
+
+let main b = 
+  let c = apply b 
+  let a = getIdentity ()
+  (a 1 = b 1) && (b 1 = c 1)
+
+let main (getIdentity ())
 \end{lstlisting}
 
 \subsubsection{Wywołanie funkcji znanej}
@@ -822,8 +843,8 @@ w definicji funkcji.
   nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym momencie 
   zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
 
-TODO: Coś o tym że funkcje / symbole trzymane są w środowisku z informacją 
-known / unknown.
+% TODO: Coś o tym że funkcje / symbole trzymane są w środowisku z informacją 
+% known / unknown.
 \end{enumerate}
 
 \subsubsection{Wywołanie funkcji nieznanej}
@@ -839,12 +860,13 @@ zawierającą następujące pola:
 \begin{itemize}
   \item wskaźnik na funkcje,
   \item wskaźnik na środowisko (zapamiętane argumenty), które jest pamiętane 
-  jako spójny ciąg bajów. TODO: Można też tablice wskaźników na argumenty i 
-  dlaczego tak nie zrobiłem
-  \item liczba bajtów w środowisku,
-  \item liczba obecnie zaaplikowanych argumentów
+  jako spójny ciąg bajów (dynamicznie zaalokowana tablica z $C$),
+  % TODO: Można też tablice wskaźników na argumenty i 
+  % dlaczego tak nie zrobiłem
   \item pozostała liczba argumentów koniecznych do zaaplikowana, aby należało 
-  wywołać wskazywaną funkcje.
+  wywołać wskazywaną funkcje,
+  \item arność funkcji,
+  \item liczba bajtów w środowisku.
 \end{itemize}
 
 Definicja takiej struktury w $C$ wyglądałaby następująco:
@@ -889,11 +911,11 @@ odpowiednie jej pola uaktualnione.
 % TODO: o dynamicznych przypadkach
 
 % TODO: wywoływanie funkcji, przypadki z przykładami
-TODO: Przykład w pseudokodzie? Może algorytm
+% TODO: Przykład w pseudokodzie? Może algorytm
 
 % TODO: Co to unknown i know call 
 
-TODO: generowanie każdej funkcji
+% TODO: generowanie każdej funkcji
 
 
 % 1. Dlaczego jest to nietrywialne
@@ -1027,7 +1049,7 @@ Niskopoziomowy język, taki jaki \textit{LLVM IR} nie obsługuje zagnieżdżonyc
 nim zadeklarować jedynie procedury na takim samym, najwyższym poziomie (ang. top level). 
 Konieczna jest transformacja wyrażeń \textit{let}, polegająca na przeniesieniu ich na najwyższy poziom. 
 Jeśli wykonamy taką transformacje na funkcji \textit{add}, bez dodatkowych zmian, to zmienna $x$,
-przesanie być dostępna z ciała funkcji.
+przestanie być dostępna z ciała funkcji.
 
 \begin{lstlisting}[frame=single, caption={Po przeniesieniu funkcji \textit{add} na najwyższy poziom}]
 let add y = x + y 
@@ -1035,7 +1057,7 @@ let make_adder x = add
 \end{lstlisting}
 
 Powyższy kod nie jest poprawnym programem w języku \textit{OCaml}, oraz 
-nie mógbły zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
+nie mógłby zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
 Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie w którym 
 wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
 Na poniższym przykładzie zostało przedstawione jak mogłaby wyglądać taka transformacja.
@@ -1128,8 +1150,8 @@ funkcyjnych).
 Do języków które stosują powyższą metodę należą m. in. Java i Haskell.
 W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
 leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
-ich wartość (ang. unboxed types), takie jak \textit{\#Int} i 
-\textit{\#Double}. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
+ich wartość (ang. unboxed types), takie jak $\verb!#Int!$ i 
+$\verb!#Double!$. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
 W fazie optymalizacji, kompilator \textit{GHC} może zamienić typ boxed 
 na unboxed, ale nie jest to gwarantowane. Jako że kierowałem się wydajnością
 przy implementacji kompilatora \textit{Langa}, to rozwiązanie nie jest 
@@ -1145,16 +1167,16 @@ arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość obiektó
 dłuższych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
 rozwiązania, nie zdecydowałem sie go zaimplementować.
 
-Języki takie jak \textit{C++} i \textit{Rust} oraz kompilator \textit{SMLa} 
+Języki takie jak \texttt{C++} i \textit{Rust} oraz kompilator \textit{SMLa} 
 MLton, wyspecjalizowują każdą polimorficzną funkcję przed fazą generowania 
 kodu. Ten proces nazywany jest monomorfizacją. Polega on na utworzenia osobnej 
 implementacji polimorficznej funkcji dla każdego konkretnego typu który został 
-podstawiony pod typ ogólny. W \textit{C++} użytkownik może explicite podać 
+podstawiony pod typ ogólny. W \texttt{C++} użytkownik może explicite podać 
 dla jakich typów ukonkretnia daną funkcje, bądź może być to wykryte przez 
 kompilator.
 
 \begin{lstlisting}[frame=single, caption={Polimorficzna funkcja w 
-\textit{C++} z użyciem szablonów (ang. template)}]
+\texttt{C++} z użyciem szablonów (ang. template)}]
 template<class Type1, class Type2>
 void foo(Type1 t1, Type2 t2) {
     // ...
@@ -1178,7 +1200,7 @@ wydłużając czas kompilacji i zwiększać rozmiar wynikowego programu. Kolejn�
 wadą w praktycznych zastosowaniach, jest fakt, że wysokopoziomowy kod 
 implementacji funkcji polimorficznej musi być opublikowany wraz z wygenerowaną 
 bibliotekę, aby istniała możliwość użycia wywołania tej funkcji dla typów dla 
-których nie byłą wcześniej ukonkretniona. Mimo to, język \textit{C++} cieszy 
+których nie byłą wcześniej ukonkretniona. Mimo to, język \texttt{C++} cieszy 
 się ogromną popularnością, a system szablonów jest szeroko używany, także w 
 zastosowaniach produkcyjnych. 
 
@@ -1216,12 +1238,10 @@ jeśli tak to definicja funkcji jest aktualizowana, jeśli nie to typ pozostaje
 ogólny. Graf równości typów jest także używany w celu znalezienia konkretnych 
 typów przy wywoływaniu polimorficznej funkcji (dzieję się to w fazie 
 generowania kodu). 
-TODO: O optymalizacji z union finda.
+% TODO: O optymalizacji z union finda.
 
 \section{Klasy typów}
-
 % 1. Czym są? Po co? 
-
 Najpopularniejszą implementacją klas typów, jest ta zastosowana w Haskellu. 
 Jej idea polega na przekazywaniu słownika (rekordu) z implementacjami funkcji 
 z danej instancji klasy (ang. dictionary passing). Przedstawię w jaki sposób 
@@ -1235,7 +1255,7 @@ class Show a where
 \end{lstlisting}
 \end{minipage}\hfill
 \begin{minipage}{.45\textwidth}
-\begin{lstlisting}[caption=Deklracja odpowiednika klasy typów w OCamlu z
+\begin{lstlisting}[caption=Deklaracja odpowiednika klasy typów w OCamlu z
 użyciem metody przekazywania słownika, frame=tlrb]{Name}
 type 'a show = { 
     show : 'a -> string 
@@ -1278,7 +1298,7 @@ let show_bool = {
 \end{minipage}
 
 Funkcja, która korzysta z typu który jest instancją klasy, musi przyjmować 
-dodatkowy argument będą słownikiem z implementacją metod klasy. 
+dodatkowy argument będący słownikiem z implementacją metod klasy. 
 
 \noindent\begin{minipage}{.45\textwidth}
 \begin{lstlisting}[caption=Instancja klasy w Haskellu, frame=tlrb]{Name}
@@ -1308,9 +1328,9 @@ Zasadnicza różnica między symulowaniem klas typów w języku ich nie
 wspierającym, a użyciem ich w Haskellu, jest to, że to do użytkownika należy 
 udowodnienie istnienia instancji klasy dla danego typu.
 
-TODO: O tym że to może być bardziej uciążliwe \newline
-jak są klasy bazowe: 
-http://okmij.org/ftp/Computation/typeclass.html
+% TODO: O tym że to może być bardziej uciążliwe \newline
+% jak są klasy bazowe: 
+% http://okmij.org/ftp/Computation/typeclass.html
 
 Metoda przekazywania słownika nie niesie ze sobą dużego narzutu na czas 
 kompilacji i wykonywania programu. Wymaga dodania co najmniej
