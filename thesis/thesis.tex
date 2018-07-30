@@ -890,14 +890,28 @@ Funkcja wołana jest odpowiedzialna za nadmiarowe argumenty i przekazanie ich
 dalej.
 
 Aplikacja funkcji nie zawsze musi się wiązać z faktycznym wywołaniem funkcji.
-Na poniższym przykładzie w pierwszym przypadku funkcja \textit{TODO:}
-zostanie wywołana, a w drugim, pomimo aplikacji tych samych argumentów, nic nie 
-zostanie wywołane.
+Na poniższym przykładzie, w ciele funkcji \textit{apply},
+w pierwszym przypadku funkcja \textit{f} zostanie wywołana, 
+a w drugim, pomimo aplikacji tych samych argumentów i tego samego typu funkcji, 
+nic nie zostanie wywołane.
 \begin{lstlisting}[frame=single, caption={To czy funkcja zostanie wywołana,
-nie jest wiadome w czasie kompilacj.}]
-TODO: Przykład z wywołaniem i nie wywołaniem częściowo 
-zaaplikowanej funkcji  
+nie jest wiadome w czasie kompilacj. OCaml.}]
+let called a b = 
+  let inner c d = a + b + c + d in 
+  print_string "called\n";
+  inner 
+
+let not_called a b c d = a + b + c + d 
+
+let apply f a b c : int -> int = 
+    f a b c 
+
+let _ = 
+    apply called 1 2 3;
+    apply not_called 1 2 3
 \end{lstlisting}
+% TODO: Przykład z wywołaniem i nie wywołaniem częściowo 
+% zaaplikowanej funkcji  
 
 Dla każdego wywołania nieznanej funkcji, generowany jest dodatkowy \newline
 kod, który jest odpowiedzialny za sprawdzenie, czy aplikowaną funkcje 
@@ -960,7 +974,7 @@ reprezentowanie ich przez wskaźnik, ale takiego rozwiązania chciałem unikną�
 Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych 
 aplikowanych jako ostatnie, w środowisku. Wywoływana funkcja, wie już w czasie 
 kompilacji jakich argumentów (i o jakim rozmiarze), spodziewać się w środowisku,
-więc jest w stanie je z niego odzyskać. To rozwiązanie rozwiązuje wspomniany 
+więc jest w stanie je z niego odzyskać. To rozwiązuje wspomniany 
 problem, lecz wykonuje niepotrzebne zapisywanie i ładowanie argumentów 
 zaaplikowanych jako ostatnie. Moje rozwiązanie unika tej operacji. 
 
@@ -984,7 +998,7 @@ Dla oryginalnej funkcji, tworzona jest globalna tablica wskaźników na wszystki
 jej funkcje wejściowe. Funkcje są zapamiętane po kolei, tj. 
 wskaźnik na pierwszą funkcję wejściową jest pierwszym elementem tablicy, na 
 drugą, drugim itd. 
-Gdy tworzona jest instancja struktury \textit{function}, jak wskaźnik na 
+Gdy tworzona jest instancja struktury \textit{function}, jako wskaźnik na 
 funkcję do wywołania ustawiany jest wskaźnik na początek tablicy funkcji 
 wejściowych. Oznacza to, że typ pola \textit{fn} w języku \textit{C} to 
 \textit{void ($\ast\ast$fn)()}, oraz że przed wywołaniem funkcji ze struktury,
@@ -1049,7 +1063,7 @@ Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$.
 Niskopoziomowy język, taki jaki \textit{LLVM IR} nie obsługuje zagnieżdżonych funkcji, można w
 nim zadeklarować jedynie procedury na takim samym, najwyższym poziomie (ang. top level). 
 Konieczna jest transformacja wyrażeń \textit{let}, polegająca na przeniesieniu ich na najwyższy poziom. 
-Jeśli wykonamy taką transformacje na funkcji \textit{add}, bez dodatkowych zmian, to zmienna $x$,
+Jeśli wykonamy taką transformacje na funkcji \textit{add}, bez dodatkowych zmian, to zmienna $x$
 przestanie być dostępna z ciała funkcji.
 
 \begin{lstlisting}[frame=single, caption={Po przeniesieniu funkcji \textit{add} na najwyższy poziom}]
@@ -1059,8 +1073,8 @@ let make_adder x = add
 
 Powyższy kod nie jest poprawnym programem w języku \textit{OCaml}, oraz 
 nie mógłby zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
-Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie w którym 
-wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
+Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie,
+w którym wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
 Na poniższym przykładzie zostało przedstawione jak mogłaby wyglądać taka transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
@@ -1073,18 +1087,17 @@ let make_adder x =
 \end{lstlisting}
 Powyższe przekształcenia nie wprowadzają dużego narzutu na wynikowy program i rozwiązują 
 problem z zasięgiem symbolu $x$. Ten kod jednak nie zwróci poprawnego wyniku, przy założeniu o statycznym zasięgu widoczności (ang. static scoping). Drugie 
-wywołanie \textit{make\_adder} dla argumentu 5, nadpisze jego pierwszą wartość z której korzysta
-pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
-\textit{add}, w momencie w którym jest zwracana. 
+wywołanie \textit{make\_adder} dla argumentu 5, nadpisze jego pierwszą wartość, z której korzysta pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
+\textit{add}, w momencie, w którym jest zwracana. 
 
 W \textit{Langu}, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
 już zaimplementowaną częściową aplikację. W czasie analizy programu dla każdego 
 zagnieżdżonego wyrażenia \textit{let} wyznaczam jego zmienne wolne. Zmienne wolne
 zostaną dodane jako dodatkowe argumenty, przed tymi podanymi pierwotnie.
-Następnie, symbol pod którym wyrażenie \textit{let} było zapamiętane w 
-środowisku, zostaje związany z częściową aplikacją zmienny wolnych 
+Następnie, symbol, pod którym wyrażenie \textit{let} było zapamiętane w 
+środowisku, zostaje związany z częściową aplikacją zmiennych wolnych 
 do oryginalnej funkcji (rozszerzonej o dodatkowe argumenty -- zmienne wolne).
-Poniżej została na funkcji \textit{add} została wykonana ta transformacja.
+Poniżej na funkcji \textit{add} została wykonana ta transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
 let make_adder x = 
@@ -1140,15 +1153,15 @@ języków rozwiązuje ten problem poprzez jednorodną reprezentację wszystkich
 typów, które mogą być użyte w funkcjach polimorficznych. Jednorodna 
 reprezentacja sprowadza się do alokowania wartości obiektu na stercie, a 
 następnie przekazywanie wskaźnika na ten obiekt. Wszystkie wskaźniki 
-niezależnie od typu i rozmiaru obiektu na który wskazują, mają ten sam 
+niezależnie od typu i rozmiaru obiektu, na który wskazują, mają ten sam 
 rozmiar i są przekazywane w ten sam sposób. Niesie to ze sobą kilka wad.
-Przykładowo, dla każdego \textit{inta} który sam zajmuje $4$ bajty,
-dodatkowo alokowane jest $8$ bajtów na wskaźnik do niego. Jako, że jest 
+Przykładowo, dla każdego \textit{inta}, który sam zajmuje $4$ bajty,
+dodatkowo alokowane jest $8$ bajtów na wskaźnik do niego. Jako że jest 
 zaalokowany na stercie, będzie musiał być ręcznie zwolniony przez programistę 
 lub przez automatyczne odśmiecanie pamięci (które często występuje w językach 
 funkcyjnych).
 
-Do języków które stosują powyższą metodę należą m. in. Java i Haskell.
+Do języków, które stosują powyższą metodę należą m. in. Java i Haskell.
 W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
 leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
 ich wartość (ang. unboxed types), takie jak $\verb!Int#!$ i 
@@ -1171,7 +1184,7 @@ rozwiązania, nie zdecydowałem sie go zaimplementować.
 Języki takie jak \texttt{C++} i \textit{Rust} oraz kompilator \textit{SMLa} 
 MLton, wyspecjalizowują każdą polimorficzną funkcję przed fazą generowania 
 kodu. Ten proces nazywany jest monomorfizacją. Polega on na utworzenia osobnej 
-implementacji polimorficznej funkcji dla każdego konkretnego typu który został 
+implementacji polimorficznej funkcji dla każdego konkretnego typu, który został 
 podstawiony pod typ ogólny. W \texttt{C++} użytkownik może explicite podać 
 dla jakich typów ukonkretnia daną funkcje, bądź może być to wykryte przez 
 kompilator.
@@ -1298,8 +1311,8 @@ let show_bool = {
 \end{lstlisting}
 \end{minipage}
 
-Funkcja, która korzysta z typu który jest instancją klasy, musi przyjmować 
-dodatkowy argument będący słownikiem z implementacją metod klasy. 
+Funkcja, która korzysta z typu będącego instancją klasy, musi przyjmować 
+dodatkowy argument --- słownik z implementacją metod klasy. 
 
 \noindent\begin{minipage}{.45\textwidth}
 \begin{lstlisting}[caption=Instancja klasy w Haskellu, frame=tlrb]{Name}
