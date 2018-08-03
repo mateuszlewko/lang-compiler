@@ -1391,13 +1391,48 @@ danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
 
 \section{Dalsze prace}
 
-TODO: 
-- kompilacja różnych plików
-- reprezentacja struktur przez wartość 
-- klasy typów z wieloma parametrami
-- ewentualna rekurencja polimorficzna
-- zagnieżdżone wzajemnie rekurencyjne let
-- lepsze parsowanie
+Tworzenie kompilatorów jest obszernym i czasochłonnym zadaniem. Zdecydowałem 
+się pominąć pewne standardowe cechy języków funkcyjnych, aby lepiej skupić 
+się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{Lang}
+i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
+
+\begin{itemize}
+  \item Wyrażenia lambda. Mogłyby być zrealizowane poprzez ich zamianę na 
+  globalne wyrażenia let o unikalnych nazwach. 
+  \item Klasy typów z wieloma parametrami. Nie są obecne w standardzie 
+  Haskell 98, jednak istnieje możliwość ich włączenia poprzez odpowiednią 
+  dyrektywę. Ich implementacja byłaby łatwym 
+  rozszerzeniem obecnej (z jednym parametrem), jednak dołożenie ich do języka 
+  wiązałoby się z pewnymi niejednoznacznościami \cite{multi_params_tcs}
+  przy wyborze odpowiedniej instancji klasy. Koniecznym mogłoby by sie okazać 
+  dodanie zależności funkcyjnych \cite{fun_deps}.
+  \item Kompilacja wielu plików. Obecna implementacja pozwala na skompilowanie 
+  jednego pliku. Umożliwienie kompilacji wielu plików w jednym projekcie nie 
+  jest trudnością, gdyż wystarczy połączyć pliki w odpowiedniej kolejności 
+  (lub też pozwolić użytkownikowi na zdefiniowanie ich kolejności). Tworzenie 
+  przenośnych bibliotek może okazać się wyzwaniem ze względu na zastosowanie 
+  monomorfizacji.
+  \item Składnia pozwalająca na opcjonalne użycie słów kluczowych, które tworzą 
+  kontekst (w OCamlu to \texttt{begin}, \texttt{end}, \texttt{in} oraz nawiasy).
+  Jest to cecha znana z języka \textit{F\#}. Należałoby przenieść wykrywanie 
+  całych bloków wciętego kodu do etapu analizy leksykalnej. Wcięcia generowały 
+  by różne tokeny (nie tylko \textit{INDENT} i \textit{DEDENT}), w zależności 
+  od kontekstu w których się znajdują. Dokładny opis tego rozwiązania znajduje 
+  sie w Specyfikacji języka \textit{F\#} $4.0$\cite{fs_spec}.
+  \item Reprezentowanie małych rekordów poprzez ich wartość. Rekord zawierający 
+  dwa pola będącymi intami może być zapamiętany w jednym słowie maszynowym. 
+  Obecnie wszystkie rekordy są pamiętane przez wskaźnik do ich zawartości, 
+  jednak dzięki monomorfizacji, nic nie stoi na przeszkodzi aby zastosować tę 
+  optymalizację.
+
+\end{itemize}
+
+% - klasy typów z wieloma parametrami
+% - kompilacja różnych plików
+% - reprezentacja struktur przez wartość 
+% - ewentualna rekurencja polimorficzna
+% - zagnieżdżone wzajemnie rekurencyjne let
+% - lepsze parsowanie
 
 \chapter{Instrukcja obsługi}
 
@@ -1516,6 +1551,17 @@ Levity Polymorphism.
 \\\texttt{https://www.microsoft.com/en-us/research/wp-content/\newline
 uploads/2016/11/levity-pldi17.pdf}
 
+\bibitem{fun_deps} 
+Functional dependencies.
+\\\texttt{https://wiki.haskell.org/Functional\_dependencies}
+
+\bibitem{multi_params_tcs} 
+Multi-parameter type class
+\\\texttt{https://wiki.haskell.org/Multi-parameter\_type\_class}
+
+\bibitem{fs_spec} 
+Specyfikacja języka F\# 4.0
+\\\texttt{https://fsharp.org/specs/language-spec/4.0/FSharpSpec-4.0-final.pdf}
 
 \end{thebibliography}
 
