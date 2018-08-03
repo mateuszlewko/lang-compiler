@@ -1374,6 +1374,20 @@ korzysta \textit{MLton}.
 \chapter{Podsumowanie}
 
 \section{Wnioski}
+Najtrudniejszym element przy tworzeniu kompilatora dla języka funkcyjnego 
+okazała się efektywna implementacja częściowej aplikacji. Główną trudnością
+było spełnienie założeń o optymalnym przekazywaniu zmiennych i unikaniu 
+jednorodnej reprezentacji różnych typów danych poprzez boxowanie. Pomimo że 
+jest to standardowa cecha wielu języków i istnieją opisy jej implementacji
+w części z nich, to cele, które postawiłem zaowocowały odmiennym rozwiązaniem.
+% Moje rozwiązanie, choć z założenia szybsze i bardziej oszczędne w zasobach niż 
+% popularne rozwiązania, 
+
+Drugim celem projektu, było wprowadzenie klas typów do języka z rodziny ML. 
+Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. Te proste,
+rozszerzenie języka znacznie zwiększyło jego możliwości. Pozwoliło na 
+pisanie modularnych funkcji oraz abstrakcję funkcjonalności od reprezentacji 
+danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
 
 \section{Dalsze prace}
 
