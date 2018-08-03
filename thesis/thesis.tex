@@ -1438,83 +1438,115 @@ i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \section{Instalacja}
 
-\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
-- install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
+Projekt można skompilować na systemie \textit{Linux}.
+Uprzednio należy wykonać następujące kroki. 
 
-- switch to *ocaml* version `4.05.0`:
+\begin{enumerate}
+  \item Instalacja kompilatora OCamla. Instrukcja dostępna na stronie: \newline
+  \texttt{https://ocaml.org/docs/install.html}.
+  \item Instalacja LLVMa. Instrukcja dostępna na stronie: \newline
+  \texttt{https://llvm.org/}.
+  \item Wymagana jest kompilator LLVM w wersji co najmniej $5$. Zainstalowaną 
+  wersję można sprawdzić poleceniem:
+  \begin{lstlisting}[language=bash]
+  $ llc --version
+  \end{lstlisting}
+  \item Ustawienie wersji kompilatora:
+  \begin{lstlisting}[language=bash]
+  $ opam switch 4.05.0
+  \end{lstlisting}
+  \item Konfiguracja menadżera pakietów:
+  \begin{lstlisting}[language=bash]
+  $ eval `opam config env`
+  \end{lstlisting}
+  \item Instalacja bibliotek. Należy uruchomić skrypt \texttt{install\_deps.sh}
+   instalujący odpowiednie pakiety z użyciem \textit{opama}. Plik znajduje się 
+   w głównym folderze 
+  \texttt{lang-compiler}. 
+  \begin{lstlisting}[language=bash]
+  $ ./install_deps.sh
+  \end{lstlisting}
+\end{enumerate}
 
-```bash
-$ opam switch 4.05.0
-```
+% \begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
+% - install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
 
-- configure *opam* in the current shell:
+% - switch to *ocaml* version `4.05.0`:
 
-```bash
-$ eval `opam config env`
-```
+% ```bash
+% $ opam switch 4.05.0
+% ```
 
-- install *jbuilder* and *sedlex*:
+% - configure *opam* in the current shell:
 
-```bash
-$ opam install jbuilder sedlex
-```
+% ```bash
+% $ eval `opam config env`
+% ```
 
-- install rest of dependencies by following output from these commands (except for `menhirLib`):
+% - install *jbuilder* and *sedlex*:
 
-```bash
-$ jbuilder external-lib-deps --missing @runlangc
-$ jbuilder external-lib-deps --missing @runtest
-```
+% ```bash
+% $ opam install jbuilder sedlex
+% ```
 
-  You will be asked to install required modules through *opam*, and some external libraries through *depext*.
-- install [LLVM 5](https://llvm.org/) and *gcc* (*gcc* is usually present on linux)
+% - install rest of dependencies by following output from these commands (except for `menhirLib`):
 
- Finally check whether you installed everything correctly:
-```bash
-$ llc --version    # Expect something like LLVM version 5.0.1, later versions should also be fine.
-                   # NOTE: Version 3.8 will *not* work.
-$ gcc --version
-$ jbuilder --version
-\end{lstlisting}
+% ```bash
+% $ jbuilder external-lib-deps --missing @runlangc
+% $ jbuilder external-lib-deps --missing @runtest
+% ```
+
+%   You will be asked to install required modules through *opam*, and some external libraries through *depext*.
+% - install [LLVM 5](https://llvm.org/) and *gcc* (*gcc* is usually present on linux)
+
+%  Finally check whether you installed everything correctly:
+% ```bash
+% $ llc --version    # Expect something like LLVM version 5.0.1, later versions should also be fine.
+%                    # NOTE: Version 3.8 will *not* work.
+% $ gcc --version
+% $ jbuilder --version
+% \end{lstlisting}
 
 \section{Sposób użycia z przykładami}
 
 \section{Użyte narzędzia i biblioteki}
 
-TODO:
-- OCaml 
-- Menhir 
-- Sedlex 
-- Template użycia sedlexa
-- High Ollvm 
+\begin{itemize}
+  \item \texttt{OCaml}
+  \item \texttt{Menhir}
+  \item \texttt{Sedlex}
+  \item \texttt{OCaml-parsing}
+  \item \texttt{Core} 
+  \item \texttt{JBuilder} 
+\end{itemize}
 
+% - OCaml 
+% - Menhir 
+% - Sedlex 
+% - Template użycia sedlexa
+% - High Ollvm 
 
-- [ocaml-parsing](https://github.com/smolkaj/ocaml-parsing) - boilerplate code for parsing in OCaml
-- [Menhir](http://gallium.inria.fr/~fpottier/menhir/) - LR(1) parser generator
-- [Sedlex](https://github.com/alainfrisch/sedlex) - lexer generator
-- Jane Street's [core](https://ocaml.janestreet.com/ocaml-core/latest/doc/), the inofficial standard library for OCaml
-- Jane Street's [jbuilder](https://github.com/janestreet/jbuilder), an OCaml build system
-- Other libraries specified in jbuild files
-
+% - [ocaml-parsing](https://github.com/smolkaj/ocaml-parsing) - boilerplate code for parsing in OCaml
+% - [Menhir](http://gallium.inria.fr/~fpottier/menhir/) - LR(1) parser generator
+% - [Sedlex](https://github.com/alainfrisch/sedlex) - lexer generator
+% - Jane Street's [core](https://ocaml.janestreet.com/ocaml-core/latest/doc/), the inofficial standard library for OCaml
+% - Jane Street's [jbuilder](https://github.com/janestreet/jbuilder), an OCaml build system
+% - Other libraries specified in jbuild files
 
 \section{Struktura projektu}
 
-\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
-
-- `compiler/` - compiler library which contains: lexer, parser and codegen
-- `compiler/grammar.mly` - grammar in [Menhir](http://gallium.inria.fr/~fpottier/menhir/) format
-- `compiler/lexer.cppo.sedlex.ml` - lexer
-- `compiler/codegen.ml` - main *LLVM IR* code generation
-- `compiler/codegenUtils.ml` - some helper functions for code generation
-- `compiler/ast.ml` - abstract syntax tree
-
-- `printer/` - pretty-printer for abstract syntax tree
-- `langc/` - compiler executable
-
-- `test/` - tests for compiler and parser
-- `test/compiler-test-srcs` - input files for compiler tests
-
-\end{lstlisting}
+\begin{itemize}
+  \item \texttt{compiler/} -- compiler library which contains: lexer, parser and codegen
+  \item \texttt{compiler/grammar.mly} -- gramatyka w składni Menhira.
+  \item \texttt{compiler/lexer.cppo.sedlex.ml} -- lexer
+  \item \texttt{compiler/codegen.ml} -- main *LLVM IR* code generation
+  \item \texttt{compiler/codegenUtils.ml} -- some helper functions for code generation
+  \item \texttt{compiler/ast.ml} -- abstract syntax tree
+  \item \texttt{printer/} -- pretty-printer for abstract syntax tree
+  \item \texttt{langc/} -- compiler executable
+  \item \texttt{test/} -- tests for compiler and parser
+  \item \texttt{test/compiler-test-srcs} -- input files for compiler tests
+\end{itemize}
 
 %%%%% BIBLIOGRAFIA
 
