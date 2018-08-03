@@ -1391,15 +1391,95 @@ danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
 
 \section{Dalsze prace}
 
+TODO: 
+- kompilacja różnych plików
+- reprezentacja struktur przez wartość 
+- klasy typów z wieloma parametrami
+- ewentualna rekurencja polimorficzna
+- zagnieżdżone wzajemnie rekurencyjne let
+- lepsze parsowanie
+
 \chapter{Instrukcja obsługi}
 
 \section{Instalacja}
+
+\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
+- install [*ocaml*](https://ocaml.org/docs/install.html) and [*opam*](https://opam.ocaml.org/doc/Install.html)
+
+- switch to *ocaml* version `4.05.0`:
+
+```bash
+$ opam switch 4.05.0
+```
+
+- configure *opam* in the current shell:
+
+```bash
+$ eval `opam config env`
+```
+
+- install *jbuilder* and *sedlex*:
+
+```bash
+$ opam install jbuilder sedlex
+```
+
+- install rest of dependencies by following output from these commands (except for `menhirLib`):
+
+```bash
+$ jbuilder external-lib-deps --missing @runlangc
+$ jbuilder external-lib-deps --missing @runtest
+```
+
+  You will be asked to install required modules through *opam*, and some external libraries through *depext*.
+- install [LLVM 5](https://llvm.org/) and *gcc* (*gcc* is usually present on linux)
+
+ Finally check whether you installed everything correctly:
+```bash
+$ llc --version    # Expect something like LLVM version 5.0.1, later versions should also be fine.
+                   # NOTE: Version 3.8 will *not* work.
+$ gcc --version
+$ jbuilder --version
+\end{lstlisting}
 
 \section{Sposób użycia z przykładami}
 
 \section{Użyte narzędzia i biblioteki}
 
+TODO:
+- OCaml 
+- Menhir 
+- Sedlex 
+- Template użycia sedlexa
+- High Ollvm 
+
+
+- [ocaml-parsing](https://github.com/smolkaj/ocaml-parsing) - boilerplate code for parsing in OCaml
+- [Menhir](http://gallium.inria.fr/~fpottier/menhir/) - LR(1) parser generator
+- [Sedlex](https://github.com/alainfrisch/sedlex) - lexer generator
+- Jane Street's [core](https://ocaml.janestreet.com/ocaml-core/latest/doc/), the inofficial standard library for OCaml
+- Jane Street's [jbuilder](https://github.com/janestreet/jbuilder), an OCaml build system
+- Other libraries specified in jbuild files
+
+
 \section{Struktura projektu}
+
+\begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
+
+- `compiler/` - compiler library which contains: lexer, parser and codegen
+- `compiler/grammar.mly` - grammar in [Menhir](http://gallium.inria.fr/~fpottier/menhir/) format
+- `compiler/lexer.cppo.sedlex.ml` - lexer
+- `compiler/codegen.ml` - main *LLVM IR* code generation
+- `compiler/codegenUtils.ml` - some helper functions for code generation
+- `compiler/ast.ml` - abstract syntax tree
+
+- `printer/` - pretty-printer for abstract syntax tree
+- `langc/` - compiler executable
+
+- `test/` - tests for compiler and parser
+- `test/compiler-test-srcs` - input files for compiler tests
+
+\end{lstlisting}
 
 %%%%% BIBLIOGRAFIA
 
