@@ -1031,9 +1031,48 @@ równe $0$). Taki wynik mógł powstać w funkcji wołanej w drugim przypadku.
 
 \subsection{Porównanie z innymi implementacjami}
 
-1. Push/enter vs eval/apply
+Istnieję dwa modele realizacji częściowej aplikacji: push/enter i eval/apply. 
+Zostały dokładnie opisane przez Marlow i Peyton Jones\cite{fast_curry}. 
+Ich zasadnicza różnica polega na sposobie działania przy aplikacji funkcji 
+nieznanej. W push/enter przed właściwym wywołaniem funkcji jej argumenty są 
+ładowane na stos. Następnie to funkcja wołana jest odpowiedzialna 
+rozważenie wszystkie przypadków związanych z liczbą zaaplikowanych argumentów.
+Podejmuje decyzje o wywołaniu właściwiej funkcji i ewentualnym przekazaniu 
+pozostałych argumentów dalej bądź zwróceniu obiektu reprezentującego częściowo\
+zaaplikowana funkcje. W modelu eval/apply, to po stronie funkcji wołającej 
+leży zadanie rozważania tych przypadków. Strona wołająca (ang. call site)
+zna liczbę zaaplikowanych argumentów, a w czasie działania sprawdza 
+faktyczną arność funkcji. 
 
-TODO: Porównanie z pracą "Making a fast curry: ..."
+Moje rozwiązanie istotnie czerpie z modelu push/enter. Większość decyzji
+jest podejmowana po stronie funkcji wołanej. Strona wołająca przekazuje 
+wszystkie argumenty do funkcji wskazywanej w strukturze \textit{function}. 
+Jednak za nim to się stanie to strona wołająca dynamicznie sprawdza arność 
+funkcji. W przypadku gdy jest ona większa od liczby zaaplikowanych argumentów 
+to w tym miejscu uaktualniany jest obiekt częściowej aplikacji, oszczędzając 
+na zbędnym wywołaniu funkcji. Jest to podobne do rozwiązania z enter/apply.
+Strona wołająca nie musi także dynamicznie przeszukiwać stosu w poszukiwaniu 
+przekazanych argumentów. Dzięki generacji wielu funkcji wejściowych, funkcja 
+wołana wie dokładnie ile argumentów i o jakim typie jest w środowisku, a jakie 
+zostały właśnie przekazane. 
+
+Marlow i Peyton Jones w pracy \textit{Making a Fast Curry: Push/Enter vs.
+Eval/Apply} jasno zalecają korzystanie z modelu eval/apply ze względu na 
+prostszą implementację i trudności w kompilacji push/enter do przenośnego 
+języka takiego jak C, \texttt{C--} czy LLVM. Wspomniana trudność wynika z 
+konieczności manualnego zarządzania stosem, co nie jest łatwe (o ile możliwe) w 
+takich językach. Jednak moje rozwiązanie unika tego problemu, a ponadto
+umożliwia przekazywanie argumentów przez rejestry, co zostało wykluczone dla 
+modelu push/enter. Te cechy zostały osiągnięte dzięki generacji wielu funkcji 
+wejściowych, dla każdego sufiksu argumentów z typu funkcji. Niesie to ze sobą 
+jednak istotną wadę, nieobecną w żadnym z dwóch wspomnianych modeli --- 
+generowanie dużej ilości dodatkowego kodu. Nie jest to problemem dla małych 
+przykładowych programów, jednak mogło by znacznie wydłużyć czas kompilacji i 
+rozmiar wynikowego programu przy dużych, profesjonalnych projektach.
+
+% 1. Push/enter vs eval/apply
+
+% TODO: Porównanie z pracą "Making a fast curry: ..."
 
 \section{Zagnieżdżone funkcje}
 
@@ -1144,7 +1183,7 @@ Mimo wygody jaką dostarcza programiście, często wiąże sie z dodatkowym
 obciążeniem czasowym i pamięciowym. Polimorficzna funkcja 
 \lstinline[language=Caml]!let identity x = x! może być użyta niezależenie
 od typu podanego argumentu. Jednak, jeśli funkcja \textit{identity} 
-jest aplikowana do argumentów typu \textit{int} i textit{float}, to nie jest 
+jest aplikowana do argumentów typu \textit{int} i \textit{float}, to nie jest 
 jasne jak powinien wyglądać jej wygenerowany kod. Argument typu \textit{float}
 zostałby przekazany przez specjalny rejestr dla liczb zmiennoprzecinkowych, 
 inny od tego dla argumentu typu \textit{int}. W wygenerowanym kodzie jasno
@@ -1438,7 +1477,7 @@ i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \section{Instalacja}
 
-Projekt można skompilować na systemie \textit{Linux}.
+Projekt można skompilować w systemie \textit{Linux}.
 Uprzednio należy wykonać następujące kroki. 
 
 \begin{enumerate}
@@ -1446,7 +1485,7 @@ Uprzednio należy wykonać następujące kroki.
   \texttt{https://ocaml.org/docs/install.html}.
   \item Instalacja LLVMa. Instrukcja dostępna na stronie: \newline
   \texttt{https://llvm.org/}.
-  \item Wymagana jest kompilator LLVM w wersji co najmniej $5$. Zainstalowaną 
+  \item Wymagany jest kompilator LLVM w wersji co najmniej $5$. Zainstalowaną 
   wersję można sprawdzić poleceniem:
   \begin{lstlisting}[language=bash]
   $ llc --version
@@ -1542,9 +1581,9 @@ Uprzednio należy wykonać następujące kroki.
   \item \texttt{compiler/codegen.ml} -- main *LLVM IR* code generation
   \item \texttt{compiler/codegenUtils.ml} -- some helper functions for code generation
   \item \texttt{compiler/ast.ml} -- abstract syntax tree
-  \item \texttt{printer/} -- pretty-printer for abstract syntax tree
-  \item \texttt{langc/} -- compiler executable
-  \item \texttt{test/} -- tests for compiler and parser
+  % \item \texttt{printer/} -- pretty-printer for abstract syntax tree
+  \item \texttt{langc/} -- Plik wykonywalny Interfejs 
+  \item \texttt{test/} -- Testy kompilatora.
   \item \texttt{test/compiler-test-srcs} -- input files for compiler tests
 \end{itemize}
 
@@ -1571,7 +1610,8 @@ std::bind - C++ Reference
 \\\texttt{https://en.cppreference.com/w/cpp/utility/functional/bind}
 
 \bibitem{fslang_typeclass} 
-TODO: FS lang, user voice - type classes
+F\# Language - User Voice.  Suggestions about Future evolution of the 
+F\# Language and Core Library.
 \\\texttt{https://fslang.uservoice.com/forums/245727-f-language/filters/top}
 
 \bibitem{python_indentation} 
@@ -1594,6 +1634,12 @@ Multi-parameter type class
 \bibitem{fs_spec} 
 Specyfikacja języka F\# 4.0
 \\\texttt{https://fsharp.org/specs/language-spec/4.0/FSharpSpec-4.0-final.pdf}
+
+\bibitem{fast_curry} 
+Making a Fast Curry: Push/Enter vs.
+Eval/Apply for Higher-order Languages. Simon Marlow, Simon Peyton Jones
+\\\texttt{https://www.microsoft.com/en-us/research/wp-content/uploads/\newline
+2016/07/eval-apply.pdf}
 
 \end{thebibliography}
 
