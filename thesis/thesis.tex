@@ -1341,7 +1341,8 @@ generowania kodu).
 % 1. Czym są? Po co? 
 Najpopularniejszą implementacją klas typów, jest ta zastosowana w Haskellu. 
 Jej idea polega na przekazywaniu słownika (rekordu) z implementacjami funkcji 
-z danej instancji klasy (ang. dictionary passing) \cite{type_class_wadler88}. Przedstawię w jaki sposób 
+z danej instancji klasy (ang. dictionary passing) 
+\cite{type_class_wadler88, implementing_type_classes}. Przedstawię w jaki sposób 
 działa ta implementacja, porównując kod używający klas typów w Haskellu i 
 odpowiadający mu kod w OCamlu (w którym nie ma klas typów).
 
@@ -1467,8 +1468,8 @@ w części z nich, to cele, które postawiłem zaowocowały odmiennym rozwiązan
 % niż 
 % popularne rozwiązania, 
 
-Drugim celem projektu, było wprowadzenie klas typów do języka z rodziny ML. 
-Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. Te proste,
+Drugim celem projektu było wprowadzenie klas typów do języka z rodziny ML. 
+Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. Te proste
 rozszerzenie języka znacznie zwiększyło jego możliwości. Pozwoliło na 
 pisanie modularnych funkcji oraz abstrakcję funkcjonalności od reprezentacji 
 danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
@@ -1738,6 +1739,11 @@ How to make \textit{ad--hoc} polymorphism less \textit{ad--hoc}.
 P. Wadler, S. Blott
 \\\texttt
 {https://people.csail.mit.edu/dnj/teaching/6898/papers/wadler88.pdf}
+
+\bibitem{implementing_type_classes}
+Implementing Type Classes. John Peterson, Mark Jones
+\\\texttt
+{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.53.3952\&rep=rep1\&type=pdf}
 
 \bibitem{okmij}
 Implementing, and Understanding Type Classes.
