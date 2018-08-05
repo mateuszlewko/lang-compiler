@@ -48,14 +48,31 @@
 \polishtitle    {Implementacja języka funkcyjnego z rodziny ML z użyciem 
                  systemu kompilacji LLVM}
 \englishtitle   {Implementation of ML-family functional language, using LLVM compiler infrastructure}
-\polishabstract { TODO polish abstract}
-\englishabstract{ TODO english abstract}
+\polishabstract { 
+Popularne kompilatory języków funkcyjnych z rodziny ML często charakteryzują się 
+podobnymi kompromisami przy implementacji częściowej aplikacji i polimorfizmu 
+parametrycznego. Zazwyczaj nie pozwalają na przekazywanie dowolnych 
+typów przez ich wartość do funkcji polimorficznych. W swojej pracy przedstawię 
+implementację kompilatora języka funkcyjnego, w której unikam jednorodnej 
+reprezentacji danych przez wskaźnik dzięki monomorfizacji. 
+Zmniejszając narzut pamięciowy przy użyciu funkcji polimorficznych 
+decyduję się zwiększenie rozmiaru wygenerowanego programu.
+Moja implementacja częściowej aplikacji, choć bazowana na popularnym modelu 
+\textit{push/enter}, radzi sobie z problemem manualnego zarządzania stosem.
+
+Drugim celem pracy jest implementacja prostych klas typów w języku z rodziny ML, 
+wprowadzając tym samym \textit{ad--hoc} polimorfizm. Będą one głównym elementem 
+języka pozwalającym na modularyzację programu. Odbiega to od standardowo 
+stosowanego systemu modułów. Monomorfizacja funkcji pozwoli na statyczne 
+wybranie odpowiednich instancji klasy. 
+}
+\englishabstract{ TODO english abstract, pozostawiam na koniec. }
 % w pracach wielu autorow nazwiska mozna oddzielic poleceniem \and
 \author         {Mateusz Lewko}
 % w przypadku kilku promotorow, lub koniecznosci podania ich afiliacji, linie
 % w ponizszym poleceniu mozna zlamac poleceniem \fmlinebreak
 \advisor        {dr hab. Dariusz Biernacki}
-\date          {}                     % Data zlozenia pracy
+\date           {}                     % Data zlozenia pracy
 % Dane do oswiadczenia o autorskim wykonaniu
 % \transcriptnum {283197}                     % Numer indeksu
 %\advisorgen    {dr. Jana Kowalskiego} % Nazwisko promotora w dopelniaczu
@@ -726,7 +743,8 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 
 % 1. Jakie są etapy (lexer $\rightarrow$ parser $\rightarrow$ untyped ast $\rightarrow$ 
 % typed ast bez zagnieżdżonych funkcji $\rightarrow$ generowanie kodu (ast high-ollvm)
-% $\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ gcc i external) 
+% $\rightarrow$ wywoływanie funkcji z api llvma $\rightarrow$ llc $\rightarrow$ gcc i 
+sexternal) 
 
 % 2. Krótko o każdym etapie
 
@@ -1047,7 +1065,7 @@ faktyczną arność funkcji.
 Moje rozwiązanie istotnie czerpie z modelu push/enter. Większość decyzji
 jest podejmowana po stronie funkcji wołanej. Strona wołająca przekazuje 
 wszystkie argumenty do funkcji wskazywanej w strukturze \textit{function}. 
-Jednak za nim to się stanie to strona wołająca dynamicznie sprawdza arność 
+Jednak zanim to się stanie, to strona wołająca dynamicznie sprawdza arność 
 funkcji. W przypadku gdy jest ona większa od liczby zaaplikowanych argumentów 
 to w tym miejscu uaktualniany jest obiekt częściowej aplikacji, oszczędzając 
 na zbędnym wywołaniu funkcji. Jest to podobne do rozwiązania z enter/apply.
