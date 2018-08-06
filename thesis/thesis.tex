@@ -147,8 +147,9 @@ do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów s�
 \textit{cechy} (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
 nie pozwalają na implementacje polimorfizmu wyższych rzędów 
 \cite{no_hkt_in_rust} (ang. 
-Higher-kinder polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
-Haskella nie definiuje nowego typu, a jedynie pozwala na ograniczenie typu do 
+Higher-rank polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
+Haskella nie definiuje nowego typu, a jedynie pozwala na ograniczenie typu
+polimorficznego do 
 instancji klasy. \textit{Cecha} z Rusta może być użyta jak zwykły typ, przykładowo 
 można stworzyć listę zawierające obiekty, które są różnymi instancjami 
 (implementacjami) \textit{cechy} \cite{traits_as_obj_rust}. W Haskellu istnieją także rozszerzenia, które 
@@ -241,13 +242,17 @@ entry:
 }
 \end{lstlisting}
 
-LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych globalnych, 
-podstawowych bloków, przypisań oraz wywołań funkcji. Podstawowe bloki kodu jak i funkcje nie 
+LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych 
+globalnych, podstawowych bloków, przypisań oraz wywołań funkcji.
+sPodstawowe bloki kodu jak i funkcje nie 
 mogą być zagnieżdżone. 
 
-W moim kompilatorze nie generuję kodu LLVM'a, korzystam z oficjalnej biblioteki dla OCamla, 
-udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. System LLVM 
-jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu pośredniego (LLVM IR) 
+W moim kompilatorze nie generuję kodu LLVMa bezpośrednio, 
+korzystam z oficjalnej biblioteki dla OCamla, 
+udostępniającej interfejs potrzebny do tworzenia elementów wygenerowanego kodu. 
+System LLVM 
+jest odpowiedzialny za ostatni etap procesu kompilacji, zamianę kodu 
+pośredniego (LLVM IR) 
 na assembler. Cały kod jest w postaci Single Static Assignment. Oznacza to że, 
 do jednej zmiennej (etykiety) można przypisać tylko jedno wyrażenie. 
 Dzięki takiej formie kodu pośredniego, LLVM jest w 
@@ -685,9 +690,10 @@ let multiLineArr : int array =
 
 Mała część funkcjonalności języka została zaimplementowana z użyciem 
 zewnętrznych funkcji w $C$ (wypisywanie oraz operacje na tablicy). Dlatego 
-koniecznym było dołożenie wyrażeń pozwalających zadeklarować zewnętrzny symbol 
+koniecznym było dołożenie wyrażeń, pozwalających zadeklarować zewnętrzny symbol 
 wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Typy 
-$Langa$ są dosłownie tłumaczone na typy w $C$, z wyjątkiem typu $unit$, który jest zamieniany na $bool$ (o rozmiarze jednego bajtu).
+Langa są dosłownie tłumaczone na typy w $C$ z wyjątkiem typu $unit$, który 
+jest zamieniany na $bool$ (o rozmiarze jednego bajtu).
 
 \begin{lstlisting}[frame=single, caption=Interfejs zewnętrzny.]
 external set_array_elem : int array -> int -> int -> () 
@@ -773,7 +779,8 @@ Istnieje wiele języków programowania realizujących ideę składni czułej na
 wcięcia. Sposób w jaki działa to w $\verb!F#!$ jest jednym z bardziej zaawansowanych,
 bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp. 
 bez użycia znaków przełamania wiersza bądź słów kluczowych znanych 
-z języka OCaml (\textit{begin}, \textit{end}, \textit{;}). W $\verb!F#!$ 
+z języka OCaml (\texttt{begin}, \texttt{end}, \texttt{;}, \texttt{in}).
+ W $\verb!F#!$ 
 istnieje 
 także możliwość mieszania tych słów kluczowych z wcięciami. 
 
@@ -784,10 +791,12 @@ wcięć z poprzednich wierszy są trzymane na stosie. Na początku na stosie
 znajduję się wcięcie długości $0$. Gdy wcięcie w obecnym wierszu jest większe od 
 ostatniego na stosie, generowany jest token \textit{INDENT}, oznaczający 
 początek wciętego bloku. Gdy wcięcie jest mniejsze od ostatniego na stosie, 
-wszystkie większe są zdejmowane ze stosu i dla każdego zdjętego generowany 
-jest token \textit{DEDENT}. Oznacza on koniec wciętego bloku. Po zdjęciu 
+wszystkie większe wcięcia są zdejmowane ze stosu i dla każdego zdjętego wcięcia 
+generowany jest token \textit{DEDENT}. Oznacza on koniec wciętego bloku. 
+Po zdjęciu 
 wszystkich większych wcięć, ostatnie wcięcie, które zostanie na stosie musi być 
-równe obecnemu wcięciu, w szczególności może być równe $0$. W przeciwnym 
+równe wcięciu z obecnie przetwarzanego wiersza, a w szczególności może być równe $0$. 
+W przeciwnym 
 przypadku kod źródłowy jest źle wcięty i kompilator zwróci błąd.
 
 \section{Parsowanie}
@@ -820,7 +829,7 @@ pozwalałoby na przekazywanie typów o różnych rozmiarach przez wartość.
 Podzielmy wszystkie wywołania funkcji na dwie grupy. Wywołania do znanych 
 (ang. known call) i nie znanych funkcji (ang. unknown call). Znane funkcje to 
 takie, których definicję można łatwo wskazać na etapie kompilacji. 
-Na poniższym przykładzie, wywołana funkcja \textit{double} jest statycznie znana.
+Na poniższym przykładzie wywołana funkcja \textit{double} jest statycznie znana.
 
 \begin{lstlisting}[frame=single, caption=Wywołanie statycznie znanej funkcji.] 
 let double x = x + x
@@ -862,18 +871,26 @@ w definicji funkcji.
 \begin{enumerate}
   \item Liczba zaaplikowanych argumentów jest mniejsza od liczby zdefiniowanych 
   argumentów. W tym przypadku utworzony zostaje obiekt reprezentujący częściowo
-  zaaplikowaną funkcję. Zostaną w nim zapisane zaaplikowane argumenty oraz 
-  wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt zostaną 
+  zaaplikowaną funkcję. Zostaną w nim zapisane zaaplikowane argumenty 
+  oraz 
+  wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt 
+  zostaną 
   utworzone na stercie.
-  \item Zaaplikowanych argumentów jest tyle co zdefiniowanych. Funkcja zostanie
-  wywołana w stylu z $C$. Jest to najbardziej optymalny przypadek wywołania 
+  \item Zaaplikowanych argumentów jest tyle co zdefiniowanych. Funkcja 
+  zostanie
+  wywołana w stylu z $C$. Jest to najbardziej optymalny przypadek 
+  wywołania 
   funkcji i nie powoduje on zaalokowania żadnej dodatkowej pamięci. Jeśli 
-  początkowe argumenty mieszczą się w rejestrach to mogą zostać przez nie 
-  przekazane.
-  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $n$ to będzie liczba 
-  zdefiniowanych argumentów. Najpierw nastąpi wywołanie znanej funkcji z 
-  pierwszymi $n$ argumentami. Do wyniku pierwszego wywołania, który teraz jest
-  nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym momencie 
+  początkowe argumenty mieszczą się w rejestrach, to mogą zostać przez 
+  nie przekazane.
+  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych 
+  jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $n$ będzie 
+  liczbą zdefiniowanych argumentów. Najpierw nastąpi wywołanie znanej 
+  funkcji z 
+  pierwszymi $n$ argumentami. Do wyniku pierwszego wywołania, który teraz 
+  jest
+  nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym 
+  momencie 
   zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
 
 % TODO: Coś o tym że funkcje / symbole trzymane są w środowisku z informacją 
@@ -884,7 +901,7 @@ w definicji funkcji.
 
 Wywołania funkcji nieznanych podzielimy na takie, których wynikiem jest dowolna
 funkcja $ a \rightarrow b $ i takie których wynikiem jest wartość. Podczas
-fazy inferencji typów, obliczany jest typ każdego wyrażenia, więc kompilator
+fazy inferencji typów obliczany jest typ każdego wyrażenia, więc kompilator
 jest w stanie określić do której grupy należy dana aplikacja funkcji. Każda 
 nieznana lub częściowo zaaplikowana funkcja jest reprezentowana przez strukturę 
 (taką jak w $C$), 
@@ -914,7 +931,7 @@ struct function {
 };
 \end{lstlisting}
 
-Wskaźnik na funkcje \textit{fn}, przed wywołaniem musi zostać zrzutowany na 
+Wskaźnik na funkcje \textit{fn} przed wywołaniem musi zostać zrzutowany na 
 prawidłowy typ. Dla aplikacji funkcji, których wynikiem jest funkcja, typ 
 wynikowy funkcji \textit{fn} to struktura \textit{function}. Jako argumenty 
 funkcji \textit{fn}, poza argumentami podanymi w aplikacji funkcji, przekazane 
@@ -923,7 +940,7 @@ Funkcja wołana jest odpowiedzialna za nadmiarowe argumenty i przekazanie ich
 dalej.
 
 Aplikacja funkcji nie zawsze musi się wiązać z faktycznym wywołaniem funkcji.
-Na poniższym przykładzie, w ciele funkcji \textit{apply},
+Na poniższym przykładzie w ciele funkcji \textit{apply},
 w pierwszym przypadku funkcja \textit{f} zostanie wywołana, 
 a w drugim, pomimo aplikacji tych samych argumentów i tego samego typu 
 funkcji, nic nie zostanie wywołane.
@@ -983,7 +1000,7 @@ przekazywane przez wskaźnik do ich zawartości zapamiętanej na stercie, ale
 łatwo rozszerzyć język o typy o dowolnej długości. 
 
 Takie założenie komplikuje implementację częściowej aplikacji funkcji. Aby 
-zrozumieć dlaczego, weźmy dwie instancje struktury \textit{function}, dla 
+zrozumieć dlaczego, weźmy dwie instancje struktury \textit{function} dla 
 funkcji o typie \textit{int $\rightarrow$ bool $\rightarrow$ int 
 $\rightarrow$ bool}. Niech pierwsza zostanie częściowo zaaplikowana dwoma 
 argumentami o typach \textit{int} i \textit{bool}, a druga pierwszym argumentem
@@ -1000,12 +1017,12 @@ może być sprawdzone w czasie działania programu dzięki polu
 środowisku. Wtedy typ zrzutowanych funkcji wskazywanych przez \textit{fn} byłby 
 taki sam, niezależnie od tego ile dotychczas argumentów zostało zaaplikowanych.
 Jednak argumenty w środowisku są zapamiętane przez wartość w tablicy \textit
-{args}, a ich reprezentacja nie jest jednorodna (mogą mieć różny rozmiar), 
+{args}, a ich reprezentacja nie jest jednorodna (mogą mieć różny rozmiar),
 co uniemożliwia ich przekazanie.
 Jednorodną reprezentacje wszystkich argumentów można uzyskać poprzez 
 reprezentowanie ich przez wskaźnik, ale takiego rozwiązania chciałem uniknąć.
 Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych 
-aplikowanych jako ostatnie, w środowisku. Wywoływana funkcja, wie już w czasie 
+aplikowanych jako ostatnie, w środowisku. Wywoływana funkcja wie już w czasie 
 kompilacji jakich argumentów (i o jakim rozmiarze), spodziewać się w środowisku,
 więc jest w stanie je z niego odzyskać. To rozwiązuje wspomniany 
 problem, lecz wykonuje niepotrzebne zapisywanie i ładowanie argumentów 
@@ -1094,7 +1111,7 @@ zostały właśnie przekazane.
 Marlow i Peyton Jones w pracy \textit{Making a Fast Curry: Push/Enter vs.
 Eval/Apply} jasno zalecają korzystanie z modelu eval/apply ze względu na 
 prostszą implementację i trudności w kompilacji push/enter do przenośnego 
-języka takiego jak C \texttt{C--} czy LLVM. Wspomniana trudność wynika z 
+języka takiego jak C, C-{}- czy LLVM. Wspomniana trudność wynika z 
 konieczności manualnego zarządzania stosem, co nie jest łatwe (o ile możliwe) 
 w takich językach. Jednak moje rozwiązanie unika tego problemu, a ponadto
 umożliwia przekazywanie argumentów przez rejestry, co zostało wykluczone dla 
