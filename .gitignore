@@ -44,3 +44,5 @@ thesis.out
 thesis.toc
 thesis.synctex.gz
 temp.txt
+record1.out
+*.out

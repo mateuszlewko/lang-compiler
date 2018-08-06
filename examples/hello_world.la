@@ -1,0 +1,12 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+
+  let printn_int x : () = 
+    ll_putint x
+    ll_print_line () 
+
+open Prelude
+
+let _ =
+  printn_int 42
