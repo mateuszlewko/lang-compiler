@@ -1657,12 +1657,26 @@ kompilowanie z tego folderu.
   \item \texttt{compiler/parsing/lexer.cppo.sedlex.ml} -- Analiza leksykalna.
   \item \texttt{compiler/parsing/ast.ml} -- Typy reprezentujące drzewo składni 
   po parsowaniu.
-  \item \texttt{compiler/codegen.ml} -- Zbiór funkcji zajmujących się 
-  generowaniem kodu.
-  \item \texttt{compiler/lang\_types\_def} -- Definicja drzewa 
-  \item \texttt{langc/} -- Plik wykonywalny Interfejs 
-  \item \texttt{test/} -- Testy kompilatora.
-  \item \texttt{test/compiler-test-srcs} -- input files for compiler tests
+  \item \texttt{compiler/codegen.ml} -- Zbiór funkcji odpowiedzialnych za 
+  generowanie kodu.
+  \item \texttt{compiler/lang\_types\_def} -- Definicja typów reprezentujących 
+  typy z Langa.
+  \item \texttt{compiler/lang\_types} -- Funkcje służące znalezieniu
+  typu wyrażeń. Inferencja typów.
+  \item \texttt{compiler/letexp.ml} -- Generowaniu kodu funkcji 
+  (wyrażeń \textit{let}). 
+  Główna część implementacji częściowej aplikacji.
+  \item \texttt{compiler/envn.ml} -- Środowisko używane przy 
+  generacji kodu.
+  \item \texttt{compiler/typed\_ast\_def} -- Typy reprezentujące drzewo 
+  z otypowanymi wyrażeniami.
+  \item \texttt{compiler/typed\_ast} -- Zamiana drzewa otrzymanego po 
+  sparsowaniu na \newline drzewo z otypowanymi wyrażeniami. Wykonywane są także 
+  transformacje: modułów, funkcji zagnieżdżonych, closure conversion
+  oraz klasy typów.
+  \item \texttt{langc} -- Plik wykonywalny kompilatora. Obsługa 
+  parametrów programu.
+
 \end{itemize}
 
 %%%%% BIBLIOGRAFIA
