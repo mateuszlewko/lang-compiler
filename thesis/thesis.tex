@@ -1551,6 +1551,10 @@ Uprzednio należy wykonać następujące kroki.
   \begin{lstlisting}[language=bash]
   $ ./install_deps.sh
   \end{lstlisting}
+  \item Kompilacja projektu:
+  \begin{lstlisting}[language=bash]
+  $ make -B langc
+  \end{lstlisting}
 \end{enumerate}
 
 % \begin{lstlisting}[caption=Instancja klasy w OCamlu, frame=tlrb]{Name}
@@ -1592,7 +1596,33 @@ Uprzednio należy wykonać następujące kroki.
 % $ jbuilder --version
 % \end{lstlisting}
 
-\section{Sposób użycia z przykładami}
+\section{Sposób użycia}
+Skompilowany plik wykonywalny kompilatora znajduje się w folderze \newline
+\texttt{lang-compiler/\_build/default/langc/langc.exe}. Pierwszym argumentem 
+musi być ścieżka do kodu źródłowego w Langu. Program posiada także dodatkowe 
+argumenty. 
+
+\begin{itemize}
+  \item \texttt{--help} --- Opis użycia oraz dostępnych argumentów. 
+  \item \texttt{-o} --- Opcjonalny argument dzięki któremu można określić 
+  ścieżkę i nazwę skompilowanego programu. Domyślnie jest to \texttt{a.out}.
+  \item \texttt{--ll-only} --- Dodanie tego argumentu powoduje wygenerowanie 
+  kodu w pośrednim języku LLVM IR do pliku \texttt{a.out}, bez tworzenia pliku 
+  wykonywalnego. 
+\end{itemize}
+
+Przykładowy program z folderu \texttt{examples} można skompilować następującym 
+poleceniem: 
+\begin{lstlisting}[language=bash]
+$ _build/default/langc/langc.exe examples/hello_world.la # kompilacja 
+$ ./a.out # uruchomienie wygenerowanego programu 
+\end{lstlisting}
+
+\textbf{Uwaga.} Podczas kompilacji program szuka pliku \texttt{external.c} w 
+obecnym folderze (tym w którym znajduje się użytkownik). Zawiera on  
+implementacje kilku funkcji bibliotecznych w \textit{C}. Znajduje on się w 
+głównym folderze projektu (\texttt{lang-compiler}), dlatego zalecanym jest 
+kompilowanie z tego folderu.
 
 \section{Użyte narzędzia i biblioteki}
 
@@ -1621,13 +1651,15 @@ Uprzednio należy wykonać następujące kroki.
 \section{Struktura projektu}
 
 \begin{itemize}
-  \item \texttt{compiler/} -- compiler library which contains: lexer, parser and codegen
-  \item \texttt{compiler/grammar.mly} -- gramatyka w składni Menhira.
-  \item \texttt{compiler/lexer.cppo.sedlex.ml} -- lexer
-  \item \texttt{compiler/codegen.ml} -- main *LLVM IR* code generation
-  \item \texttt{compiler/codegenUtils.ml} -- some helper functions for code generation
-  \item \texttt{compiler/ast.ml} -- abstract syntax tree
-  % \item \texttt{printer/} -- pretty-printer for abstract syntax tree
+  \item \texttt{compiler/} -- Biblioteka kompilatora. Zawiera wszystkie 
+  najważniejsze elementy procesu kompilacji.
+  \item \texttt{compiler/parsing/grammar.mly} -- Gramatyka w składni Menhira.
+  \item \texttt{compiler/parsing/lexer.cppo.sedlex.ml} -- Analiza leksykalna.
+  \item \texttt{compiler/parsing/ast.ml} -- Typy reprezentujące drzewo składni 
+  po parsowaniu.
+  \item \texttt{compiler/codegen.ml} -- Zbiór funkcji zajmujących się 
+  generowaniem kodu.
+  \item \texttt{compiler/lang\_types\_def} -- Definicja drzewa 
   \item \texttt{langc/} -- Plik wykonywalny Interfejs 
   \item \texttt{test/} -- Testy kompilatora.
   \item \texttt{test/compiler-test-srcs} -- input files for compiler tests
