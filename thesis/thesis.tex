@@ -58,7 +58,7 @@ typów przez ich wartość do funkcji polimorficznych. W swojej pracy przedstawi
 implementację kompilatora języka funkcyjnego, w której unikam jednorodnej 
 reprezentacji danych przez wskaźnik dzięki monomorfizacji. 
 Zmniejszając narzut pamięciowy przy użyciu funkcji polimorficznych 
-decyduję się zwiększenie rozmiaru wygenerowanego programu.
+decyduję się na zwiększenie rozmiaru wygenerowanego programu.
 Moja implementacja częściowej aplikacji, choć bazowana na popularnym modelu 
 \textit{push/enter}, radzi sobie z problemem manualnego zarządzania stosem.
 
@@ -108,7 +108,7 @@ dzięki jego inicjatywie, powstał Standard ML --- ustandaryzowana wersja język
 ML. Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca, 
 inferencje typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy,
 które cechują większość dzisiejszych języków programowania 
-wywodzących się z \textit{SMLa} takich jak \textit{OCaml} i \textit{F\#}. W 
+wywodzących się z SMLa takich jak OCaml i F\#. W 
 swojej pracy zaimplementowałem kompilator języka funkcyjnego \textit{Lang}, 
 bazującego na języku F\#. Zaimplementowałem w nim najważniejsze cechy języków 
 z rodziny ML, starając się uniknąć wad rozwiązań z popularnych kompilatorów. 
@@ -139,7 +139,7 @@ widzenia programisty.
 
 Jako pierwsze pojawiły się w języku Haskell\cite{tc_wiki}. 
 Początkowo zostały użyte w celu umożliwienia przeładowania operatorów 
-arytmetycznych i równości. Od tego czasu, 
+arytmetycznych i równości. Od tego czasu
 znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
 Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji i definiowania 
 funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
@@ -162,7 +162,7 @@ kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje z jedny
 parametrem, wprowadzając ad--hoc polimorfizm do języka.
 
 Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella. 
-W celu stworzenia klasy typów $C$ dla typu ogólnego $a$, należy 
+W celu stworzenia klasy typów C dla typu ogólnego $a$, należy 
 zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Dla danego 
 typu i klasy może istnieć co najwyżej jedna instancja. 
 
@@ -190,7 +190,7 @@ instance Eq Bool where
 
 Kolejnym celem tej pracy jest implementacja głównych cech języków funkcyjnych w
 możliwie optymalny sposób. Skupię się na optymalizacji czasu wykonania 
-programu, kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać 
+programu kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać 
 do kodu maszynowego, gdyż daje to lepszą wydajność otrzymanego programu. 
 Stanowi to jednak duże wyzwanie przy kompilacji języka funkcyjnego ze względu 
 na konieczność translacji abstrakcyjnych i wysokopoziomowych konstrukcji do 
@@ -242,9 +242,9 @@ entry:
 }
 \end{lstlisting}
 
-LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji, zmiennych 
-globalnych, podstawowych bloków, przypisań oraz wywołań funkcji.
-sPodstawowe bloki kodu jak i funkcje nie 
+LLVM IR składa się przede wszystkim z: deklaracji i definicji funkcji
+(procedur), zmiennych globalnych, podstawowych bloków, przypisań oraz 
+wywołań funkcji. Podstawowe bloki kodu jak i funkcje nie 
 mogą być zagnieżdżone. 
 
 W moim kompilatorze nie generuję kodu LLVMa bezpośrednio, 
@@ -291,7 +291,7 @@ zaimplementowałem oba te elementy.
 \section{Rozwijanie funkcji oraz częściowa aplikacja}
 
 Częściowa aplikacja występuje wtedy, gdy po zaaplikowaniu mniejszej liczby 
-argumentów niż wynosi arność funkcji otrzymujemy nową funkcje. Przykładowo 
+argumentów niż wynosi arność funkcji otrzymujemy nową funkcję. Przykładowo 
 dla funkcji $f: (A \times B) \rightarrow C$ po zaaplikowaniu pierwszego 
 argumentu $a : A$ otrzymujemy funkcję $g : B \rightarrow C$. W szczególności
 dla dowolnego $b : B$ zachodzi: $g(b) = f(a, b)$. Funkcja $g$, która jest 
@@ -345,11 +345,11 @@ kompilatorze, zaprezentuję w~rozdziale poświęconym jego implementacji.
 \chapter{Język $lang$}
 
 \section{Inspiracja}
-Składnia języka $lang$ jest w większości zapożyczona z języka $\verb!F#!$, należącego
+Składnia języka $lang$ jest w większości zapożyczona z języka F\#, należącego
 do rodziny ML. Dzięki zastosowaniu składni czułej na wcięcia, która eliminuje 
 konieczność użycia wielu słów kluczowych, jest jednym z  prostszych języków z 
-tej rodziny. Przy tworzeniu nowego języka funkcyjnego, kierowałem się głównie 
-jego prostotą. Poza zapożyczeniem składni $\verb!F#!$ dla podstawowych wyrażeń,
+tej rodziny. Przy tworzeniu nowego języka funkcyjnego kierowałem się głównie 
+jego prostotą. Poza zapożyczeniem składni F\# dla podstawowych wyrażeń,
 funkcji i typów, rozszerzyłem ją o wyrażenia koniecznie do realizacji klas 
 typów i ich instancji. Ich składnia została zaczerpnięta z Haskella.
 % Jedną z najpopularniejszych funkcjonalności, zasugerowaną przez użytkowników, są
@@ -361,9 +361,9 @@ typów i ich instancji. Ich składnia została zaczerpnięta z Haskella.
 
 \subsection{Wyrażenia warunkowe}
 
-Składnia wyrażeń warunkowych jest bardzo podobna do tej w $\verb!F#!$. W 
+Składnia wyrażeń warunkowych jest bardzo podobna do tej w F\#. W 
 języku $Lang$
-istnieją jednak pewne uproszczenia względem $\verb!F#!$. 
+istnieją jednak pewne uproszczenia względem F\#. 
 Warunek musi być prostym wyrażeniem zawierającym operacje arytmetyczne i 
 logiczne
 lub wywołania funkcji. Nie może zawierać przykładowo: wielolinijkowych wyrażeń
@@ -371,12 +371,12 @@ lub wywołania funkcji. Nie może zawierać przykładowo: wielolinijkowych wyra�
 ciało funkcji, o ile występuje w nowej lini i jest wcięte bardziej niż 
 token \textit{if}. 
 % TODO: Więcej o wcięciach
-Poniższa gramatyka, prezentują zbliżoną formę do rzeczywistej składni języka.
+Poniższa gramatyka jest zbliżona do rzeczywistej składni języka.
 Dokładny opis gramatyki znajduje się w pliku 
 \path{lang-compiler/compiler/parsing/grammar.mly}. Jest bardziej skomplikowany
 ze względu na rozpoznawanie wciętych bloków kodu na
 poziomie parsera. Lepszym pod względem czytelności gramatyki, 
-jest wykonanie tej czynności na etapie lexera, tak jak to ma miejsce w $\verb!F#!$. Dokładniejszy opis 
+jest wykonanie tej czynności na etapie lexera, tak jak to ma miejsce w F\#. Dokładniejszy opis 
 sposobu parsowania składni bazującej na wcięciach znajduje się w rozdziale \ref{wciecia_omowienie}. 
 
 Poniższa gramatyka jest w notacji \textit{EBNF}.
@@ -456,7 +456,7 @@ let alwaysTrue x = (mod2 x = 0) || (mod2 (x + 1) = 0)
 \section{Deklaracja funkcji (wyrażenie let)}
 
 Argumenty funkcji muszą być w tym samym wierszu co słowo \textit{let}. Po znaku 
-$=$ ciało funkcji może być złożonym wyrażeniem o ile zaczyna się w następnym wierszu i 
+$=$ ciało funkcji może być złożonym wyrażeniem, o ile zaczyna się w następnym wierszu i 
 jest w późniejszej kolumnie niż \textit{let}. Wyrażenie \textit{let} może być 
 zdefiniowane w jednej linii, o ile jego ciało jest pojedynczym wyrażeniem prostym.
 Standardowo dla języków z rodziny ML należy explicite zaznaczyć słowem 
@@ -568,7 +568,8 @@ let p3 : point3 =
 
 \subsection{Uaktualnianie rekordu}
 
-Rekordy w $Langu$ podobnie jak rekordy w $\verb!F#!$ i OCamlu, są trwałe. 
+Rekordy w $Langu$, podobnie jak rekordy w F\# i OCamlu, 
+są trwałe. 
 Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu. 
 % Dlatego to
 % wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
@@ -632,7 +633,7 @@ instance Print Vec where
 
 \section{Moduły}
 
-Moduły w $Langu$ spełniają takie zadanie jak te w $\verb!F#!$ -- służą jako 
+Moduły w $Langu$ spełniają takie zadanie jak te w F\# -- służą jako 
 przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem 
 systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
 Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
@@ -666,11 +667,11 @@ open Prelude.Internal
 Zaimplementowane zostały jedynie tablice zawierające typ $int$. Tablice są 
 ulotną strukturą danych. Na poziomie języka można stworzyć literał tablicy.
 Zmiana i odczytanie komórki tablicy bądź utworzenie niezainicjalizowanej 
-tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane w $C$. 
-Tablice w langu są reprezentowane tak samo jak języku w $C$ jako spójny ciąg w pamięci.
+tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane w C. 
+Tablice w langu są reprezentowane tak samo jak języku w C jako spójny ciąg w pamięci.
 
 Elementami literału tablicy mogą być proste wyrażenia oddzielone średnikiem. 
-Podobnie jak w $OCamlu$ i $\verb!F#!$ tablica zaczyna się od symbolu~$[|$, a 
+Podobnie jak w $OCamlu$ i F\# tablica zaczyna się od symbolu~$[|$, a 
 kończy symbolem~$|]$.
 
 \textbf{Uwaga.} Dla wielowierszowego literału tablicy symbole rozpoczynający 
@@ -686,13 +687,13 @@ let multiLineArr : int array =
   |]
 \end{lstlisting}
 
-\section{Wołanie funkcji z $C$}
+\section{Wołanie funkcji z C}
 
 Mała część funkcjonalności języka została zaimplementowana z użyciem 
-zewnętrznych funkcji w $C$ (wypisywanie oraz operacje na tablicy). Dlatego 
+zewnętrznych funkcji w C (wypisywanie oraz operacje na tablicy). Dlatego 
 koniecznym było dołożenie wyrażeń, pozwalających zadeklarować zewnętrzny symbol 
 wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Typy 
-Langa są dosłownie tłumaczone na typy w $C$ z wyjątkiem typu $unit$, który 
+Langa są dosłownie tłumaczone na typy w C z wyjątkiem typu $unit$, który 
 jest zamieniany na $bool$ (o rozmiarze jednego bajtu).
 
 \begin{lstlisting}[frame=single, caption=Interfejs zewnętrzny.]
@@ -729,8 +730,9 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   \item Otrzymany ciąg jest następnie poddany analizie składniowej 
   (ang. parsing), która zgodnie z podaną gramatyką generuje \textit{drzewo 
   składni abstrakcyjnej (ang. abstract syntax tree)}. Węzły tego drzewa 
-  zawierają jedno z wyrażeń, lecz nie posiadają informacji o typie tego
-  wyrażenia. Implementacja w pliku: \newline
+  zawierają jedno z wyrażeń języka, 
+  lecz nie posiadają informacji o jego typie. 
+  Implementacja w pliku: \newline
   \path{lang-compiler/compiler/parsing/grammar.mly}
  
   \item Następnie wykonywana jest transformacja drzewa składni, która:
@@ -776,15 +778,15 @@ Do przeprowadzania analizy leksykalnej skorzystałem z biblioteki
 \subsection{Analiza wcięć} \label{wciecia_omowienie}
  
 Istnieje wiele języków programowania realizujących ideę składni czułej na 
-wcięcia. Sposób w jaki działa to w $\verb!F#!$ jest jednym z bardziej zaawansowanych,
+wcięcia. Sposób w jaki działa to w F\# jest jednym z bardziej zaawansowanych,
 bo pozwala na zdefiniowanie wielowierszowych aplikacji funkcji, warunków itp. 
 bez użycia znaków przełamania wiersza bądź słów kluczowych znanych 
 z języka OCaml (\texttt{begin}, \texttt{end}, \texttt{;}, \texttt{in}).
- W $\verb!F#!$ 
+ W F\# 
 istnieje 
 także możliwość mieszania tych słów kluczowych z wcięciami. 
 
-Analiza wcięć w $Langu$ jest zbliżona do tej w \textit{Pythonie}
+Analiza wcięć w $Langu$ jest zbliżona do tej w Pythonie
 \cite{python_indentation}. Dla każdego wiersza
 na bieżąco jest obliczany numer kolumny pierwszego znaku (wcięcie). Długości 
 wcięć z poprzednich wierszy są trzymane na stosie. Na początku na stosie
@@ -801,13 +803,13 @@ przypadku kod źródłowy jest źle wcięty i kompilator zwróci błąd.
 
 \section{Parsowanie}
 
-Popularnym narzędziem do generowania parserów jest \textit{Menhir}. Na 
+Popularnym narzędziem do generowania parserów jest \textit{Menhir} \cite{menhir}. Na 
 \newline podstawie podanej gramatyki \textit{LR(1)}, generuje kod $OCamla$, 
 który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operatory: $
 +$, $?$, $\ast$. Zdecydowałem się skorzystać z tego narzędzia ze względu na 
 łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
 ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
-{ocamlyacc}. Całość gramatyki znajduje się w pliku 
+{ocamlyacc} \cite{menhir}. Całość gramatyki znajduje się w pliku 
 \path{lang-compiler/compiler/parsing/grammar.mly}. 
 % TODO: Może coś o kontekstach w F\#
 
@@ -844,7 +846,7 @@ Przykładem nieznanych funkcji są funkcje, które:
   \item są wynikiem częściowej aplikacji funkcji.
 \end{itemize}
 
-W tym przykładzie wywołane funkcje $a$, $b$ i $c$ są nieznane.
+W tym przykładzie wywołane funkcje $a$, $b$ i C są nieznane.
 
 \begin{lstlisting}[frame=single, caption=Przykłady statycznie 
 nieznanej funkcji.]
@@ -876,21 +878,19 @@ w definicji funkcji.
   wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt 
   zostaną 
   utworzone na stercie.
-  \item Zaaplikowanych argumentów jest tyle co zdefiniowanych. Funkcja 
-  zostanie
-  wywołana w stylu z $C$. Jest to najbardziej optymalny przypadek 
-  wywołania 
-  funkcji i nie powoduje on zaalokowania żadnej dodatkowej pamięci. Jeśli 
-  początkowe argumenty mieszczą się w rejestrach, to mogą zostać przez 
-  nie przekazane.
-  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych 
-  jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $n$ będzie 
-  liczbą zdefiniowanych argumentów. Najpierw nastąpi wywołanie znanej 
-  funkcji z 
-  pierwszymi $n$ argumentami. Do wyniku pierwszego wywołania, który teraz 
-  jest
-  nieznaną funkcją, zostaną zaaplikowane pozostałe argumenty. W tym 
-  momencie 
+  \item Zaaplikowanych argumentów jest tyle samo co zdefiniowanych. 
+  Funkcja zostanie wywołana w stylu z C. Jest to najbardziej optymalny 
+  przypadek wywołania funkcji i nie powoduje on zaalokowania żadnej 
+  dodatkowej pamięci. 
+  Jeśli początkowe argumenty mieszczą się w rejestrach, to mogą zostać 
+  przez nie przekazane.
+  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych, 
+  jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $k$ będzie 
+  liczbą argumentów w definicji funkcji, a $n$ liczbą aplikowanych 
+  argumentów, gdzie $n > k$. Najpierw nastąpi wywołanie znanej 
+  funkcji z pierwszymi $k$ argumentami. Do wyniku pierwszego wywołania, 
+  który teraz jest nieznaną funkcją, zostanie zaaplikowane pozostałe 
+  $n - k$ argumentów. W tym momencie 
   zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
 
 % TODO: Coś o tym że funkcje / symbole trzymane są w środowisku z informacją 
@@ -904,22 +904,22 @@ funkcja $ a \rightarrow b $ i takie których wynikiem jest wartość. Podczas
 fazy inferencji typów obliczany jest typ każdego wyrażenia, więc kompilator
 jest w stanie określić do której grupy należy dana aplikacja funkcji. Każda 
 nieznana lub częściowo zaaplikowana funkcja jest reprezentowana przez strukturę 
-(taką jak w $C$), 
+(taką jak w C), 
 zawierającą następujące pola:
 
 \begin{itemize}
-  \item wskaźnik na funkcje,
+  \item wskaźnik na funkcję,
   \item wskaźnik na środowisko (zapamiętane argumenty), które jest pamiętane 
-  jako spójny ciąg bajów (dynamicznie zaalokowana tablica z $C$),
+  jako spójny ciąg bajów (dynamicznie zaalokowana tablica z C),
   % TODO: Można też tablice wskaźników na argumenty i 
   % dlaczego tak nie zrobiłem
   \item pozostała liczba argumentów koniecznych do zaaplikowana, aby należało 
-  wywołać wskazywaną funkcje,
+  wywołać wskazywaną funkcjęs,
   \item arność funkcji,
   \item liczba bajtów w środowisku.
 \end{itemize}
 
-Definicja takiej struktury w $C$ wyglądałaby następująco:
+Definicja takiej struktury w C wyglądałaby następująco:
 
 \begin{lstlisting}[frame=single, caption=Rozwinięta funkcja w OCamlu.]
 struct function {
@@ -931,9 +931,10 @@ struct function {
 };
 \end{lstlisting}
 
-Wskaźnik na funkcje \textit{fn} przed wywołaniem musi zostać zrzutowany na 
+Wskaźnik na funkcję \textit{fn} przed wywołaniem musi zostać zrzutowany na 
 prawidłowy typ. Dla aplikacji funkcji, których wynikiem jest funkcja, typ 
-wynikowy funkcji \textit{fn} to struktura \textit{function}. Jako argumenty 
+wynikowy wygenerowanej funkcji \textit{fn} to struktura \textit{function}. 
+Jako argumenty 
 funkcji \textit{fn}, poza argumentami podanymi w aplikacji funkcji, przekazane 
 zostaną dodatkowo: wskaźnik na środowisko i liczba aplikowanych argumentów.
 Funkcja wołana jest odpowiedzialna za nadmiarowe argumenty i przekazanie ich 
@@ -1087,11 +1088,11 @@ Istnieję dwa modele realizacji częściowej aplikacji: push/enter i eval/apply.
 Zostały dokładnie opisane przez Marlow i Peyton Jones\cite{fast_curry}. 
 Ich zasadnicza różnica polega na sposobie działania przy aplikacji funkcji 
 nieznanej. W push/enter przed właściwym wywołaniem funkcji jej argumenty są 
-ładowane na stos. Następnie to funkcja wołana jest odpowiedzialna 
-rozważenie wszystkie przypadków związanych z liczbą zaaplikowanych argumentów.
+ładowane na stos. Następnie to funkcja wołana jest odpowiedzialna za
+rozważenie wszystkich przypadków związanych z liczbą zaaplikowanych argumentów.
 Podejmuje decyzje o wywołaniu właściwiej funkcji i ewentualnym przekazaniu 
 pozostałych argumentów dalej bądź zwróceniu obiektu reprezentującego częściowo\
-zaaplikowana funkcje. W modelu eval/apply, to po stronie funkcji wołającej 
+zaaplikowaną funkcję. W modelu eval/apply, to po stronie funkcji wołającej 
 leży zadanie rozważania tych przypadków. Strona wołająca (ang. call site)
 zna liczbę zaaplikowanych argumentów, a w czasie działania sprawdza 
 faktyczną arność funkcji. 
@@ -1134,10 +1135,10 @@ Ideą \textit{closure conversion} jest pamiętanie funkcji wraz z jej domknięci
 \textit{Closure conversion} dodaje duży narzut pamięciowy i czasowy na wygenerowany program,
 dlatego należy ustalić dlaczego taka transformacja jest potrzebna.
 
-Zdefiniujmy funkcje \textit{make\_adder} w \textit{OCamlu}, która będzie zwracać zagnieżdżona funkcje.
+Zdefiniujmy funkcję \textit{make\_adder} w OCamlu, która będzie zwracać zagnieżdżoną funkcję.
 Ciało zagnieżdżonej funkcji \textit{add} odwołuje się do zmiennej z zewnętrznego zakresu.
 
-\begin{lstlisting}[frame=single, caption={Zagnieżdżona funkcja w \textit{OCamlu}}]
+\begin{lstlisting}[frame=single, caption={Zagnieżdżona funkcja w OCamlu}]
 let make_adder x = 
     let add y = x + y in 
     add 
@@ -1166,10 +1167,10 @@ let add y = x + y
 let make_adder x = add 
 \end{lstlisting}
 
-Powyższy kod nie jest poprawnym programem w języku \textit{OCaml}, oraz 
+Powyższy kod nie jest poprawnym programem w języku OCaml, oraz 
 nie mógłby zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
 Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie,
-w którym wprowadzona zostaje globalna zmienna, odpowiadająca zmiennej wolnej $x$. 
+w którym wprowadzona zostaje globalna zmienna odpowiadająca zmiennej wolnej $x$. 
 Na poniższym przykładzie zostało przedstawione jak mogłaby wyglądać taka transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
@@ -1182,7 +1183,7 @@ let make_adder x =
 \end{lstlisting}
 Powyższe przekształcenia nie wprowadzają dużego narzutu na wynikowy program i rozwiązują 
 problem z zasięgiem symbolu $x$. Ten kod jednak nie zwróci poprawnego wyniku, przy założeniu o statycznym zasięgu widoczności (ang. static scoping). Drugie 
-wywołanie \textit{make\_adder} dla argumentu 5, nadpisze jego pierwszą wartość, z której korzysta pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
+wywołanie \textit{make\_adder} dla argumentu 5 nadpisze jego pierwszą wartość, z której korzysta pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
 \textit{add}, w momencie, w którym jest zwracana. 
 
 W \textit{Langu}, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
@@ -1250,7 +1251,7 @@ reprezentacja sprowadza się do alokowania wartości obiektu na stercie, a
 następnie przekazywanie wskaźnika na ten obiekt. Wszystkie wskaźniki 
 niezależnie od typu i rozmiaru obiektu, na który wskazują, mają ten sam 
 rozmiar i są przekazywane w ten sam sposób. Niesie to ze sobą kilka wad.
-Przykładowo, dla każdego \textit{inta}, który sam zajmuje $4$ bajty,
+Przykładowo, dla każdego inta, który sam zajmuje $4$ bajty,
 dodatkowo alokowane jest $8$ bajtów na wskaźnik do niego. Jako że jest 
 zaalokowany na stercie, będzie musiał być ręcznie zwolniony przez programistę 
 lub przez automatyczne odśmiecanie pamięci (które często występuje w językach 
@@ -1258,7 +1259,7 @@ funkcyjnych).
 
 Do języków, które stosują powyższą metodę należą m. in. Java 
 \cite{type_erasure} i Haskell 
-\cite{haskell_poly}(sekcja \textit{Haskell implementation}).
+(\cite{haskell_poly}, sekcja \textit{Haskell implementation}).
 W Haskellu konieczna jest taka reprezentacja danych także ze względu na jego 
 leniwość. Dostępne w nim są także prymitywne typy reprezentowane przez 
 ich wartość (ang. unboxed types), takie jak $\verb!Int#!$ i 
@@ -1268,29 +1269,29 @@ na unboxed, ale nie jest to gwarantowane. Jako że kierowałem się wydajności�
 przy implementacji kompilatora \textit{Langa}, to rozwiązanie nie jest 
 satysfakcjonujące.
 
-\textit{OCaml} reprezentuje \textit{inty} i wskaźniki na jednym słowie 
+OCaml reprezentuje inty i wskaźniki na jednym słowie 
 maszynowym. To czy do funkcji został przekazany wskaźnik, czy \textit{int}
 przez wartość jest rozpoznawane na podstawie najniższego bitu, który jest 
-traktowany jak znacznik \cite{ocaml_31bit}. Jeśli wynosi $1$ to dana wartość jest \textit{intem}.
+traktowany jak znacznik \cite{ocaml_31bit}. Jeśli wynosi $1$ to dana wartość jest intem.
 To rozwiązania pozwala na uniknięcie większości narzutu przy wykonywaniu 
 operacji na typach prymitywnych, ale wiąże się z niestandardowym podejście do 
 arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość obiektów 
 dłuższych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
 rozwiązania, nie zdecydowałem sie go zaimplementować.
 
-Języki takie jak \texttt{C++} i \textit{Rust} oraz kompilator \textit{SMLa} 
+Języki takie jak C++ i Rust oraz kompilator SMLa 
 MLton \cite{mono_mlton}, wyspecjalizowują każdą polimorficzną funkcję przed 
 fazą generowania 
-kodu. Ten proces nazywany jest monomorfizacją. Dokładniej, polega on na 
+kodu. Ten proces nazywany jest \textit{monomorfizacją}. Dokładniej, polega on na 
 utworzenia osobnej 
 implementacji polimorficznej funkcji dla każdego konkretnego typu, który 
 został 
-podstawiony pod typ ogólny. W \texttt{C++} użytkownik może explicite podać 
-dla jakich typów ukonkretnia daną funkcje, bądź może być to wykryte przez 
+podstawiony pod typ ogólny. W C++ użytkownik może explicite podać 
+dla jakich typów ukonkretnia daną funkcję, bądź może być to wykryte przez 
 kompilator.
 
 \begin{lstlisting}[frame=single, caption={Polimorficzna funkcja w 
-\texttt{C++} z użyciem szablonów (ang. template)}]
+C++ z użyciem szablonów (ang. template)}]
 template<class Type1, class Type2>
 void foo(Type1 t1, Type2 t2) {
     // ...
@@ -1308,13 +1309,13 @@ implementacje, a oryginalne wywołania funkcji zostaną już w fazie kompilacje
 zamienione na wywołania odpowiednich, wyspecjalizowanych wersji tej funkcji.
 Takie rozwiązanie pozwala na przekazanie dowolnego typu przez jego wartość, 
 bez zmian jego reprezentacji. Jednak nie jest ono pozbawione kompromisów. 
-Statyczna monomorfizacja funkcji, nie pozwala na zastosowanie polimorficznej
-rekurencji. Dodatkowo, zwiększa długość wygenerowanego kodu, tym samym 
+Statyczna monomorfizacja funkcji nie pozwala na zastosowanie polimorficznej
+rekurencji. Dodatkowo zwiększa długość wygenerowanego kodu, tym samym 
 wydłużając czas kompilacji i zwiększać rozmiar wynikowego programu. Kolejną 
 wadą w praktycznych zastosowaniach, jest fakt, że wysokopoziomowy kod 
 implementacji funkcji polimorficznej musi być opublikowany wraz z wygenerowaną 
-bibliotekę, aby istniała możliwość użycia wywołania tej funkcji dla typów dla 
-których nie byłą wcześniej ukonkretniona. Mimo to, język \texttt{C++} cieszy 
+bibliotekę, aby istniała możliwość wywołania tej funkcji dla typów dla 
+których nie była wcześniej ukonkretniona. Mimo to, język C++ cieszy 
 się ogromną popularnością, a system szablonów jest szeroko używany, także w 
 zastosowaniach produkcyjnych. 
 
@@ -1341,13 +1342,13 @@ konkretnych są zapamiętywane.
 Inferencja typów zwalnia programistę z obowiązku wyspecyfikowania typów 
 każdej deklaracji, pozostawiając wszystkie zalety statycznego systemu typów.
 W \textit{Langu} działa ona następująco. Na początku każdemu argumentowi,
-który nie został oznaczony przez użytkownika typem konkretny, zostaje 
-przypisany różny typ ogólny. Podczas inferencji w ciele funkcji, dla 
+który nie został adnotowany przez użytkownika typem konkretnym, zostaje 
+przypisany inny typ ogólny. Podczas inferencji w ciele funkcji, dla 
 każdego wyrażenia, dla którego może być wywnioskowane jakieś ograniczenie 
 (np. warunek w \textit{if} powinien mieć typ \textit{bool}), odpowiednia 
 równość między typami zostaje zapisana w drzewie ast tej funkcji. Po 
-przetworzeniu funkcji, zostaje zbudowany graf równości między typami. 
-Sprawdzane jest czy któreś argumenty w ciele funkcji zostały ukonkretnione, 
+przetworzeniu funkcji zostaje zbudowany graf równości między typami. 
+Sprawdzane jest, czy któreś argumenty w ciele funkcji zostały ukonkretnione, 
 jeśli tak to definicja funkcji jest aktualizowana, jeśli nie to typ pozostaje
 ogólny. Graf równości typów jest także używany w celu znalezienia konkretnych 
 typów przy wywoływaniu polimorficznej funkcji (dzieję się to w fazie 
@@ -1452,17 +1453,17 @@ kompilacji i wykonywania programu. Wymaga dodania co najmniej
 jednego argumentu do funkcji polimorficznych korzystających z klas typów. 
 Jednak w implementacji klas typów w \textit{Langu}, ze względu na decyzje 
 podjęte w poprzednich cechach języka (monomorfizacja dla let polimorfizmu), 
-nie skorzystałem z tej metody. Po przeprowadzeniu monomorfizacji w kodzie nie 
+nie skorzystałem z tej metody. Po przeprowadzeniu monomorfizacji, w kodzie nie 
 występują żadne funkcje polimorficzne. Jedyne co należy zrobić w kolejnej 
-fazie, to sprawdzić czy dla danego typu i klasy istnieje instancja. Jeśli tak 
-to użycie każdej metody z tej klasy dla konkretnego typu, należy zamienić 
+fazie, to sprawdzić czy dla danego typu i klasy istnieje instancja. Jeśli tak,
+to użycie każdej metody z tej klasy dla konkretnego typu należy zamienić 
 na wywołanie odpowiedniej implementacji. Po tym przekształceniu, kod jest 
 pozbawiony wszystkich konstrukcji klas typów, zawiera jedynie ich 
 implementacje i wywołania odpowiednich metod. Oczywistą zaletą tego rozwiązania
 jest fakt, że te wysoko poziomowe abstrakcje nie wiążą ze sobą żadnego kosztu.
 Jest to istotna cecha w praktycznych zastosowania, bo pozwala na swobodne 
 korzystanie z wysokopoziomowych konstrukcji języka, bez rozważania nad ich 
-wpływem na wydajność. Jednak wady nad tym rozwiązaniem ciążą wszystkie wady 
+wpływem na wydajność. Jednak z tym rozwiązaniem związane są wszystkie wady 
 monomorfizacji: brak rekurencji polimorficznej, brak polimorfizmu wyższych 
 rzędów (ang. higher-rank polymorphism) oraz konieczność kompilacji całego kodu 
 programu na raz. Z podobnego rozwiązania przy implementacji klas typów 
@@ -1480,7 +1481,7 @@ okazała się efektywna implementacja częściowej aplikacji. Główną trudnoś
 było spełnienie założeń o optymalnym przekazywaniu zmiennych i unikaniu 
 jednorodnej reprezentacji różnych typów danych poprzez boxowanie. Pomimo że 
 jest to standardowa cecha wielu języków i istnieją opisy jej implementacji
-w części z nich, to cele, które postawiłem zaowocowały odmiennym rozwiązaniem.
+w części z nich, to cele, które postawiłem, zaowocowały odmiennym rozwiązaniem.
 % Moje rozwiązanie, choć z założenia szybsze i bardziej oszczędne w zasobach 
 % niż 
 % popularne rozwiązania, 
@@ -1516,16 +1517,16 @@ i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
   monomorfizacji.
   \item Składnia pozwalająca na opcjonalne użycie słów kluczowych, które tworzą 
   kontekst (w OCamlu to \texttt{begin}, \texttt{end}, \texttt{in} oraz nawiasy).
-  Jest to cecha znana z języka \textit{F\#}. Należałoby przenieść wykrywanie 
+  Jest to cecha znana z języka F\#. Należałoby przenieść wykrywanie 
   całych bloków wciętego kodu do etapu analizy leksykalnej. Wcięcia generowały 
   by różne tokeny (nie tylko \textit{INDENT} i \textit{DEDENT}), w zależności 
   od kontekstu w których się znajdują. Dokładny opis tego rozwiązania znajduje 
-  sie w Specyfikacji języka \textit{F\#} $4.0$\cite{fs_spec}.
+  sie w specyfikacji języka F\# $4.0$\cite{fs_spec}.
   \item Reprezentowanie małych rekordów poprzez ich wartość. Rekord zawierający 
-  dwa pola będącymi intami może być zapamiętany w jednym słowie maszynowym. 
+  dwa pola będącymi intami, może być zapamiętany w jednym słowie maszynowym. 
   Obecnie wszystkie rekordy są pamiętane przez wskaźnik do ich zawartości, 
-  jednak dzięki monomorfizacji, nic nie stoi na przeszkodzi aby zastosować tę 
-  optymalizację.
+  jednak dzięki monomorfizacji zastosowanie tej optymalizacji nie stanowi 
+  problemu.
 
 \end{itemize}
 
@@ -1782,10 +1783,13 @@ Type Erasure. The Java Tutorials.
 Type Systems, Type Inference, and Polymorphism.
 \\\texttt{http://www.cs.tau.ac.il/~msagiv/courses/pl14/chap6-1.pdf}
 
+\bibitem{menhir}
+Menhir.
+\\\texttt{http://gallium.inria.fr/~fpottier/menhir/}
+
 \bibitem{ocaml_31bit}
 Chapter 20. Memory Representation of Values. Real World OCaml.
-\\\texttt
-{https://v1.realworldocaml.org/v1/en/html/memory-representation-of-values.html}
+\\\texttt{https://v1.realworldocaml.org/v1/en/html/memory-representation-of-values.html}
 
 \bibitem{mono_mlton}
 Monomorphise. MLton.
