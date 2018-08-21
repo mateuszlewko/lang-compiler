@@ -18,7 +18,7 @@ Parser:
     ✔ complex expression in if @today @done(18-01-24 00:44)
     ✔ correct priority of operators @done(18-01-26 23:17)
 
-    ❑ proper (improved) parsing @medium  
+    ✘ proper (improved) parsing @medium @cancelled(18-08-14 20:13)
 
     ✔ record types @done(18-05-21 01:45)
     ✔ record field get @done(18-05-21 21:54)
@@ -30,8 +30,8 @@ Parser:
         ✔ type class annotation @today @done(18-05-30 01:50)
         
     ✔ mutually recursive let-exps @done(18-06-06 21:31)
-    ❑ lambda (fun or =>)
-    ❑ mutable var
+    ✘ lambda (fun or =>) @cancelled(18-08-14 20:13)
+    ✘ mutable var @cancelled(18-08-14 20:13)
     ✘ lists @cancelled(18-06-06 21:00)
     ✘ tuples @cancelled(18-06-06 21:00)
     ✘ tuples pattern matching @cancelled(18-06-06 21:00)
@@ -87,7 +87,7 @@ Codegen:
         ✔ record literal @done(18-05-23 19:12)
 
     ✔ let-polymorphism @done(18-05-26 23:24)
-    ❑ generics in return type (for example in case of partial application) @today 
+    ✘ generics in return type (for example in case of partial application) @today @cancelled(18-08-14 20:13)
 
     simple type inference (with let-polymorphism): @today 
         ✔ basic type unification @done(18-06-04 01:14)
@@ -97,40 +97,42 @@ Codegen:
         ✔ mutually recursive functions @done(18-06-08 19:23)
    
     ✔ basic type classes @today @done(18-06-04 01:16)
-    ❑ type inference with type classes @today 
+    ✔ type inference with type classes @today @done(18-08-14 20:13)
 
     ✔ mutually recursive functions @done(18-06-08 19:23)
     ✘ mutually recursive nested functions @today @cancelled(18-06-13 22:26)
 
-    ❑ generic arrays
-    ❑ top level expressions 
-    ❑ float type with literals @medium
-    ❑ arithmetic operations (float) @medium
+    ✘ generic arrays @cancelled(18-08-14 20:13)
+    ✔ top level expressions @done(18-08-14 20:13)
+    ✘ float type with literals @medium @cancelled(18-08-14 20:13)
+    ✘ arithmetic operations (float) @medium @cancelled(18-08-14 20:13)
 
-    ❑ simple boehm gc
+    ✘ simple boehm gc @cancelled(18-08-14 20:13)
 
-    ❑ lists
-    ❑ lambda (fun or =>)
+    ✘ lists @cancelled(18-08-14 20:13)
+    ✘ lambda (fun or =>) @cancelled(18-08-14 20:14)
     ✘ tuples @cancelled(18-06-08 20:57)
     ✘ tuples pattern matching @cancelled(18-06-06 20:44)
-    ❑ ref 
+    ✘ ref @cancelled(18-08-14 20:14)
     ✘ function keyword or similar (pattern matching) @cancelled(18-06-06 20:43)
     ✘ algebraic types (unions / variants) @cancelled(18-06-06 20:42)
     ✘ match (...) with (...) expression @cancelled(18-06-06 20:42)
 
-    ❑ type string @medium @optional 
-    ❑ type char @medium @optional 
+    ✘ type string @medium @optional @cancelled(18-08-14 20:14)
+    ✘ type char @medium @optional @cancelled(18-08-14 20:14)
     ✘ multi-file programs @low @optional @cancelled(18-05-22 23:31)
 
 Optimisations: @optional
     ✔ value expression instead of closure conversion and lifting when letexp is value @done(18-05-21 19:57)
-    ❑ no closure conversion when there is no free variables
-    ❑ unboxed structures when possible
+    ✘ no closure conversion when there is no free variables @cancelled(18-08-14 20:14)
+    ✘ unboxed structures when possible @cancelled(18-08-14 20:14)
 
 Bugs:
     ❑ fix if-else codegen (something with env) @critical @today 
     ✔ fix nested functions in type annotation @critical @done(18-05-30 01:51)
-    ❑ function redefinitions detected in llvmgateway
+    ❑ function redefinitions detected in llvmgateway 
+    ❑ earlier functions not visible for nested let (types_ast.ml:of_tops) @critical 
+    ❑ make generic types different in separate top let expressions @critical 
     ✔ fix nested let @critical @done(18-05-18 00:35)
         ✔ closure conversion @today @done(18-05-18 00:35)
         ✔ lambda lifting @today @done(18-05-18 00:35)

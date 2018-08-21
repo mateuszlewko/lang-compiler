@@ -47,15 +47,19 @@
 % Pamietaj o madrym (zgodnym z logicznym rozbiorem zdania oraz estetyka) recznym
 % zlamaniu wierszy w temacie pracy, zwlaszcza tego w jezyku pracy. Uzyj do tego
 % polecenia \fmlinebreak.
-\polishtitle    {Implementacja języka funkcyjnego z rodziny ML z użyciem 
-                 systemu kompilacji LLVM}
-\englishtitle   {Implementation of ML-family functional language, using LLVM compiler infrastructure}
+\polishtitle    {Implementacja języka funkcyjnego z rodziny ML, 
+zawierającego klasy typów, z wykorzystaniem infrastruktury LLVM }
+\englishtitle   
+{Implementation of a ML-family functional language with type classes, 
+using the LLVM compiler infrastructure}
 \polishabstract { 
 Popularne kompilatory języków funkcyjnych z rodziny ML często charakteryzują się 
 podobnymi kompromisami przy implementacji częściowej aplikacji i polimorfizmu 
-parametrycznego. Zazwyczaj nie pozwalają na przekazywanie dowolnych 
-typów przez ich wartość do funkcji polimorficznych. W swojej pracy przedstawię 
-implementację kompilatora języka funkcyjnego, w której unikam jednorodnej 
+parametrycznego. Zazwyczaj wymagają jednorodnej reprezentacji danych, więc 
+opakowują wszystkie polimorficzne argumenty we wskaźnik. 
+W swojej pracy przedstawię 
+implementację kompilatora języka funkcyjnego \textit{MonoML},
+w której unikam jednorodnej 
 reprezentacji danych przez wskaźnik dzięki monomorfizacji. 
 Zmniejszając narzut pamięciowy przy użyciu funkcji polimorficznych 
 decyduję się na zwiększenie rozmiaru wygenerowanego programu.
@@ -63,12 +67,30 @@ Moja implementacja częściowej aplikacji, choć bazowana na popularnym modelu
 \textit{push/enter}, radzi sobie z problemem manualnego zarządzania stosem.
 
 Drugim celem pracy jest implementacja prostych klas typów w języku z rodziny ML, 
-wprowadzając tym samym \textit{ad--hoc} polimorfizm. Będą one głównym elementem 
+wprowadzając tym samym \textit{ad--hoc} polimorfizm. Są one głównym elementem 
 języka pozwalającym na modularyzację programu. Odbiega to od standardowo 
 stosowanego systemu modułów. Monomorfizacja funkcji pozwoli na statyczne 
 wybranie odpowiednich instancji klasy. 
 }
-\englishabstract{ TODO english abstract, pozostawiam na koniec. }
+\englishabstract{Popular compilers for a ML-family functional programming 
+languages, often made similiar trade-offs when implementing partial aplication
+and parametric polimorphism. Usually they require uniform type representation 
+which leads to boxing of all polymorphic arguments. In this paper I'll present 
+my implementation of compiler for functional programming language \textit{MonoML}, 
+in which I choose to avoid uniform data representation by boxing. 
+Monomorphization allows to decrease memory overhead for polymorphic functions,
+however it increases overall code size. My implementation of 
+partial application is based on \textit{push/enter}. I manage to overcome 
+issue of manual stack management, related to \textit{push/enter} model.
+
+Second goal of this paper is to introduce \textit{ad--hoc} polymorphism in 
+a ML-family programming language \textit{MonoML}, 
+by implementing \textit{type classes}. They're main feature which 
+allows to modularize programs. This approach is different from a modules 
+which are usually present in a ML-family languages. Monomorphization will 
+allow to statically choose appropriate instance for each class.
+}
+
 % w pracach wielu autorow nazwiska mozna oddzielic poleceniem \and
 \author         {Mateusz Lewko}
 % w przypadku kilku promotorow, lub koniecznosci podania ich afiliacji, linie
@@ -109,88 +131,23 @@ ML. Już wtedy zawierał m. in. rozwijanie funkcji, dopasowanie do wzorca,
 inferencje typów oraz moduły parametryczne \cite{sml_proposal}. Są to elementy,
 które cechują większość dzisiejszych języków programowania 
 wywodzących się z SMLa takich jak OCaml i F\#. W 
-swojej pracy zaimplementowałem kompilator języka funkcyjnego \textit{Lang}, 
+swojej pracy zaimplementowałem kompilator języka funkcyjnego \textit{MonoML}, 
 bazującego na języku F\#. Zaimplementowałem w nim najważniejsze cechy języków 
-z rodziny ML, starając się uniknąć wad rozwiązań z popularnych kompilatorów. 
+z rodziny ML, wybierając inne kompromisy niż popularne kompilatory. 
+Zastosowałem monomorfizację, która znacznie zwiększa rozmiar kodu i utrudnia
+tworzenie przenośnych bibliotek, ale pozwala na zmniejszenie narzutu pamięciowego 
+dla funkcji polimorficznych.
 Ponadto wprowadziłem do niego \textit{klasy typów} zamiast skomplikowanego 
 systemu modułów. Porównam swoje rozwiązania z innymi rozwiązaniami i omówię 
-kompromisy na które się zdecydowałem.
+kompromisy, na które się zdecydowałem.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
-
-\section{Klasy typów}
-Większość języków z rodziny ML w celu lepszego ustrukturyzowania
-programu stosuje system modułów. Pozwala on na podzielenie programu na 
-niezależne~od~siebie funkcjonalności.
-Klasy typów, których głównym celem jest wprowadzenie 
-ad--hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
-\cite{modules_vs_typeclasses}. 
-Są obecne w językach takich jak Haskell, Scala\cite{scala_traits} czy Rust
-\cite{rust_traits}. Fakt, że pojawiają się
-w nowych językach ogólnego zastosowania, świadczy o ich atrakcyjności z punktu 
-widzenia programisty. 
-% Mimo to nieznane są żadne popularne języki ML korzystającego
-% z tego rozwiązania. 
-% Jedynym z celów tej pracy jest wprowadzenie klas typów do 
-% prostego języka funkcyjnego, bazującego na podstawowych cechach rodziny ML. W tym 
-% celu stworzyłem kompilator języka $Lang$, wymyślonego na potrzeby tej pracy.
-
-% \subsection{Klasy typów}
-
-Jako pierwsze pojawiły się w języku Haskell\cite{tc_wiki}. 
-Początkowo zostały użyte w celu umożliwienia przeładowania operatorów 
-arytmetycznych i równości. Od tego czasu
-znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
-Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji i definiowania 
-funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
-do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
-\textit{cechy} (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
-nie pozwalają na implementacje polimorfizmu wyższych rzędów 
-\cite{no_hkt_in_rust} (ang. 
-Higher-rank polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
-Haskella nie definiuje nowego typu, a jedynie pozwala na ograniczenie typu
-polimorficznego do 
-instancji klasy. \textit{Cecha} z Rusta może być użyta jak zwykły typ, przykładowo 
-można stworzyć listę zawierające obiekty, które są różnymi instancjami 
-(implementacjami) \textit{cechy} \cite{traits_as_obj_rust}. W Haskellu istnieją także rozszerzenia, które 
-pozwalają na definicje klas z wieloma parametrami. 
-
-% Jakich językach i czym się różnią
-
-Istnieje wiele wariantów klas typów oraz rozwiązań do nich podobnych, dlatego w swoim 
-kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje z jednym 
-parametrem, wprowadzając ad--hoc polimorfizm do języka.
-
-Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella. 
-W celu stworzenia klasy typów C dla typu ogólnego $a$, należy 
-zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Dla danego 
-typu i klasy może istnieć co najwyżej jedna instancja. 
-
-% \lstset{language=llvm}
-\begin{lstlisting}[frame=single, caption=Przykładowa definicja klasy typów.]
-class Eq a where
-  (==) :: a -> a -> Bool
-  (/=) :: a -> a -> Bool
-\end{lstlisting}
-
-W powyższym przykładzie definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
-~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Eq$, 
-jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa 
-instancja dla typu $Bool$, mogłaby wyglądać następująco:
-
-\begin{lstlisting}[frame=single, caption=Instancja klasy $Eq$ dla typu $Bool$.]
-instance Eq Bool where
-  True == True = True 
-  False == False = True 
-  _ == _ = False
-  l /= r = not (l == r)
-\end{lstlisting}
 
 \section{Efektywna implementacja języka funkcyjnego}
 
 Kolejnym celem tej pracy jest implementacja głównych cech języków funkcyjnych w
 możliwie optymalny sposób. Skupię się na optymalizacji czasu wykonania 
-programu kosztem długości wygenerowanego kodu. Kompilacja będzie się odbywać 
+programu kosztem rozmiaru wygenerowanego kodu. Kompilacja będzie się odbywać 
 do kodu maszynowego, gdyż daje to lepszą wydajność otrzymanego programu. 
 Stanowi to jednak duże wyzwanie przy kompilacji języka funkcyjnego ze względu 
 na konieczność translacji abstrakcyjnych i wysokopoziomowych konstrukcji do 
@@ -291,19 +248,36 @@ zaimplementowałem oba te elementy.
 \section{Rozwijanie funkcji oraz częściowa aplikacja}
 
 Częściowa aplikacja występuje wtedy, gdy po zaaplikowaniu mniejszej liczby 
-argumentów niż wynosi arność funkcji otrzymujemy nową funkcję. Przykładowo 
-dla funkcji $f: (A \times B) \rightarrow C$ po zaaplikowaniu pierwszego 
-argumentu $a : A$ otrzymujemy funkcję $g : B \rightarrow C$. W szczególności
-dla dowolnego $b : B$ zachodzi: $g(b) = f(a, b)$. Funkcja $g$, która jest 
-częściowo zaaplikowaną funkcją $f$, musi zapamiętać zaaplikowane dotychczas 
-argumenty. 
+argumentów niż wynosi arność funkcji, otrzymujemy nową funkcję. Przykładowo 
+dla funkcji $f: (A \times B \times C) \rightarrow D$ o arności $3$,
+po częściowym zaaplikowaniu jej do pierwszego 
+argumentu $a : A$ otrzymujemy funkcję $g : (B \times C) \rightarrow D$ o arność $2$.
+Formalnie, w trakcie procesu częściowej aplikacji,
+funkcja $f$ musiała zostać zamieniona na funkcję 
+$A \rightarrow (B \times C) \rightarrow D$, aby następnie móc zaaplikować do niej 
+argument $a : A$. Wartość $a$ musi być zapamiętana w środowisku nowo powstałej 
+funkcji $g$.
+W szczególności
+dla dowolnego $b : B$ i $c : C$  musi zachodzić: $g(b, c) = f(a, b, c)$. 
+% Funkcja $g$, która jest 
+% częściowo zaaplikowaną funkcją $f$, musi zapamiętać zaaplikowane dotychczas 
+% argumenty. 
 
 Częściowa aplikacja jest spotykana nie tylko w językach funkcyjnych. 
-Przykładowo, biblioteka standardowa języka $\verb!C++!$ dostarcza funkcję
-$bind$ \cite{cpp_bind}, która pozwala na zaaplikowanie części argumentów. 
+Przykładowo, biblioteka standardowa języka C++ dostarcza funkcję
+$bind$ \cite{cpp_bind}, która pozwala na zaaplikowanie części argumentów,
+w dowolnej kolejności. 
+
 Częściową aplikacje można osiągnąć poprzez rozwinięcie funkcji (ang. currying) 
-do wielu funkcji jednoargumentowych. Na poniższym fragmencie kodu języka 
-Javascript znajduje się przykład takiego rozwiązania.
+do wielu funkcji jednoargumentowych. Funkcja $f$ z powyższego przykładu 
+w rozwiniętej
+formie ma typ $f : A \rightarrow B \rightarrow C \rightarrow D$. Funkcje w 
+takiej postaci, wspierają częściową aplikację bez użycia dodatkowych 
+funkcjonalności języka (na przykład funkcji $bind$ w języku C++).
+Na poniższym fragmencie kodu języka 
+Javascript znajduje się przykład wprowadzenia częściowo aplikowalnej funkcji 
+poprzez jej rozwinięcie.
+
 
 % \lstset{language=javascript}
 \begin{lstlisting}[frame=single, caption=Rozwinięcie funkcji w Javascriptcie.]
@@ -339,16 +313,84 @@ kompilatorze, zaprezentuję w~rozdziale poświęconym jego implementacji.
 % 1. Dlaczego ML, jakie są inne języki ML
 % 2. Bazowanie na $ F\# $
 
-% \chapter{Cechy języka $lang$}
+% \chapter{Cechy języka \textit{MonoML}}
 % \subsection{Składnia}
 
-\chapter{Język $lang$}
+\section{Klasy typów}
+Większość języków z rodziny ML w celu lepszego ustrukturyzowania
+programu stosuje system modułów. Pozwala on na podzielenie programu na 
+niezależne~od~siebie funkcjonalności.
+Klasy typów, których głównym celem jest wprowadzenie 
+ad--hoc polimorfizmu do języka, mogą po części także spełnić to zadanie 
+\cite{modules_vs_typeclasses}. 
+Są obecne w językach takich jak Haskell, Scala\cite{scala_traits} czy Rust
+\cite{rust_traits}. Fakt, że pojawiają się
+w nowych językach ogólnego zastosowania, świadczy o ich atrakcyjności z punktu 
+widzenia programisty. 
+% Mimo to nieznane są żadne popularne języki ML korzystającego
+% z tego rozwiązania. 
+% Jedynym z celów tej pracy jest wprowadzenie klas typów do 
+% prostego języka funkcyjnego, bazującego na podstawowych cechach rodziny ML. W tym 
+% celu stworzyłem kompilator języka \textit{MonoML}, wymyślonego na potrzeby tej pracy.
+
+% \subsection{Klasy typów}
+
+Jako pierwsze pojawiły się w języku Haskell\cite{tc_wiki}. 
+Początkowo zostały użyte w celu umożliwienia przeładowania operatorów 
+arytmetycznych i równości. Od tego czasu
+znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
+Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji i definiowania 
+funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
+do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
+\textit{cechy} (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
+nie pozwalają na implementacje polimorfizmu wyższych rzędów 
+\cite{no_hkt_in_rust} (ang. 
+Higher-rank polymorphism). Inną istotną różnicą jest fakt, że klasa typów z 
+Haskella nie definiuje nowego typu, a jedynie pozwala na ograniczenie typu
+polimorficznego do 
+instancji klasy. \textit{Cecha} z Rusta może być użyta jak zwykły typ, przykładowo 
+można stworzyć listę zawierające obiekty, które są różnymi instancjami 
+(implementacjami) \textit{cechy} \cite{traits_as_obj_rust}. W Haskellu istnieją także rozszerzenia, które 
+pozwalają na definicje klas z wieloma parametrami. 
+
+% Jakich językach i czym się różnią
+
+Istnieje wiele wariantów klas typów oraz rozwiązań do nich podobnych, dlatego w swoim 
+kompilatorze zdecydowałem się zaimplementować ich najprostszą wersje z jednym 
+parametrem, wprowadzając ad--hoc polimorfizm do języka.
+
+Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella. 
+W celu stworzenia klasy typów C dla typu ogólnego $a$, należy 
+zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Dla danego 
+typu i klasy może istnieć co najwyżej jedna instancja. 
+
+% \lstset{language=llvm}
+\begin{lstlisting}[frame=single, caption=Przykładowa definicja klasy typów.]
+class Eq a where
+  (==) :: a -> a -> Bool
+  (/=) :: a -> a -> Bool
+\end{lstlisting}
+
+W powyższym przykładzie definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
+~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Eq$, 
+jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa 
+instancja dla typu $Bool$, mogłaby wyglądać następująco:
+
+\begin{lstlisting}[frame=single, caption=Instancja klasy $Eq$ dla typu $Bool$.]
+instance Eq Bool where
+  True == True = True 
+  False == False = True 
+  _ == _ = False
+  l /= r = not (l == r)
+\end{lstlisting}
+
+\chapter{Język \textit{MonoML}}
 
 \section{Inspiracja}
-Składnia języka $lang$ jest w większości zapożyczona z języka F\#, należącego
+Składnia języka \textit{MonoML} jest w większości zapożyczona z języka F\#, należącego
 do rodziny ML. Dzięki zastosowaniu składni czułej na wcięcia, która eliminuje 
-konieczność użycia wielu słów kluczowych, jest jednym z  prostszych języków z 
-tej rodziny. Przy tworzeniu nowego języka funkcyjnego kierowałem się głównie 
+konieczność użycia wielu słów kluczowych, jest jednym z prostszych, pod względem 
+składni, języków z tej rodziny. Przy tworzeniu nowego języka funkcyjnego kierowałem się głównie 
 jego prostotą. Poza zapożyczeniem składni F\# dla podstawowych wyrażeń,
 funkcji i typów, rozszerzyłem ją o wyrażenia koniecznie do realizacji klas 
 typów i ich instancji. Ich składnia została zaczerpnięta z Haskella.
@@ -357,52 +399,70 @@ typów i ich instancji. Ich składnia została zaczerpnięta z Haskella.
 % To było jedną inspiracją do całego projektu 
 % i dodania tego elementu do jednego z 
 
-\section{Podstawowe wyrażania}
-
-\subsection{Wyrażenia warunkowe}
-
-Składnia wyrażeń warunkowych jest bardzo podobna do tej w F\#. W 
-języku $Lang$
-istnieją jednak pewne uproszczenia względem F\#. 
-Warunek musi być prostym wyrażeniem zawierającym operacje arytmetyczne i 
-logiczne
-lub wywołania funkcji. Nie może zawierać przykładowo: wielolinijkowych wyrażeń
-\textit{if} i wyrażeń \textit{let}. Ciało warunku może być złożonym wyrażeniem, takim jak 
-ciało funkcji, o ile występuje w nowej lini i jest wcięte bardziej niż 
-token \textit{if}. 
-% TODO: Więcej o wcięciach
-Poniższa gramatyka jest zbliżona do rzeczywistej składni języka.
+Gramatyka w notacji \textit{EBNF} przedstawiona w poniższych sekcjach 
+jest zbliżona do rzeczywistej składni języka.
 Dokładny opis gramatyki znajduje się w pliku 
-\path{lang-compiler/compiler/parsing/grammar.mly}. Jest bardziej skomplikowany
+\path{MonoML-compiler/compiler/parsing/grammar.mly}. Jest bardziej skomplikowany
 ze względu na rozpoznawanie wciętych bloków kodu na
 poziomie parsera. Lepszym pod względem czytelności gramatyki, 
 jest wykonanie tej czynności na etapie lexera, tak jak to ma miejsce w F\#. Dokładniejszy opis 
 sposobu parsowania składni bazującej na wcięciach znajduje się w rozdziale \ref{wciecia_omowienie}. 
 
-Poniższa gramatyka jest w notacji \textit{EBNF}.
+\section{Podstawowe wyrażania}
 
-\begin{bnf*}
-  \bnfprod{simple-if-exp}
-    { \bnfts{ if } \bnfpn{simple-exp} \bnfts{ then } \bnfpn{simple-exp} 
-      \bnfpn{simple-elif-exp} \bnfpn{simple-else-exp}
-    }\\
-  \bnfprod{if-exp}
-    { \bnfts{ if } \bnfpn{simple-exp} \bnfpn{newline} \bnfts{ then } 
-      \bnfpn{body-exp}+ \bnfpn{elif-exp}\ast \bnfpn{else-exp}
-    }\\
-  \bnfprod{simple-else-exp}
-    {\bnfts{ else } \bnfpn{simple-exp} \bnfor \bnfes}\\
-  \bnfprod{simple-elif-exp}
-    {\bnfts{ elif } \bnfpn{simple-exp} \bnfts{ then } \bnfpn{simple-exp} \bnfor \bnfes}\\
-  \bnfprod{elif-exp}
-    {\bnfts{ elif } \bnfpn{body-exp}+ \bnfor \bnfpn{simple-elif-exp} 
-     \bnfor \bnfes}\\
-  \bnfprod{else-exp}
-    {\bnfts{ else } \bnfpn{body-exp}+ \bnfor \bnfpn{simple-else-exp} 
-     \bnfor \bnfes}\\
-  \bnfprod{newline}
-    {\bnftd{nowa linia}}
-\end{bnf*}
+\subsection{Wyrażenia warunkowe}
+
+Składnia i semantyka wyrażeń warunkowych jest bardzo podobna do tej w F\#. W 
+języku MonoML
+istnieją jednak pewne uproszczenia względem F\#. 
+Warunek musi być prostym wyrażeniem zawierającym operacje arytmetyczne i 
+logiczne lub wywołania funkcji. Nie może zawierać przykładowo:
+wielolinijkowych wyrażeń \textit{if} i wyrażeń \textit{let}. 
+Ciało warunku może być złożonym wyrażeniem, takim jak 
+ciało funkcji, o ile występuje w nowej lini i jest wcięte bardziej niż 
+token \textit{if}. Listing $2..1$ prezentuje składnię wyrażeń warunkowych. 
+Kolejny listing $2..2$ prezentuje przykład ich użycia w języku MonoML.
+% TODO: Więcej o wcięciach
+
+% \begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+% <simple-if-exp> ::= if <simple-exp> 
+%                       then <simple-exp> 
+%                       <simple-elif-exp> 
+%                       <simple-else-exp>
+% \end{lstlisting}
+\subsubsection{Sematyka wyrażeń warunkowych}
+Wyrażenie w warunku musi mieć typ logiczny bool. Wszystkie gałęzie wynikowe
+wyrażenia warunkowego muszą mieć taki sam typ. Jeśli typ wyrażenia po $then$ 
+to $unit$, przypadek $else$ może zostać pominięty. Jest to podejście znane 
+z pozostałych języków z rodziny ML.
+
+
+\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+  <simple-if-exp> ::= 
+      if <simple-exp>  
+      then <simple-exp> 
+      <simple-elif-exp>? <simple-else-exp>?
+
+  <if-exp> ::= 
+      if <simple-exp> <newline>
+      then 
+      <body-exp>+ <elif-exp>* <else-exp>
+
+  <simple-else-exp> ::=
+      else <simple-exp> 
+
+  <simple-elif-exp> ::=
+      elif <simple-exp>
+      then <simple-exp> 
+
+  <elif-exp> ::=
+      elif <body-exp>+ 
+    | <simple-elif-exp> 
+
+  <else-exp> ::=
+      else <body-exp>+ 
+    | <simple-else-exp> 
+\end{lstlisting}
 
 \begin{lstlisting}[frame=single, caption=Przykłady wyrażeń warunkowych.]
 let isZero x = if x = 0 then true else false
@@ -428,21 +488,21 @@ let rec pow x n =
 \subsection{Wyrażenia arytmetyczne i logiczne}
 Wyrażenia arytmetyczne i logiczne mają taką samą składnię jak w pozostałych
 językach z rodziny ML.
-\begin{bnf*}
-  \bnfprod{bool-exp}
-    { \bnfpn{simple-exp} \bnfpn{bool-op} \bnfpn{simple-exp} 
+
+\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+  <bool-exp> ::=
+    { <simple-exp> <bool-op} <simple-exp> 
     }\\
-  \bnfprod{arith-exp}
-    { \bnfpn{simple-exp} \bnfpn{arith-op} \bnfpn{arith-exp} 
+  <arith-exp> ::=
+    { <simple-exp> <arith-op} <arith-exp> 
     }\\
-  \bnfprod{arith-op}
-    { \bnfts{+} \bnfor \bnfts{-} \bnfor \bnfts{*}
-      \bnfor \bnfts{/} 
+  <arith-op> ::=
+    { +} -} *} /}
     }\\
-  \bnfprod{bool-op}
-    { \bnfts{\&\&} \bnfor \bnfts{$\|$} 
+  <bool-op> ::=
+    { \&\&} $\|$}
     }\\
-\end{bnf*}
+\end{lstlisting}
 
 
 \begin{lstlisting}[frame=single, caption=Przykłady wyrażeń arytmetycznych i 
@@ -477,13 +537,13 @@ let _ =
 % TODO: Let z argumentami z adnotacjami.
 % TODO: Rekurencja
 
-% \begin{bnf*}
-%   \bnfprod{let-exp}
-%     { \bnfts{let} \bnfpn{identifier}+ \bnfts{=} \bnfpn{simple-exp} 
-%       \bnfor \bnfts{let} \bnfpn{identifier}+ \bnfts{=} 
-%       \bnfpn { newline } \bnfpn{body-exp}
+% \begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+%   <let-exp> ::=
+%     { let <identifier}+ =}{simple-exp> 
+%       \bnfor let <identifier}+ =}
+%       <{ newline } <body-exp>
 %     }\\
-% \end{bnf*}
+% \end{lstlisting}
 
 \subsection{Wzajemnie rekurencyjne wyrażenia let}
 
@@ -514,17 +574,16 @@ and odd x = 1 + (even (x - 1))
 
 \subsection{Deklaracja rekordu}
 
-\begin{bnf*}
-  \bnfprod{record-decl}
-    { \bnfts{type} \bnfpn{identifier} \bnfts{=} \bnfts{'\{'} 
-      \bnfpn{field-decl}+ \bnfts{'\}'} 
+\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+  <record-decl> ::=
+    { type <identifier} =}
+      <field-decl}+ '\}'}
     }\\
-  \bnfprod{field-decl}
-    { \bnfpn{identifier} \bnfts{:} \bnfpn{identifier}+
-      \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{:} \bnfpn{identifier}+
-      \bnfts{;}
-    }\\
-\end{bnf*}
+  <field-decl> ::=
+    { <identifier} :}{identifier}+
+      <newline} \bnfor <identifier} :}{identifier}+
+      ;}
+\end{lstlisting}
 
 \begin{lstlisting}[frame=single, caption=Definicja rekordu.]
 type simple  = { a : int; b : int    }
@@ -544,17 +603,17 @@ definicji w jednym wierszu kolejne pola muszą być oddzielone średnikami.
 W definicji wielowierszowej klamra otwierająca i zamykająca muszą być w tej 
 samej kolumnie.
 
-\begin{bnf*}
-\bnfprod{record-lit}
-  { \bnfts{ type } \bnfpn{identifier} \bnfts{=} \bnfts{'\{'} 
-    \bnfpn{field-lit}+ \bnfts{'\}'} 
+\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+<record-lit> ::=
+  {  type <identifier} =}
+    <field-lit}+ '\}'}
   }\\
-\bnfprod{field-lit}
-  { \bnfpn{identifier} \bnfts{ = } \bnfpn{simple-exp}
-    \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{ = } \bnfpn{simple-exp}
-    \bnfts{ ; }
+<field-lit> ::=
+  { <identifier}  = <simple-exp>
+    <newline} \bnfor <identifier}  = <simple-exp>
+     ;
   }\\
-\end{bnf*}
+\end{lstlisting}
 
 \begin{lstlisting}[frame=single, caption=Literał rekordu.]
 let s : simple = { a = 0; b = 1}
@@ -574,17 +633,16 @@ Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu.
 % Dlatego to
 % wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
 
-\begin{bnf*}
-\bnfprod{record-update}
-  { \bnfts{ \{ } \bnfpn{simple-exp} \bnfts{ with } 
-    \bnfpn{field-update}+ \bnfts{ \} } 
+\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+<record-update> ::=
+  {  \{ <simple-exp>  with 
+    <field-update}+  \} 
   }\\
-\bnfprod{field-update}
-  { \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
-    \bnfpn{newline} \bnfor \bnfpn{identifier} \bnfts{=} \bnfpn{simple-exp}
-    \bnfts{;}
-  }\\
-\end{bnf*}
+<field-update> ::=
+  { <identifier} =}{simple-exp>
+    <newline} \bnfor <identifier} =}{simple-exp>
+    ;}
+\end{lstlisting}
 % TODO: samo pole 
 
 \begin{lstlisting}[frame=single, caption=Uaktualnianie rekordu.]
@@ -671,7 +729,7 @@ tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane w C.
 Tablice w langu są reprezentowane tak samo jak języku w C jako spójny ciąg w pamięci.
 
 Elementami literału tablicy mogą być proste wyrażenia oddzielone średnikiem. 
-Podobnie jak w $OCamlu$ i F\# tablica zaczyna się od symbolu~$[|$, a 
+Podobnie jak w OCamlu i F\# tablica zaczyna się od symbolu~$[|$, a 
 kończy symbolem~$|]$.
 
 \textbf{Uwaga.} Dla wielowierszowego literału tablicy symbole rozpoczynający 
@@ -725,7 +783,7 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
 \begin{enumerate}
   \item Analiza leksykalna, w efekcie której otrzymujemy ciąg tokenów. 
   Implementacja w pliku: 
-  \path{lang-compiler/compiler/parsing/lexer.cppo.sedlex.ml}
+  \path{MonoML-compiler/compiler/parsing/lexer.cppo.sedlex.ml}
 
   \item Otrzymany ciąg jest następnie poddany analizie składniowej 
   (ang. parsing), która zgodnie z podaną gramatyką generuje \textit{drzewo 
@@ -733,26 +791,26 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   zawierają jedno z wyrażeń języka, 
   lecz nie posiadają informacji o jego typie. 
   Implementacja w pliku: \newline
-  \path{lang-compiler/compiler/parsing/grammar.mly}
+  \path{MonoML-compiler/compiler/parsing/grammar.mly}
  
   \item Następnie wykonywana jest transformacja drzewa składni, która:
 
   \begin{enumerate}
-    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka $Lang$ (na późniejszym etapie, wyrażenia będą miał typ 
+    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka \textit{MonoML} (na późniejszym etapie, wyrażenia będą miał typ 
     z \textit{LLVM IR}). 
     \item Eliminuje zagnieżdżone wyrażenia \textit{let}.
     \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
     ich w pełni kwalifikowanych nazw (ang. fully qualified name).
   \end{enumerate}
   Implementacja w pliku: 
-  \path{lang-compiler/compiler/typed_ast.ml}
+  \path{MonoML-compiler/compiler/typed_ast.ml}
 
   \item Generowanie drzewa wyrażeń z LLVM IR. Jest to największy etap z całego 
   procesu kompilacji. Zamienia skomplikowane wyrażenia wysokopoziomowego języka
   na proste wyrażenia LLVM IR, które już łatwo mogą być przetłumaczone na 
   niskopoziomowe instrukcje.
   Implementacja w pliku: 
-  \path{lang-compiler/compiler/codegen.ml}
+  \path{MonoML-compiler/compiler/codegen.ml}
 
   \item Konwersja drzewa wyrażeń LLVM IR na kod LLVM IR. Odbywa się to dzięki 
   interfejsowi programistycznemu (ang. api), udostępnionym przez oficjalną 
@@ -810,7 +868,7 @@ który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operato
 łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
 ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
 {ocamlyacc} \cite{menhir}. Całość gramatyki znajduje się w pliku 
-\path{lang-compiler/compiler/parsing/grammar.mly}. 
+\path{MonoML-compiler/compiler/parsing/grammar.mly}. 
 % TODO: Może coś o kontekstach w F\#
 
 % \section{Generowanie kodu}
@@ -818,7 +876,7 @@ ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
 
 Jak wspomniałem we wprowadzeniu, generowanie wszystkich funkcji w rozwiniętej 
 formie (każda funkcja przyjmuje tylko jeden argument) jest nieoptymalne pod
-względem długości kodu jak i szybkości jego wykonania. Pomimo że aplikacja 
+względem rozmiaru kodu jak i szybkości jego wykonania. Pomimo że aplikacja 
 częściowa jest bardzo przydatną cechą języków funkcyjnych, to często funkcje
 wywoływane są ze wszystkimi argumentami. W takich przypadkach chcielibyśmy 
 korzystać z wywołania funkcji, które jest tak szybkie jak w \textit{C}. 
@@ -995,10 +1053,10 @@ odpowiednie jej pola uaktualnione.
 
 Jednym z założeń implementacji tego języka, była możliwość przekazywania typów
 o różnym rozmiarze przez ich wartość, a nie przez wskaźnik. W obecnej 
-implementacji istnieje tylko kilka typów o różnej długości: \textit{bool},
+implementacji istnieje tylko kilka typów o różnym rozmiarze: \textit{bool},
 \textit{int} i \textit{rekord}. Rekordy mają taki sam rozmiar, ponieważ są 
 przekazywane przez wskaźnik do ich zawartości zapamiętanej na stercie, ale 
-łatwo rozszerzyć język o typy o dowolnej długości. 
+łatwo rozszerzyć język o typy o dowolnej wielkości. 
 
 Takie założenie komplikuje implementację częściowej aplikacji funkcji. Aby 
 zrozumieć dlaczego, weźmy dwie instancje struktury \textit{function} dla 
@@ -1120,7 +1178,7 @@ modelu push/enter. Te cechy zostały osiągnięte dzięki generacji wielu funkcj
 wejściowych, dla każdego sufiksu argumentów z typu funkcji. Niesie to ze sobą 
 jednak istotną wadę, nieobecną w żadnym z dwóch wspomnianych modeli --- 
 generowanie dużej ilości dodatkowego kodu. Nie jest to problemem dla małych 
-przykładowych programów, jednak mogłoby znacznie wydłużyć czas kompilacji i 
+przykładowych programów, jednak mogłoby znacznie zwiększyć czas kompilacji i 
 rozmiar wynikowego programu przy dużych, profesjonalnych projektach.
 
 % 1. Push/enter vs eval/apply
@@ -1274,9 +1332,9 @@ maszynowym. To czy do funkcji został przekazany wskaźnik, czy \textit{int}
 przez wartość jest rozpoznawane na podstawie najniższego bitu, który jest 
 traktowany jak znacznik \cite{ocaml_31bit}. Jeśli wynosi $1$ to dana wartość jest intem.
 To rozwiązania pozwala na uniknięcie większości narzutu przy wykonywaniu 
-operacji na typach prymitywnych, ale wiąże się z niestandardowym podejście do 
+operacji na typach prymitywnych, ale wiąże się z niestandardowym podejściem do 
 arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość obiektów 
-dłuższych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
+większych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
 rozwiązania, nie zdecydowałem sie go zaimplementować.
 
 Języki takie jak C++ i Rust oraz kompilator SMLa 
@@ -1310,7 +1368,7 @@ zamienione na wywołania odpowiednich, wyspecjalizowanych wersji tej funkcji.
 Takie rozwiązanie pozwala na przekazanie dowolnego typu przez jego wartość, 
 bez zmian jego reprezentacji. Jednak nie jest ono pozbawione kompromisów. 
 Statyczna monomorfizacja funkcji nie pozwala na zastosowanie polimorficznej
-rekurencji. Dodatkowo zwiększa długość wygenerowanego kodu, tym samym 
+rekurencji. Dodatkowo zwiększa rozmiar wygenerowanego kodu, tym samym 
 wydłużając czas kompilacji i zwiększać rozmiar wynikowego programu. Kolejną 
 wadą w praktycznych zastosowaniach, jest fakt, że wysokopoziomowy kod 
 implementacji funkcji polimorficznej musi być opublikowany wraz z wygenerowaną 
@@ -1496,7 +1554,7 @@ danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
 
 Tworzenie kompilatorów jest obszernym i czasochłonnym zadaniem. Zdecydowałem 
 się pominąć pewne standardowe cechy języków funkcyjnych, aby lepiej skupić 
-się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{Lang}
+się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{MonoML}
 i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \begin{itemize}
@@ -1565,7 +1623,7 @@ Uprzednio należy wykonać następujące kroki.
   \item Instalacja bibliotek. Należy uruchomić skrypt \texttt{install\_deps.sh}
    instalujący odpowiednie pakiety z użyciem \textit{opama}. Plik znajduje się 
    w głównym folderze 
-  \texttt{lang-compiler}. 
+  \texttt{MonoML-compiler}. 
   \begin{lstlisting}[language=bash]
   $ ./install_deps.sh
   \end{lstlisting}
@@ -1616,7 +1674,7 @@ Uprzednio należy wykonać następujące kroki.
 
 \section{Sposób użycia}
 Skompilowany plik wykonywalny kompilatora znajduje się w folderze \newline
-\texttt{lang-compiler/\_build/default/langc/langc.exe}. Pierwszym argumentem 
+\texttt{MonoML-compiler/\_build/default/langc/langc.exe}. Pierwszym argumentem 
 musi być ścieżka do kodu źródłowego w Langu. Program posiada także dodatkowe 
 argumenty. 
 
@@ -1639,7 +1697,7 @@ $ ./a.out # uruchomienie wygenerowanego programu
 \textbf{Uwaga.} Podczas kompilacji program szuka pliku \texttt{external.c} w 
 obecnym folderze (tym w którym znajduje się użytkownik). Zawiera on  
 implementacje kilku funkcji bibliotecznych w \textit{C}. Znajduje on się w 
-głównym folderze projektu (\texttt{lang-compiler}), dlatego zalecanym jest 
+głównym folderze projektu (\texttt{MonoML-compiler}), dlatego zalecanym jest 
 kompilowanie z tego folderu.
 
 \section{Użyte narzędzia i biblioteki}
@@ -1677,9 +1735,9 @@ kompilowanie z tego folderu.
   po parsowaniu.
   \item \texttt{compiler/codegen.ml} -- Zbiór funkcji odpowiedzialnych za 
   generowanie kodu.
-  \item \texttt{compiler/lang\_types\_def} -- Definicja typów reprezentujących 
+  \item \texttt{compiler/MonoML\_types\_def} -- Definicja typów reprezentujących 
   typy z Langa.
-  \item \texttt{compiler/lang\_types} -- Funkcje służące znalezieniu
+  \item \texttt{compiler/MonoML\_types} -- Funkcje służące znalezieniu
   typu wyrażeń. Inferencja typów.
   \item \texttt{compiler/letexp.ml} -- Generowaniu kodu funkcji 
   (wyrażeń \textit{let}). 
@@ -1709,15 +1767,15 @@ The Standard ML Core Language, by Robin Milner, July 1984.
 ML Modules and Haskell Type Classes:
 A Constructive Comparison
 Stefan Wehr and Manuel M. T. Chakravarty
-\\\texttt{https://www.cse.unsw.edu.au/~chak/papers/modules-classes.pdf}
+\\\texttt{https://www.cse.unsw.edu.au/\~chak/papers/modules-classes.pdf}
 
 \bibitem{no_hkt_in_rust} 
 Higher kinded polymorphism - Rust Github issues.
-\\\texttt{https://github.com/rust-lang/rfcs/issues/324}
+\\\texttt{https://github.com/rust-MonoML/rfcs/issues/324}
 
 \bibitem{traits_as_obj_rust} 
 Using Trait Objects that Allow for Values of Different Types. Rust.
-\\\texttt{https://doc.rust-lang.org/book/second-edition/ch17-02-trait-objects.html}
+\\\texttt{https://doc.rust-MonoML.org/book/second-edition/ch17-02-trait-objects.html}
 
 \bibitem{llvm} 
 LLVM.
@@ -1765,11 +1823,11 @@ Eval/Apply for Higher-order Languages. Simon Marlow, Simon Peyton Jones
 
 \bibitem{scala_traits} 
 Scala docs: Traits.
-\\\texttt{https://docs.scala-lang.org/tour/traits.html}
+\\\texttt{https://docs.scala-MonoML.org/tour/traits.html}
 
 \bibitem{rust_traits}
 Rust by example. Traits.
-\\\texttt{https://doc.rust-lang.org/rust-by-example/trait.html}
+\\\texttt{https://doc.rust-MonoML.org/rust-by-example/trait.html}
 
 \bibitem{tc_wiki}
 Type class. Wikipedia.
@@ -1781,11 +1839,11 @@ Type Erasure. The Java Tutorials.
 
 \bibitem{haskell_poly}
 Type Systems, Type Inference, and Polymorphism.
-\\\texttt{http://www.cs.tau.ac.il/~msagiv/courses/pl14/chap6-1.pdf}
+\\\texttt{http://www.cs.tau.ac.il/\~msagiv/courses/pl14/chap6-1.pdf}
 
 \bibitem{menhir}
 Menhir.
-\\\texttt{http://gallium.inria.fr/~fpottier/menhir/}
+\\\texttt{http://gallium.inria.fr/\~fpottier/menhir/}
 
 \bibitem{ocaml_31bit}
 Chapter 20. Memory Representation of Values. Real World OCaml.
