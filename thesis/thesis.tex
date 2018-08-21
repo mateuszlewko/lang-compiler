@@ -486,22 +486,28 @@ let rec pow x n =
 \end{lstlisting}
 
 \subsection{Wyrażenia arytmetyczne i logiczne}
-Wyrażenia arytmetyczne i logiczne mają taką samą składnię jak w pozostałych
-językach z rodziny ML.
+Wyrażenia arytmetyczne i logiczne mają taką samą składnię i semantykę
+jak w pozostałych językach z rodziny ML. Obsługiwane są operatory $\$\$$, 
+$||$, $=$, $+$, $-$, $*$, $/$, oraz pozostałe operatory porównywania. 
+Operatory logiczne wymagają operandów o typie 
+bool lub int i zwracają typ bool, operatory arytmetyczne typów int. 
+Operatory porównywania 
+sprawdzają równość fizyczną zmiennych o tym samym typie.
+Listing $2..3$ zawiera gramatykę wyrażeń arytmetycznych i logicznych, a 
+listing $2..4$ przykład ich użycia. 
 
-\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+\begin{lstlisting}[frame=single, caption=Wyrażenia arytmetyczne i logiczne.]
   <bool-exp> ::=
-    { <simple-exp> <bool-op} <simple-exp> 
-    }\\
+      <simple-exp> <bool-op> <simple-exp> 
+  
   <arith-exp> ::=
-    { <simple-exp> <arith-op} <arith-exp> 
-    }\\
+      <simple-exp> <arith-op> <arith-exp> 
+  
   <arith-op> ::=
-    { +} -} *} /}
-    }\\
+      + | - | * | /
+  
   <bool-op> ::=
-    { \&\&} $\|$}
-    }\\
+      && | || | = | < | > | <= | >= 
 \end{lstlisting}
 
 
@@ -515,18 +521,36 @@ let alwaysTrue x = (mod2 x = 0) || (mod2 (x + 1) = 0)
 
 \section{Deklaracja funkcji (wyrażenie let)}
 
-Argumenty funkcji muszą być w tym samym wierszu co słowo \textit{let}. Po znaku 
-$=$ ciało funkcji może być złożonym wyrażeniem, o ile zaczyna się w następnym wierszu i 
-jest w późniejszej kolumnie niż \textit{let}. Wyrażenie \textit{let} może być 
+Argumenty funkcji muszą być w tym samym wierszu co słowo \textit{let}. 
+Po znaku~$=$ ciało funkcji może być złożonym wyrażeniem, o ile zaczyna się 
+w~następnym wierszu i 
+jest w~późniejszej kolumnie niż \textit{let}. Wyrażenie \textit{let} może być 
 zdefiniowane w jednej linii, o ile jego ciało jest pojedynczym wyrażeniem prostym.
 Standardowo dla języków z rodziny ML należy explicite zaznaczyć słowem 
 kluczowym \textit{rec} jeśli funkcja jest rekurencyjna. Dodatkowo do argumentów
 funkcji jak i jej wyniku można dodać adnotację typu.
 
+\subsubsection{Semantyka wyrażeń let}
+
+Typ wynikowy całego wyrażenia jest taki jak typ ostatniego wyrażenie w ciele 
+let. Wyrażenie let wprowadza nowy symbol do środowiska, dostępny od momentu 
+definicji. Typ wprowadzonego symbolu to $ a_1 \rightarrow ...\rightarrow a_n 
+\rightarrow r $, gdzie $a_1, ..., a_n$ to typy kolejnych argumentów, a $r$ to 
+typ ostatniego wyrażenia w ciele. Jeśli nie zostały zdefiniowane żadne argumenty 
+to typ symbolu to $r$. W przypadku braku argumentów, ciało wyrażenia let 
+jest ewaluowane gorliwie, przy uruchomieniu programu. Listing $2..5$ zawiera 
+przykłady wyrażeń let bez argumentów, z wielo- i jedno liniowym ciałem.
+
 \begin{lstlisting}[frame=single, caption=Deklaracja funkcji z anotacjami.]
 let compose (f : 'b -> 'c) (g : 'a -> b) (x : 'a) : 'c = f (g x)
 
 let printInt (x : int) : () = ll_putint x (* funkcja wewnętrzna *)
+
+let adder a b = 
+  printInt a 
+  printInt b 
+
+  a + b
 
 let _ = 
     printnInt (120 * 120)
@@ -549,7 +573,11 @@ let _ =
 
 Możliwe jest także zdefiniowanie globalnych (ang. top level) funkcji wzajemnie 
 rekurencyjnych z użyciem słowa \textit{and}. Deklaracja pierwszej funkcji 
-musi zaczynać się od \textit{let rec}, a kolejne od \textit{and}.
+musi zaczynać się od \textit{let rec}, a kolejne od \textit{and}. Wzajemnie 
+rekurencyjne funkcje mają dostęp do zdefiniowanych symboli ze swojej grupy,
+niezależnie ich kolejności. Nie można zdefiniować wzajemnie rekurencyjnych 
+wartości, każde wyrażenie musi definiować niezerową liczbę argumentów.
+Listing $2..6$ zawiera dwie proste funkcje wzajemnie rekurencyjne.
 
 \begin{lstlisting}[frame=single, caption=Funkcje wzajemnie rekurencyjne.]
 let rec even x = 
@@ -574,15 +602,20 @@ and odd x = 1 + (even (x - 1))
 
 \subsection{Deklaracja rekordu}
 
-\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+Składnia rekordów jest podobna do tej z pozostałych języków z rodziny ML. 
+Rekord zawiera wiele pól o różnych nazwach. Każde pole musi mieć zdefiniowany 
+typ. Typem pola może być inny, wcześniej zadeklarowany, rekord.
+Listingi $2..7$ i $2..8$ prezentują odpowiednio gramatykę deklaracji rekord
+i jej przykład.
+
+\begin{lstlisting}[frame=single, caption=Deklaracja rekordu.]
   <record-decl> ::=
-    { type <identifier} =}
-      <field-decl}+ '\}'}
-    }\\
+      type <identifier> =
+        { <field-decl}+ 
+        }
+  
   <field-decl> ::=
-    { <identifier} :}{identifier}+
-      <newline} \bnfor <identifier} :}{identifier}+
-      ;}
+      <identifier> : <identifier>+ ( <newline> | ; )
 \end{lstlisting}
 
 \begin{lstlisting}[frame=single, caption=Definicja rekordu.]
@@ -601,18 +634,17 @@ Literał może być zdefiniowany w jednym lub wielu wierszach. W przypadku
 definicji w jednym wierszu kolejne pola muszą być oddzielone średnikami. 
 Średnik może być pominięty, jeśli kolejne pola są oddzielone nową linią. 
 W definicji wielowierszowej klamra otwierająca i zamykająca muszą być w tej 
-samej kolumnie.
+samej kolumnie. Typ wyrażeń podstawianych pod każde pole musi zgadzać się ze 
+zdefiniowanym typem dla danego pola. Listingi $2..9$ i $2..10$ pokazują 
+gramatykę i przykład literału rekordu.
 
-\begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
+\begin{lstlisting}[frame=single, caption=Literał rekordu.]
 <record-lit> ::=
-  {  type <identifier} =}
-    <field-lit}+ '\}'}
-  }\\
+      { <field-lit}+
+      }
+
 <field-lit> ::=
-  { <identifier}  = <simple-exp>
-    <newline} \bnfor <identifier}  = <simple-exp>
-     ;
-  }\\
+      <identifier} = <simple-exp> (<newline> | ; )
 \end{lstlisting}
 
 \begin{lstlisting}[frame=single, caption=Literał rekordu.]
@@ -627,21 +659,23 @@ let p3 : point3 =
 
 \subsection{Uaktualnianie rekordu}
 
-Rekordy w $Langu$, podobnie jak rekordy w F\# i OCamlu, 
+Rekordy w MonoMLu, podobnie jak rekordy w F\# i OCamlu, 
 są trwałe. 
-Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu. 
+Uaktualnienie jednego z pól skutkuje stworzeniem nowego rekordu i nie zmienia 
+wartości któregokolwiek z pól z pierwotnej instancji. 
+Typ wyrażenia, które uaktualniana dane pole musi być taki sam jak typ pola 
+w deklaracji rekordu.
 % Dlatego to
 % wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
 
 \begin{lstlisting}[frame=single, caption=Wyrażenia warunkowe.]
 <record-update> ::=
-  {  \{ <simple-exp>  with 
-    <field-update}+  \} 
-  }\\
+      { <simple-exp>  with 
+        <field-update}+ 
+      }
+
 <field-update> ::=
-  { <identifier} =}{simple-exp>
-    <newline} \bnfor <identifier} =}{simple-exp>
-    ;}
+      <identifier} = <simple-exp> (<newline> | ; )
 \end{lstlisting}
 % TODO: samo pole 
 
@@ -661,7 +695,12 @@ zdecydowałem się zapożyczyć z Haskella.
 
 \subsection{Deklaracja klasy}
 
-Deklaracja klasy została zaadoptowana z Haskella.
+Deklaracja klasy została zaadoptowana z Haskella. Listing $2..13$ prezentuje 
+przykładowe deklaracje klas \textit{Print} i \textit{Pow}. Deklaracja 
+definiuje typ ogólny, który może być użyty w definicji metod klasy.
+Metody klasy muszą być funkcjami, nie mogą być wartościami. Obecna implementacja
+nie wspiera metod klasy, które muszą być ewaluowane przy uruchomieniu programu, 
+ale nie ma przeszkód utrudniających ich dodanie.
 
 \begin{lstlisting}[frame=single, caption=Deklaracja klasy.]
 class Print 'a where 
@@ -673,6 +712,12 @@ class Pow 'a where
 \end{lstlisting}
 
 \subsection{Deklaracja instancji}
+
+Instancja klasy musi zawierać nazwę klasy, którą implementuje oraz typ konkretny,
+dla którego tworzona jest instancja. Typ zadeklarowanych metod w
+instancji klasy musi być zgodny z typami w definicji danej metody z klasy,
+przy założeniu, że typ generyczny został podmieniony z typem konkretnym. 
+Listing $2..14$ prezentuje instancje różnych klas dla różnych typów konkretnych.
 
 \begin{lstlisting}[frame=single, caption=Instancja klasy.]
 instance Pow int where
@@ -691,12 +736,16 @@ instance Print Vec where
 
 \section{Moduły}
 
-Moduły w $Langu$ spełniają takie zadanie jak te w F\# -- służą jako 
+Moduły w MonoMLu spełniają takie zadanie jak te w F\# -- służą jako 
 przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem 
 systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
 Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
 modułów oraz deklaracje funkcji zewnętrznych. Nazwa modułu musi się zaczynać 
 z wielkiej litery. 
+
+Otwarcie modułu powoduje wprowadzenie zawartych w nim symboli do 
+lokalnej przestrzeni nazw. Listing $2..15$ zawiera przykład modułów z definicjami 
+i otwieranie modułów.
 
 \begin{lstlisting}[frame=single, caption=Tworzenie i importowanie modułów.]
 module Prelude = 
@@ -726,11 +775,13 @@ Zaimplementowane zostały jedynie tablice zawierające typ $int$. Tablice są
 ulotną strukturą danych. Na poziomie języka można stworzyć literał tablicy.
 Zmiana i odczytanie komórki tablicy bądź utworzenie niezainicjalizowanej 
 tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane w C. 
-Tablice w langu są reprezentowane tak samo jak języku w C jako spójny ciąg w pamięci.
+Tablice w MonoMLu są reprezentowane tak samo jak języku w C --- jako spójny
+ciąg w pamięci.
 
 Elementami literału tablicy mogą być proste wyrażenia oddzielone średnikiem. 
 Podobnie jak w OCamlu i F\# tablica zaczyna się od symbolu~$[|$, a 
-kończy symbolem~$|]$.
+kończy symbolem~$|]$. Przykład jedno i wielo wierszowego literału znajduje się 
+na listingu $2..16$.
 
 \textbf{Uwaga.} Dla wielowierszowego literału tablicy symbole rozpoczynający 
 $[|$ i kończący $|]$ muszą być w tej samej kolumnie.
@@ -750,8 +801,9 @@ let multiLineArr : int array =
 Mała część funkcjonalności języka została zaimplementowana z użyciem 
 zewnętrznych funkcji w C (wypisywanie oraz operacje na tablicy). Dlatego 
 koniecznym było dołożenie wyrażeń, pozwalających zadeklarować zewnętrzny symbol 
-wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Typy 
-Langa są dosłownie tłumaczone na typy w C z wyjątkiem typu $unit$, który 
+wraz z jego typem. Ich składnia jest prawie taka sama jak w OCamlu. Przykład
+na listingu $2..17$. 
+Typy MonoMLa są dosłownie tłumaczone na typy w C z wyjątkiem typu $unit$, który 
 jest zamieniany na $bool$ (o rozmiarze jednego bajtu).
 
 \begin{lstlisting}[frame=single, caption=Interfejs zewnętrzny.]
@@ -925,29 +977,29 @@ let main (getIdentity ())
 \subsubsection{Wywołanie funkcji znanej}
 
 Gdy funkcja, którą chcemy wywołać jest znana, możemy wyróżnić trzy przypadki 
-ze względu na liczbę zaaplikowanych argumentów względem liczby argumentów
+ze względu na liczbę argumentów w aplikacji względem liczby argumentów
 w definicji funkcji.
 
 \begin{enumerate}
-  \item Liczba zaaplikowanych argumentów jest mniejsza od liczby zdefiniowanych 
+  \item Liczba argumentów z aplikacji jest mniejsza od liczby zdefiniowanych 
   argumentów. W tym przypadku utworzony zostaje obiekt reprezentujący częściowo
   zaaplikowaną funkcję. Zostaną w nim zapisane zaaplikowane argumenty 
   oraz 
   wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt 
   zostaną 
   utworzone na stercie.
-  \item Zaaplikowanych argumentów jest tyle samo co zdefiniowanych. 
+  \item Argumentów z aplikacji jest tyle samo co zdefiniowanych. 
   Funkcja zostanie wywołana w stylu z C. Jest to najbardziej optymalny 
   przypadek wywołania funkcji i nie powoduje on zaalokowania żadnej 
   dodatkowej pamięci. 
   Jeśli początkowe argumenty mieszczą się w rejestrach, to mogą zostać 
   przez nie przekazane.
-  \item Zaaplikowanych argumentów może być więcej niż zdefiniowanych, 
+  \item Argumentów z aplikacji może być więcej niż zdefiniowanych, 
   jeśli wynikiem wywoływanej funkcji jest funkcja. Niech $k$ będzie 
-  liczbą argumentów w definicji funkcji, a $n$ liczbą aplikowanych 
-  argumentów, gdzie $n > k$. Najpierw nastąpi wywołanie znanej 
-  funkcji z pierwszymi $k$ argumentami. Do wyniku pierwszego wywołania, 
-  który teraz jest nieznaną funkcją, zostanie zaaplikowane pozostałe 
+  liczbą argumentów w definicji funkcji, a $n$ liczbą 
+  argumentów z aplikacji, gdzie $n > k$. Najpierw nastąpi wywołanie znanej 
+  funkcji z pierwszymi $k$ argumentami. Wynik pierwszego wywołania, 
+  który teraz jest nieznaną funkcją, zostanie zaaplikowany do pozostałych
   $n - k$ argumentów. W tym momencie 
   zastosowany zostanie jeden z przypadków dla wywołań nieznanych funkcji.
 
@@ -971,8 +1023,7 @@ zawierającą następujące pola:
   jako spójny ciąg bajów (dynamicznie zaalokowana tablica z C),
   % TODO: Można też tablice wskaźników na argumenty i 
   % dlaczego tak nie zrobiłem
-  \item pozostała liczba argumentów koniecznych do zaaplikowana, aby należało 
-  wywołać wskazywaną funkcjęs,
+  \item pozostała liczba argumentów do wywołania wskazywanej funkcji,
   \item arność funkcji,
   \item liczba bajtów w środowisku.
 \end{itemize}
@@ -994,15 +1045,15 @@ prawidłowy typ. Dla aplikacji funkcji, których wynikiem jest funkcja, typ
 wynikowy wygenerowanej funkcji \textit{fn} to struktura \textit{function}. 
 Jako argumenty 
 funkcji \textit{fn}, poza argumentami podanymi w aplikacji funkcji, przekazane 
-zostaną dodatkowo: wskaźnik na środowisko i liczba aplikowanych argumentów.
+zostaną dodatkowo: wskaźnik na środowisko i liczba argumentów w aplikacji.
 Funkcja wołana jest odpowiedzialna za nadmiarowe argumenty i przekazanie ich 
 dalej.
 
 Aplikacja funkcji nie zawsze musi się wiązać z faktycznym wywołaniem funkcji.
 Na poniższym przykładzie w ciele funkcji \textit{apply},
 w pierwszym przypadku funkcja \textit{f} zostanie wywołana, 
-a w drugim, pomimo aplikacji tych samych argumentów i tego samego typu 
-funkcji, nic nie zostanie wywołane.
+a w drugim, pomimo aplikacji funkcji, o tym samym typie, do tych samych 
+argumentów, nic nie zostanie wywołane.
 \begin{lstlisting}[frame=single, caption={To czy funkcja zostanie wywołana,
 nie jest wiadome w czasie kompilacj. OCaml.}]
 let called a b = 
@@ -1026,7 +1077,8 @@ Dla każdego wywołania nieznanej funkcji generowany jest dodatkowy \newline
 kod, który jest odpowiedzialny za sprawdzenie, czy aplikowaną funkcje 
 faktycznie trzeba wywołać, czy jedynie zapisać dodatkowe argumenty do 
 środowiska. Aby to sprawdzić, porównywana jest liczba argumentów pozostałych do 
-wywołania funkcji (\textit{left\_args}) z liczbą zaaplikowanych argumentów.
+wywołania funkcji (\textit{left\_args}) z liczbą argumentów, do których 
+funkcja jest aplikowana.
 Jeśli liczba pozostałych argumentów jest większa, to wszystkie argumenty 
 zostaną skopiowane do pola \textit{args} w strukturze \textit{function}, a 
 odpowiednie jej pola uaktualnione.
@@ -1061,11 +1113,11 @@ przekazywane przez wskaźnik do ich zawartości zapamiętanej na stercie, ale
 Takie założenie komplikuje implementację częściowej aplikacji funkcji. Aby 
 zrozumieć dlaczego, weźmy dwie instancje struktury \textit{function} dla 
 funkcji o typie \textit{int $\rightarrow$ bool $\rightarrow$ int 
-$\rightarrow$ bool}. Niech pierwsza zostanie częściowo zaaplikowana dwoma 
-argumentami o typach \textit{int} i \textit{bool}, a druga pierwszym argumentem
-o typie \textit{int}. W kolejnym kroku, chcąc wywołać obie funkcje, do 
-pierwszej struktury aplikujemy pozostały argument o typie \textit{int}, a do 
-drugiej pozostałe dwa o typach \textit{bool} i \textit{int}. Wskaźnik \textit
+$\rightarrow$ bool}. Niech pierwsza zostanie częściowo zaaplikowana do dwóch 
+argumentów o typach \textit{int} i \textit{bool}, a druga pierwszym argumentem
+o typie \textit{int}. W kolejnym kroku, chcąc wywołać obie funkcje, 
+pierwszą strukturę aplikujemy do pozostałego argumentu o typie \textit{int}, a
+drugą do pozostałych dwóch o typach \textit{bool} i \textit{int}. Wskaźnik \textit
 {fn} z pierwszej struktury zostałby zrzutowany na wskaźnik na funkcję 
 przyjmującą jako pierwszy argument zmienną typu \textit{int}, a funkcja 
 wskazywana przez \textit{fn} z drugiej struktury przyjmowałaby jako pierwszy 
@@ -1074,18 +1126,19 @@ możliwe rozwiązanie, w którym w momencie gdy dochodzi do wywołania funkcji (
 może być sprawdzone w czasie działania programu dzięki polu 
 \textit{left\_args}) można przekazać wszystkie argumenty znajdujące sie w 
 środowisku. Wtedy typ zrzutowanych funkcji wskazywanych przez \textit{fn} byłby 
-taki sam, niezależnie od tego ile dotychczas argumentów zostało zaaplikowanych.
+taki sam, niezależnie od tego do ilu dotychczas argumentów zostały zaaplikowane.
 Jednak argumenty w środowisku są zapamiętane przez wartość w tablicy \textit
 {args}, a ich reprezentacja nie jest jednorodna (mogą mieć różny rozmiar),
 co uniemożliwia ich przekazanie.
 Jednorodną reprezentacje wszystkich argumentów można uzyskać poprzez 
 reprezentowanie ich przez wskaźnik, ale takiego rozwiązania chciałem uniknąć.
-Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych 
-aplikowanych jako ostatnie, w środowisku. Wywoływana funkcja wie już w czasie 
+Innym sposobem byłoby zapamiętanie wszystkich argumentów, także tych,
+do których funkcja jest aplikowana na końcu, w środowisku. 
+Wywoływana funkcja wie już w czasie 
 kompilacji jakich argumentów (i o jakim rozmiarze), spodziewać się w środowisku,
 więc jest w stanie je z niego odzyskać. To rozwiązuje wspomniany 
 problem, lecz wykonuje niepotrzebne zapisywanie i ładowanie argumentów 
-zaaplikowanych jako ostatnie. Moje rozwiązanie unika tej operacji. 
+przy ostatniej aplikacji. Moje rozwiązanie unika tej operacji. 
 
 W tym celu, poza generowaniem właściwej funkcji, generowane są także funkcje 
 wejściowe (ang. entry point), które będą używane w przypadku wywoływania 
@@ -1114,8 +1167,8 @@ wejściowych. Oznacza to, że typ pola \textit{fn} w języku \textit{C} to
 \textit{void ($\ast\ast$fn)()}, oraz że przed wywołaniem funkcji ze struktury,
 należy zdereferować (ang. dereference) wskaźnik. Wskaźnik na wołaną funkcją 
 musi być w każdym momencie programu aktualny --- musi odpowiadać liczbie 
-początkowych argumentów zapamiętanych w środowisku. Dlatego gdy kolejne 
-argumenty są aplikowane, wskaźnik jest zwiększany. 
+początkowych argumentów zapamiętanych w środowisku. Dlatego gdy 
+funkcja jest aplikowana do kolejnych argumentów, wskaźnik jest zwiększany. 
 
 % \subsubsection{Funkcje wejściowe}
 % TODO: Ciało funkcji wejściowych
@@ -1126,7 +1179,7 @@ oryginalnej jest funkcja, następuje jeden z dwóch przypadków sprawdzanych w
 czasie działania programu.
 
 \begin{enumerate}
-  \item Nie pozostały żadne argumenty do zaaplikowania ---
+  \item Nie pozostały żadne argumenty do aplikacji ---
   funkcja wyjściowa jako swój wynik może zwrócić wynik funkcji oryginalnej.
   \item Pozostałych argumentów jest mniej lub tyle samo niż wynosi 
   wartość pola \textit{left\_args} ze struktury otrzymanej jako wynik 
@@ -1147,19 +1200,19 @@ Zostały dokładnie opisane przez Marlow i Peyton Jones\cite{fast_curry}.
 Ich zasadnicza różnica polega na sposobie działania przy aplikacji funkcji 
 nieznanej. W push/enter przed właściwym wywołaniem funkcji jej argumenty są 
 ładowane na stos. Następnie to funkcja wołana jest odpowiedzialna za
-rozważenie wszystkich przypadków związanych z liczbą zaaplikowanych argumentów.
+rozważenie wszystkich przypadków związanych z liczbą argumentów w aplikacji.
 Podejmuje decyzje o wywołaniu właściwiej funkcji i ewentualnym przekazaniu 
 pozostałych argumentów dalej bądź zwróceniu obiektu reprezentującego częściowo\
 zaaplikowaną funkcję. W modelu eval/apply, to po stronie funkcji wołającej 
 leży zadanie rozważania tych przypadków. Strona wołająca (ang. call site)
-zna liczbę zaaplikowanych argumentów, a w czasie działania sprawdza 
+zna liczbę argumentów z aplikacji, a w czasie działania sprawdza 
 faktyczną arność funkcji. 
 
 Moje rozwiązanie istotnie czerpie z modelu push/enter. Większość decyzji
 jest podejmowana po stronie funkcji wołanej. Strona wołająca przekazuje 
 wszystkie argumenty do funkcji wskazywanej w strukturze \textit{function}. 
 Jednak zanim to się stanie, to strona wołająca dynamicznie sprawdza arność 
-funkcji. W przypadku gdy jest ona większa od liczby zaaplikowanych argumentów, 
+funkcji. W przypadku gdy jest ona większa od liczby argumentów z aplikacji, 
 to w tym miejscu uaktualniany jest obiekt częściowej aplikacji, oszczędzając 
 na zbędnym wywołaniu funkcji. Jest to podobne do rozwiązania z enter/apply.
 Strona wołająca nie musi także dynamicznie przeszukiwać stosu w poszukiwaniu 
@@ -1249,8 +1302,8 @@ już zaimplementowaną częściową aplikację. W czasie analizy programu dla ka
 zagnieżdżonego wyrażenia \textit{let} wyznaczam jego zmienne wolne. Zmienne wolne
 zostaną dodane jako dodatkowe argumenty, przed tymi podanymi pierwotnie.
 Następnie, symbol pod którym wyrażenie \textit{let} było zapamiętane w 
-środowisku, zostaje związany z częściową aplikacją zmiennych wolnych 
-do oryginalnej funkcji (rozszerzonej o dodatkowe argumenty --- zmienne wolne).
+środowisku, zostaje związany z częściową aplikacją oryginalnej funkcji 
+(rozszerzonej o dodatkowe argumenty --- zmienne wolne) do zmiennych wolnych.
 Poniżej na funkcji \textit{add} została wykonana ta transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
