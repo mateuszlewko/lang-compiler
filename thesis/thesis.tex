@@ -292,7 +292,7 @@ console.log(add(3)(12)); // 15
 Javascript nie jest językiem funkcyjnym, a funkcje w nim zdefiniowane są w 
 zwiniętej formie. Z tego powodu konieczne jest zastosowanie rozwlekłej składni,
 takiej jak w ostatniej linii przytoczonego przykładu. Ta sama funkcja 
-zdefiniowana w OCamlu wygląda następująco:
+zdefiniowana w OCamlu wygląda następująco (listing $1..2$):
 
 \begin{lstlisting}[frame=single, caption=Rozwinięta funkcja w OCamlu.]
 let add x y = x + y 
@@ -372,10 +372,10 @@ class Eq a where
   (/=) :: a -> a -> Bool
 \end{lstlisting}
 
-W powyższym przykładzie definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
+Na przykładzie z listingu $1..3$ definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ 
 ~oraz~$/=$. Powiemy, że typ ukonkretniony z $a$ jest instancją klasy $Eq$, 
 jeśli zawiera deklaracje obu funkcji z odpowiednimi typami. Przykładowa 
-instancja dla typu $Bool$, mogłaby wyglądać następująco:
+instancja dla typu $Bool$, mogłaby wyglądać następująco (listing $1..4$):
 
 \begin{lstlisting}[frame=single, caption=Instancja klasy $Eq$ dla typu $Bool$.]
 instance Eq Bool where
