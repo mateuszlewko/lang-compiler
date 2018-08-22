@@ -914,7 +914,7 @@ przypadku kod źródłowy jest źle wcięty i kompilator zwróci błąd.
 \section{Parsowanie}
 
 Popularnym narzędziem do generowania parserów jest \textit{Menhir} \cite{menhir}. Na 
-\newline podstawie podanej gramatyki \textit{LR(1)}, generuje kod $OCamla$, 
+\newline podstawie podanej gramatyki \textit{LR(1)}, generuje kod OCamla, 
 który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operatory: $
 +$, $?$, $\ast$. Zdecydowałem się skorzystać z tego narzędzia ze względu na 
 łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
@@ -931,17 +931,18 @@ formie (każda funkcja przyjmuje tylko jeden argument) jest nieoptymalne pod
 względem rozmiaru kodu jak i szybkości jego wykonania. Pomimo że aplikacja 
 częściowa jest bardzo przydatną cechą języków funkcyjnych, to często funkcje
 wywoływane są ze wszystkimi argumentami. W takich przypadkach chcielibyśmy 
-korzystać z wywołania funkcji, które jest tak szybkie jak w \textit{C}. 
-W kompilatorze \textit{Langa} pracowałem nad rozwiązaniem, które w pozostałych 
+korzystać z wywołania funkcji, które jest tak szybkie jak w Caml. 
+W kompilatorze MonoMLa pracowałem nad rozwiązaniem, które w pozostałych 
 przypadkach korzystałoby z przekazywania argumentów funkcji przez rejestry i 
-pozwalałoby na przekazywanie typów o różnych rozmiarach przez wartość. 
+pozwalałoby, na przekazywanie typów danych o różnych rozmiarach przez ich 
+wartość (bez opakowywania we wskaźnik). 
 
 \subsection{Opis działania}
 
 Podzielmy wszystkie wywołania funkcji na dwie grupy. Wywołania do znanych 
 (ang. known call) i nie znanych funkcji (ang. unknown call). Znane funkcje to 
 takie, których definicję można łatwo wskazać na etapie kompilacji. 
-Na poniższym przykładzie wywołana funkcja \textit{double} jest statycznie znana.
+W listingu $3..1$ wywołana funkcja \textit{double} jest statycznie znana.
 
 \begin{lstlisting}[frame=single, caption=Wywołanie statycznie znanej funkcji.] 
 let double x = x + x
@@ -956,7 +957,7 @@ Przykładem nieznanych funkcji są funkcje, które:
   \item są wynikiem częściowej aplikacji funkcji.
 \end{itemize}
 
-W tym przykładzie wywołane funkcje $a$, $b$ i C są nieznane.
+W listingu $3..2$ wywołane funkcje $a$, $b$ i $c$ są nieznane.
 
 \begin{lstlisting}[frame=single, caption=Przykłady statycznie 
 nieznanej funkcji.]
@@ -976,20 +977,20 @@ let main (getIdentity ())
 
 \subsubsection{Wywołanie funkcji znanej}
 
-Gdy funkcja, którą chcemy wywołać jest znana, możemy wyróżnić trzy przypadki 
+Gdy funkcja, którą chcemy wywołać, jest znana, możemy wyróżnić trzy przypadki 
 ze względu na liczbę argumentów w aplikacji względem liczby argumentów
 w definicji funkcji.
 
 \begin{enumerate}
   \item Liczba argumentów z aplikacji jest mniejsza od liczby zdefiniowanych 
   argumentów. W tym przypadku utworzony zostaje obiekt reprezentujący częściowo
-  zaaplikowaną funkcję. Zostaną w nim zapisane zaaplikowane argumenty 
+  zaaplikowaną funkcję. Zostaną w nim zapisane argumenty z aplikacji
   oraz 
   wskaźnik na odpowiednią funkcję. Skopiowane argumenty i sam obiekt 
   zostaną 
   utworzone na stercie.
   \item Argumentów z aplikacji jest tyle samo co zdefiniowanych. 
-  Funkcja zostanie wywołana w stylu z C. Jest to najbardziej optymalny 
+  Funkcja zostanie wywołana w stylu z C. Jest to optymalny 
   przypadek wywołania funkcji i nie powoduje on zaalokowania żadnej 
   dodatkowej pamięci. 
   Jeśli początkowe argumenty mieszczą się w rejestrach, to mogą zostać 
@@ -1010,16 +1011,16 @@ w definicji funkcji.
 \subsubsection{Wywołanie funkcji nieznanej}
 
 Wywołania funkcji nieznanych podzielimy na takie, których wynikiem jest dowolna
-funkcja $ a \rightarrow b $ i takie których wynikiem jest wartość. Podczas
+funkcja $ a \rightarrow b $ i takie, których wynikiem jest wartość. Podczas
 fazy inferencji typów obliczany jest typ każdego wyrażenia, więc kompilator
-jest w stanie określić do której grupy należy dana aplikacja funkcji. Każda 
+jest w stanie określić, do której grupy należy dana aplikacja funkcji. Każda 
 nieznana lub częściowo zaaplikowana funkcja jest reprezentowana przez strukturę 
 (taką jak w C), 
 zawierającą następujące pola:
 
 \begin{itemize}
   \item wskaźnik na funkcję,
-  \item wskaźnik na środowisko (zapamiętane argumenty), które jest pamiętane 
+  \item wskaźnik na środowisko --- zapamiętane argumenty, które są pamiętane 
   jako spójny ciąg bajów (dynamicznie zaalokowana tablica z C),
   % TODO: Można też tablice wskaźników na argumenty i 
   % dlaczego tak nie zrobiłem
@@ -1028,7 +1029,7 @@ zawierającą następujące pola:
   \item liczba bajtów w środowisku.
 \end{itemize}
 
-Definicja takiej struktury w C wyglądałaby następująco:
+Definicja takiej struktury w C wyglądałaby tak jak na listingu $3..3$.
 
 \begin{lstlisting}[frame=single, caption=Rozwinięta funkcja w OCamlu.]
 struct function {
@@ -1103,7 +1104,7 @@ odpowiednie jej pola uaktualnione.
 
 \subsubsection{Generowanie funkcji}
 
-Jednym z założeń implementacji tego języka, była możliwość przekazywania typów
+Jednym z założeń implementacji MonoMLa, była możliwość przekazywania typów
 o różnym rozmiarze przez ich wartość, a nie przez wskaźnik. W obecnej 
 implementacji istnieje tylko kilka typów o różnym rozmiarze: \textit{bool},
 \textit{int} i \textit{rekord}. Rekordy mają taki sam rozmiar, ponieważ są 
@@ -1261,7 +1262,7 @@ let _ =
     print_int (add1 1);
     print_int (add5 5) 
 \end{lstlisting}
-Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$. 
+Kod z listingu $3..5$ wypisze wynik działań $1 + 1$ oraz $5 + 5$. 
 
 Niskopoziomowy język, taki jaki \textit{LLVM IR} nie obsługuje zagnieżdżonych 
 funkcji. Można w
@@ -1278,11 +1279,12 @@ let add y = x + y
 let make_adder x = add 
 \end{lstlisting}
 
-Powyższy kod nie jest poprawnym programem w języku OCaml, oraz 
+Kod z $3..6$ nie jest poprawnym programem w języku OCaml, oraz 
 nie mógłby zostać poprawnie przetłumaczony na kod \textit{LLVM IR}. 
 Skoro $x$ jest poza zasięgiem ciała \textit{add}, można zaproponować rozwiązanie,
 w którym wprowadzona zostaje globalna zmienna odpowiadająca zmiennej wolnej $x$. 
-Na poniższym przykładzie zostało przedstawione jak mogłaby wyglądać taka transformacja.
+Na przykładzie z listingu $3..7$ zostało przedstawione jak mogłaby wyglądać
+taka transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
 let global_x = ref 0
@@ -1293,18 +1295,21 @@ let make_adder x =
     add 
 \end{lstlisting}
 Powyższe przekształcenia nie wprowadzają dużego narzutu na wynikowy program i rozwiązują 
-problem z zasięgiem symbolu $x$. Ten kod jednak nie zwróci poprawnego wyniku, przy założeniu o statycznym zasięgu widoczności (ang. static scoping). Drugie 
-wywołanie \textit{make\_adder} dla argumentu 5 nadpisze jego pierwszą wartość, z której korzysta pierwsze wywołanie funkcji \textit{add1}. Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
+problem z zasięgiem symbolu $x$. Ten kod jednak nie zwróci poprawnego wyniku, 
+przy założeniu o statycznym zasięgu widoczności (ang. static scoping). Drugie 
+wywołanie \textit{make\_adder} dla argumentu 5 nadpisze jego pierwszą wartość, 
+z której korzysta pierwsze wywołanie funkcji \textit{add1}. 
+Koniecznym jest zapamiętanie $x$ w środowisku funkcji 
 \textit{add}, w momencie, w którym jest zwracana. 
 
-W \textit{Langu}, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
+W MonoMLu, do implementacji \textit{closure conversion} postanowiłem wykorzystać,
 już zaimplementowaną częściową aplikację. W czasie analizy programu dla każdego 
 zagnieżdżonego wyrażenia \textit{let} wyznaczam jego zmienne wolne. Zmienne wolne
 zostaną dodane jako dodatkowe argumenty, przed tymi podanymi pierwotnie.
-Następnie, symbol pod którym wyrażenie \textit{let} było zapamiętane w 
+Następnie symbol, pod którym wyrażenie \textit{let} było zapamiętane w 
 środowisku, zostaje związany z częściową aplikacją oryginalnej funkcji 
 (rozszerzonej o dodatkowe argumenty --- zmienne wolne) do zmiennych wolnych.
-Poniżej na funkcji \textit{add} została wykonana ta transformacja.
+W listingu $3..8$ na funkcji \textit{add} została wykonana ta transformacja.
 
 \begin{lstlisting}[frame=single, caption={Wprowadzenie globalnej zmiennej.}]
 let make_adder x = 
@@ -1329,7 +1334,7 @@ niskopoziomowy kod.
 \section{Rekordy}
 
 Rekordy są podstawowym sposobem na tworzenie własnych typów danych w wielu 
-językach programowania. Do \textit{Langa} zostały wprowadzone głównie po to, 
+językach programowania. Do MonoMLa zostały wprowadzone głównie po to, 
 aby urozmaicić przykłady zastosowania klas typów. 
 
 Jako że LLVM IR wspiera struktury, które są odpowiednikiem implementowanych 
@@ -1338,8 +1343,8 @@ implementacji
 wszystkie struktury alokowane są na stercie i przekazywane przez wskaźnik.
 Pola struktury są pamiętane przez ich wartość, chyba że polem jest inna 
 struktura. Są trwałym typem danych, więc aktualizacja pól struktury 
-z wyrażeniem \textit{with} powoduje skopiowane jej zawartości do nowej 
-instancji.
+z wyrażeniem \textit{with} powoduje skopiowane zawartości całej struktury do 
+nowej instancji.
 
 \section{Let polimorfizm}
 
@@ -1377,7 +1382,7 @@ ich wartość (ang. unboxed types), takie jak $\verb!Int#!$ i
 $\verb!Double#!$. Jednak nie mogą być one użyte w funkcjach polimorficznych. 
 W fazie optymalizacji, kompilator \textit{GHC} może zamienić typ boxed 
 na unboxed, ale nie jest to gwarantowane. Jako że kierowałem się wydajnością
-przy implementacji kompilatora \textit{Langa}, to rozwiązanie nie jest 
+przy implementacji kompilatora MonoMLa, to rozwiązanie nie jest 
 satysfakcjonujące.
 
 OCaml reprezentuje inty i wskaźniki na jednym słowie 
@@ -1388,18 +1393,18 @@ To rozwiązania pozwala na uniknięcie większości narzutu przy wykonywaniu
 operacji na typach prymitywnych, ale wiąże się z niestandardowym podejściem do 
 arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość obiektów 
 większych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
-rozwiązania, nie zdecydowałem sie go zaimplementować.
+rozwiązania nie zdecydowałem się go zaimplementować.
 
 Języki takie jak C++ i Rust oraz kompilator SMLa 
 MLton \cite{mono_mlton}, wyspecjalizowują każdą polimorficzną funkcję przed 
 fazą generowania 
 kodu. Ten proces nazywany jest \textit{monomorfizacją}. Dokładniej, polega on na 
-utworzenia osobnej 
+utworzeniu osobnej 
 implementacji polimorficznej funkcji dla każdego konkretnego typu, który 
 został 
 podstawiony pod typ ogólny. W C++ użytkownik może explicite podać 
 dla jakich typów ukonkretnia daną funkcję, bądź może być to wykryte przez 
-kompilator.
+kompilator. Przykład na listingu $3..9$.
 
 \begin{lstlisting}[frame=single, caption={Polimorficzna funkcja w 
 C++ z użyciem szablonów (ang. template)}]
@@ -1419,21 +1424,21 @@ Dla funkcji \textit{foo} z powyższego przykładu zostaną wygenerowane dwie
 implementacje, a oryginalne wywołania funkcji zostaną już w fazie kompilacje
 zamienione na wywołania odpowiednich, wyspecjalizowanych wersji tej funkcji.
 Takie rozwiązanie pozwala na przekazanie dowolnego typu przez jego wartość, 
-bez zmian jego reprezentacji. Jednak nie jest ono pozbawione kompromisów. 
+bez zmiany jego reprezentacji. Jednak nie jest ono pozbawione wad. 
 Statyczna monomorfizacja funkcji nie pozwala na zastosowanie polimorficznej
 rekurencji. Dodatkowo zwiększa rozmiar wygenerowanego kodu, tym samym 
 wydłużając czas kompilacji i zwiększać rozmiar wynikowego programu. Kolejną 
 wadą w praktycznych zastosowaniach, jest fakt, że wysokopoziomowy kod 
 implementacji funkcji polimorficznej musi być opublikowany wraz z wygenerowaną 
-bibliotekę, aby istniała możliwość wywołania tej funkcji dla typów dla 
+bibliotekę, aby istniała możliwość wywołania tej funkcji dla typów, dla 
 których nie była wcześniej ukonkretniona. Mimo to, język C++ cieszy 
 się ogromną popularnością, a system szablonów jest szeroko używany, także w 
 zastosowaniach produkcyjnych. 
 
-W \textit{Langu} postanowiłem zaimplementować rozwiązanie bazujące na 
+W MonoMLu postanowiłem zaimplementować rozwiązanie bazujące na 
 monomorfizacji. Jest ono zgodne z założeniami projektu oraz dobrze współgra z 
 pozostałymi rozwiązaniami. W trakcie inferencji typów każda polimorficzna 
-funkcja z \textit{Langa} jest reprezentowana w kompilatorze jako funkcja z 
+funkcja z MonoMLa jest reprezentowana w kompilatorze jako funkcja z 
 ukonkretnień typów ogólnych w implementację. Gdy w fazie generacji kodu 
 dochodzi do wywołania funkcji polimorficznej, muszą być znane wszystkie 
 ukonkretnienia. Wtedy wywoływana jest funkcja generująca implementację na 
@@ -1452,7 +1457,7 @@ konkretnych są zapamiętywane.
 
 Inferencja typów zwalnia programistę z obowiązku wyspecyfikowania typów 
 każdej deklaracji, pozostawiając wszystkie zalety statycznego systemu typów.
-W \textit{Langu} działa ona następująco. Na początku każdemu argumentowi,
+W MonoMLu działa ona następująco. Na początku każdemu argumentowi,
 który nie został adnotowany przez użytkownika typem konkretnym, zostaje 
 przypisany inny typ ogólny. Podczas inferencji w ciele funkcji, dla 
 każdego wyrażenia, dla którego może być wywnioskowane jakieś ograniczenie 
@@ -1562,7 +1567,7 @@ udowodnienie istnienia instancji klasy dla danego typu.
 Metoda przekazywania słownika nie niesie ze sobą dużego narzutu na czas 
 kompilacji i wykonywania programu. Wymaga dodania co najmniej
 jednego argumentu do funkcji polimorficznych korzystających z klas typów. 
-Jednak w implementacji klas typów w \textit{Langu}, ze względu na decyzje 
+Jednak w implementacji klas typów w MonoMLu, ze względu na decyzje 
 podjęte w poprzednich cechach języka (monomorfizacja dla let polimorfizmu), 
 nie skorzystałem z tej metody. Po przeprowadzeniu monomorfizacji, w kodzie nie 
 występują żadne funkcje polimorficzne. Jedyne co należy zrobić w kolejnej 
@@ -1756,12 +1761,12 @@ kompilowanie z tego folderu.
 \section{Użyte narzędzia i biblioteki}
 
 \begin{itemize}
-  \item \texttt{OCaml}
-  \item \texttt{Menhir}
-  \item \texttt{Sedlex}
-  \item \texttt{OCaml-parsing}
-  \item \texttt{Core} 
-  \item \texttt{JBuilder} 
+  \item \texttt{OCaml: https://ocaml.org/}
+  \item \texttt{Menhir: http://gallium.inria.fr/~fpottier/menhir/}
+  \item \texttt{Sedlex: https://github.com/alainfrisch/sedlex}
+  \item \texttt{OCaml-parsing: https://github.com/smolkaj/ocaml-parsing}
+  \item \texttt{Core: https://github.com/janestreet/core} 
+  \item \texttt{Dune: (JBuilder) https://github.com/ocaml/dune} 
 \end{itemize}
 
 % - OCaml 
