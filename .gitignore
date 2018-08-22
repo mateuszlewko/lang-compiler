@@ -46,3 +46,5 @@ thesis.synctex.gz
 temp.txt
 record1.out
 *.out
+thesis/thesis.bbl
+thesis/thesis.blg
