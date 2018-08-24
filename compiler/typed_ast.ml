@@ -8,7 +8,7 @@ module A  = Lang_parsing.Ast
 
 let add_raw env name (key_type : string -> key) ?(subs=[]) value = 
   let pref_name = name_in env name in
-  
+  printf "adding to opened, name: %s\n" name;
   { env with 
     prefixed = 
       BatMap.add (key_type pref_name) (value, pref_name, subs) env.prefixed 
@@ -335,7 +335,8 @@ let rec expr env =
     let (op_t, loc, _), name, _ = find env name in 
    
     if loc <> Global 
-    then sprintf "Non global operator: %s is not supported." name |> failwith;
+    then sprintf "Non global (builtin) operator: %s is not supported." name 
+         |> failwith;
 
     let env, lhs = expr env lhs in 
     let env, rhs = expr env rhs in 
@@ -348,13 +349,26 @@ let rec expr env =
   | IfExp { cond; then_; elifs; else_ } ->
     let env, cond      = expr env cond |> uncurry (LT.unify_expr LT.Bool) in 
     let env, then_body = expr env then_ in 
+
+    let print_free_vars = 
+      BatMultiMap.iter (fun lvl ->
+        BatSet.iter (fun (name, _) ->
+          printf "if-exp: free var %s at level %d\n" name lvl)) in 
+
+    (* print_free_vars env.free_vars; *)
+
     let env, else_body = 
       match elifs with 
       | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr env
       | (cond, then_)::elifs -> expr env (IfExp {cond; then_; elifs; else_}) in
 
-    LT.show_subs env.substitutions
-    |> printf "after else funexp subs: %s\n";
+    printf "after if_exp --- * ---\n";
+    env.extra_fun 
+    |> List.iter ~f:(function (Fun (f, _)) -> printf "if fun: %s\n" f.name
+                            | _            -> ());
+
+    (* LT.show_subs env.substitutions
+    |> printf "after else funexp subs: %s\n"; *)
     
     let env, then_body = LT.unify_expr (snd else_body) env then_body in 
    
@@ -447,7 +461,9 @@ let rec expr env =
 and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
- 
+  (* let name = name_in env name in  *)
+  let g_name      = name ^ ".lifted" in
+
   let prev_free_vars = env.free_vars in 
   let env = { env with free_vars = BatMultiMap.empty } in 
 
@@ -462,15 +478,17 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   let env = { env with level = env.level + 1 } in
   let lvl = AtLevel env.level in 
   let env = let env = if is_rec 
-                      then add env name (fn_t, Global) 
+                      then 
+                        (* add ~wrapping:`DontWrap env name (fn_t, AtLevel env.level)  *)
+                        add env name (fn_t, Global) 
                       else env in 
             List.fold args ~init:env 
                            ~f:(fun env (a, t) -> add env a (t, lvl)) in 
   
   let env, body = List.fold_map body ~init:env ~f:expr in
 
-  let extra_args   = BatMultiMap.enum env.free_vars |> BatList.of_enum 
-                      |> List.map ~f:snd in 
+  let extra_args = BatMultiMap.enum env.free_vars |> BatList.of_enum 
+                   |> List.map ~f:snd in 
 
   (* apply unbound type to concrete *)
   (* let env, body = 
@@ -508,7 +526,6 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   let extra_args   = List.zip_exn (List.map extra_args fst) extra_arg_ts in 
 
   let global_fn_t = LT.merge extra_arg_ts fn_t in
-  let g_name      = name ^ ".lifted" in
 
   let body = 
     if is_rec 
@@ -520,32 +537,32 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
       end
     else body in 
 
-  let global_fn   = 
+  let fn_with_env_from name  =
+      let args = List.map extra_args (fun (s, t) -> Var s, t) in
+      let app  = App ((Var g_name, global_fn_t), args) in 
+      Value (name, (app, fn_t)) in
+
+  let fn_with_env = fn_with_env_from name in 
+  let fn_with_env_decl = fn_with_env_from (name_in env name) in 
+
+  let global_fn = 
     let args = extra_args @ args in 
     printf "fun: %s, extra args:\n" g_name;
     List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
 
     { name = g_name; gen_name = g_name; is_rec; args
-    ; body = Some body }
-    , global_fn_t in
+    ; body = if is_rec
+             then Some ((fn_with_env_decl, fn_t)::body)
+             else Some body } (*(fn_with_env, fn_t)::*) in
 
   let env = 
     match kind with 
-    | `Default | `SetVar -> { env with extra_fun = global_fn::env.extra_fun } 
+    | `Default | `SetVar -> 
+      { env with extra_fun = 
+        (FunDecl ({ name = name_in env name; gen_name = g_name }, global_fn_t))
+        ::(Fun (global_fn, global_fn_t))
+        ::env.extra_fun } 
     | `Alloca            -> env in 
-
-  let fn_with_env  =
-    (* match kind with 
-    | `Alloca  -> 
-      Value (name, (Alloca fn_t, fn_t))
-    | `SetVar  -> 
-      let args = List.map extra_args (fun (s, t) -> Var s, t) in
-      let app  = App ((Var g_name, global_fn_t), args) in   
-      SetVar (name, (app, fn_t))
-    | `Default ->  *)
-      let args = List.map extra_args (fun (s, t) -> Var s, t) in
-      let app  = App ((Var g_name, global_fn_t), args) in 
-      Value (name, (app, fn_t)) in
 
   (* remove vars defined in current scope *)
   let free_vars = BatMultiMap.remove_all env.level env.free_vars
@@ -707,7 +724,20 @@ and top env =
     let parent_prefix = env.prefix in 
     let parent_opened = env.opened in 
     let env           = { env with prefix = env.prefix ^ name ^ "." } in 
-    let env, tops     = List.fold_map tops ~init:env ~f:top in
+    let env, tops     = 
+      List.fold_map tops ~init:env 
+        ~f:(fun env expr -> 
+          let env, tops = top env expr in 
+          let extra_fun = List.rev env.extra_fun in 
+          { env with extra_fun = [] }, extra_fun @ tops) in
+    
+    printf "--- * ---\n";
+    List.concat tops |> List.filter_map 
+      ~f:(function Fun (f, _)     -> Some ("fun => " ^ f.name)
+                 | FunDecl (f, _) -> Some ("decl =>" ^ f.name)
+                 | _ -> None) 
+    |> List.iter ~f:(printf "top fun: %s\n");
+    
     let env           = { env with prefix = parent_prefix
                                  ; opened = parent_opened } in
     env, List.concat tops
@@ -791,7 +821,7 @@ let of_tops tops =
   let env = empty |> add_builtin_ops in 
   let top env expr =
     let env, res = top env expr in 
-    let extra_fun = List.rev_map env.extra_fun (fun (f, t) -> Fun (f, t)) in 
+    let extra_fun = List.rev env.extra_fun in 
     { env with extra_fun = [] }, extra_fun @ res in 
 
   let env, tops = 

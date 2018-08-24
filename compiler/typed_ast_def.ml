@@ -101,7 +101,7 @@ type environment = {
   ; prefix        : string
   ; free_vars     : (int, string * t) BatMultiMap.t
   ; level         : int 
-  ; extra_fun     : (funexp * t) list 
+  ; extra_fun     : top list
   } 
 
 (** Evaluates name in current scope *)

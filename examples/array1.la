@@ -1,3 +1,16 @@
+
+let id1 x = x 
+module SomeInnerMod = 
+
+  let adder x y = 
+
+    let innerAdder z = (id1 x) + y + z
+    innerAdder x
+
+  module DoubleInner = 
+    let justAdd x y = 
+      adder x y 
+
 module Prelude =
   external ll_putint : int -> ()
   external ll_print_line : () -> ()

@@ -28,4 +28,4 @@ test:
 
 all: build test doc
 
-.PHONY: build install uninstall reinstall clean doc test all
+.PHONY: langc build install uninstall reinstall clean doc test all

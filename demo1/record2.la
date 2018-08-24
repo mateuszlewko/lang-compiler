@@ -22,7 +22,7 @@ let rec next_fib (curr : complex) n : complex =
     let succ_fib () : complex =
         let s : simple = 
             {  curr.s with a = curr.s.b
-                        b = curr.s.a + curr.s.b 
+                           b = curr.s.a + curr.s.b 
             }
 
         { curr with n = curr.n + 1; s }

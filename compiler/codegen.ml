@@ -198,12 +198,33 @@ module Codegen = struct
     | _   , None   -> sprintf "Couldn't find concrete type \
                          for: %s.\n" (LT.show t) 
                       |> failwith
+  let gen_fun_decl (env : Env.t) {TA.gen_name; name} t = 
+    match t with 
+    | LT.Fun (_::_::_ as ts) as fn_t -> 
+      let arity                   = List.length ts - 1 in 
+      let ast_arg_ts, [ast_ret_t] = BatList.takedrop arity ts in 
+      let arg_ts, ret_t           = List.map ast_arg_ts LT.to_ollvm
+                                  , LT.to_ollvm ast_ret_t in 
+
+      let m, fn    = M.global env.m ret_t gen_name in 
+      let m = declare fn arg_ts |> M.declaration m in
+      
+      printf "adding decl of %s\n" name;
+
+      Fun { fn = fn, fn_t; fns_arr = null; arity } 
+      |> Env.add { env with m } name 
+    | other  -> failwith "external values not supported"
 
   let gen_let (env : Env.t) expr funexp ts = 
     match ts with 
     | LT.Fun ts as fn_t -> 
       let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
       let args, arg_ts = List.unzip ta_args in 
+
+      (* let env = 
+        if is_rec 
+        then gen_fun_decl (env : Env.t) {TA.gen_name; name} fn_t 
+        else env in  *)
 
       LT.show_subs env.substitutions    
       |> printf "subs here gen_let: %s\n";
@@ -686,23 +707,6 @@ module Codegen = struct
                             ~f:(fun cs (k, v) -> BatMap.add k v cs) in 
     
     { env with m = inner_env.m; classes }
-
-  let gen_fun_decl (env : Env.t) {TA.gen_name; name} t = 
-    match t with 
-    | LT.Fun (_::_::_ as ts) as fn_t -> 
-      let arity                   = List.length ts - 1 in 
-      let ast_arg_ts, [ast_ret_t] = BatList.takedrop arity ts in 
-      let arg_ts, ret_t           = List.map ast_arg_ts LT.to_ollvm
-                                  , LT.to_ollvm ast_ret_t in 
-
-      let m, fn    = M.global env.m ret_t gen_name in 
-      let m = declare fn arg_ts |> M.declaration m in
-      
-      printf "adding decl of %s\n" name;
-
-      Fun { fn = fn, fn_t; fns_arr = null; arity } 
-      |> Env.add { env with m } name 
-    | other  -> failwith "external values not supported"
 
   let rec gen_top env =
     let open TA in 

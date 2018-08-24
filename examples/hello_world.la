@@ -8,5 +8,52 @@ module Prelude =
 
 open Prelude
 
+let id1 x = x 
+(* module SomeInnerMod =  *)
+
+let adder x y = 
+
+  let innerAdder z = (id1 x) + y + z
+  innerAdder x
+
+let idd z = z
+
+let rec here n () = 
+  if n = 0 
+  then idd (n + 1)
+  else 3
+
+let dooo x = 
+  let rec any n =
+    if n = 1
+    then any (n - 1)
+    else 5
+
+    (* adder 3 n *)
+    (* if n = 0 
+    then 0 
+    else any (n - 1) *)
+
+  any (x + 1)
+
+  (* module DoubleInner =  *)
+(* let justAdd x y = 
+  let idd z = z
+
+  let rec here n () = 
+    if n = 0 
+    then idd n
+    else 0 *)
+    (* if n = 0 
+    then here (n - 1) ()
+    elif n = 1
+    then adder x y 
+    else 0  
+    here (n - 1) () *)
+
+  (* here 2 () *)
+  
+
 let _ =
-  printn_int 42
+  printn_int (dooo 0)
+  printn_int (here 0 ())

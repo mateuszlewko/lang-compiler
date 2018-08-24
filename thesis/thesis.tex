@@ -1668,7 +1668,7 @@ Uprzednio należy wykonać następujące kroki.
   \texttt{https://ocaml.org/docs/install.html}.
   \item Instalacja LLVMa. Instrukcja dostępna na stronie: \newline
   \texttt{https://llvm.org/}.
-  \item Wymagany jest kompilator LLVM w wersji $5$. Zainstalowaną 
+  \item Wymagany jest kompilator LLVM w wersji $6$. Zainstalowaną 
   wersję można sprawdzić poleceniem:
   \begin{lstlisting}[language=bash]
   $ llc --version
@@ -1796,9 +1796,9 @@ kompilowanie z tego folderu.
   po parsowaniu.
   \item \texttt{compiler/codegen.ml} -- Zbiór funkcji odpowiedzialnych za 
   generowanie kodu.
-  \item \texttt{compiler/MonoML\_types\_def} -- Definicja typów reprezentujących 
+  \item \texttt{compiler/lang\_types\_def} -- Definicja typów reprezentujących 
   typy z Langa.
-  \item \texttt{compiler/MonoML\_types} -- Funkcje służące znalezieniu
+  \item \texttt{compiler/lang\_types} -- Funkcje służące znalezieniu
   typu wyrażeń. Inferencja typów.
   \item \texttt{compiler/letexp.ml} -- Generowaniu kodu funkcji 
   (wyrażeń \textit{let}). 
