@@ -1,10 +1,8 @@
 Lexer:
 
 Codegen:
-
-    ❑ multiple global variables with same name @critical @today 
-
     ❑ suppress all debug prints @critical 
+    ❑ multiple global variables with same name
 
 Bugs:
     ❑ function redefinitions detected in llvmgateway 

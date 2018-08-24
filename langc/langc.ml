@@ -1,7 +1,7 @@
 open Core
 open Lang_compiler
 open Lang_parsing
-open Compilation
+open Langc_compilation.Compilation
 
 let _ =
   (* parse command line arguments and display help *)

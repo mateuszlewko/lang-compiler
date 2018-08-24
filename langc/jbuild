@@ -2,13 +2,11 @@
 
 (executable
  ((name langc)
-  (libraries (core batteries lang_compiler llvm.analysis))))
-
-(library
- ((name    langc_lib)
-  (wrapped true)
-  (libraries (core batteries lang_compiler llvm.analysis))
-  (preprocess (pps (ppx_deriving.std ppx_enumerate)))))
+  (libraries (core 
+              batteries
+              langc_compilation
+              lang_compiler
+              llvm.analysis))))
 
 (alias
   ((name runlangc)

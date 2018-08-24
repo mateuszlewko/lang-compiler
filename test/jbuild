@@ -1,16 +1,20 @@
 (jbuild_version 1)
 
 (executable
- ((name        test)
-  (libraries (core oUnit lang_compiler langc_lib batteries))
+ ((name test)
+  (libraries (core 
+              oUnit 
+              lang_compiler 
+              langc_compilation 
+              batteries))
 ))
 
 ;;; (copy_files compiler-test-srcs/*)
-(rule
- ((fallback)
-  (targets (test))
-  (deps    (compiler-test-srcs/in1.la))
-  (action  (copy ${<} ${@}))))
+;;; (rule
+;;;  ((fallback)
+;;;   (targets (test))
+;;;   (deps    (compiler-test-srcs/in1.la))
+;;;   (action  (copy ${<} ${@}))))
 
 ;; makes sure the executable is built and run in test mode
 (alias

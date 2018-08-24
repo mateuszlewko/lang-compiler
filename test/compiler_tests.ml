@@ -1,7 +1,8 @@
 open Core
 open OUnit
 open Lang_compiler
-open Langc_lib  
+open Langc_compilation
+(* open Langc_lib.Compilation *)
 open BatPervasives
 
 let binfile = ".test.tmp.e"
