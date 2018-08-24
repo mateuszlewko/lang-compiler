@@ -90,36 +90,63 @@ type bindings_map = (key, bound * string * subs) BatMap.t
 
 type environment = { 
   (** symbols accessible with prefix *)
-    prefixed      : bindings_map
+    prefixed       : bindings_map
   (** symbols available without any prefix  *)
-  ; opened        : bindings_map
+  ; opened         : bindings_map
   (** current scope (module) prefix *)
-  ; last_var      : int
-  ; substitutions : (t, t list) BatMap.t
-  ; mono_vars     : (t, t) BatMap.t
-  (* ; all_subs      : (t, t list) BatMap.t *)
-  ; prefix        : string
-  ; free_vars     : (int, string * t) BatMultiMap.t
-  ; level         : int 
-  ; extra_fun     : top list
+  ; last_var       : int
+  ; substitutions  : (t, t list) BatMap.t
+  ; mono_vars      : (t, t) BatMap.t
+  (* ; all_subs       : (t, t list) BatMap.t *)
+  ; prefix         : string
+  ; free_vars      : (int, string * t) BatMultiMap.t
+  ; level          : int 
+  ; extra_fun      : top list
+  ; annot_mappings : (string, string) BatMap.t
   } 
 
 (** Evaluates name in current scope *)
 let name_in env = (^) env.prefix
 
 (** Creates top-level env *)
-let empty = { prefixed      = BatMap.empty
-            ; opened        = BatMap.empty
-            ; prefix        = "." 
-            ; free_vars     = BatMultiMap.empty
-            ; level         = 0 
-            ; extra_fun     = []
-            ; last_var      = 0
-            ; mono_vars     = BatMap.empty
-            ; substitutions = BatMap.empty 
+let empty = { prefixed       = BatMap.empty
+            ; opened         = BatMap.empty
+            ; prefix         = "." 
+            ; free_vars      = BatMultiMap.empty
+            ; level          = 0 
+            ; extra_fun      = []
+            ; last_var       = 0
+            ; mono_vars      = BatMap.empty
+            ; substitutions  = BatMap.empty 
+            ; annot_mappings = BatMap.empty
             (* ; all_subs      = BatMap.empty  *)
             }
 
 let fresh_type env =
   let new_env = { env with last_var = env.last_var + 1 } in
   new_env, Lang_types_def.Generic (sprintf "'a%d" new_env.last_var)
+
+let fresh_type_str env =
+  let new_env = { env with last_var = env.last_var + 1 } in
+  new_env, sprintf "'__a%d" new_env.last_var
+
+open Lang_parsing.Ast
+
+let rec rewrite_type_annots env annot = 
+  let rewrite env s = 
+    BatMap.Exceptionless.find s env.annot_mappings
+    |> Option.map ~f:(fun s -> env, s)
+    |> Option.value ~default:(
+        let env, t = fresh_type_str env in 
+        { env with annot_mappings = BatMap.add s t env.annot_mappings }, t) in 
+    
+  let rec rewrite_basic env =
+    function 
+    | Single ts -> 
+      let env, t = List.fold_map ts ~init:env ~f:rewrite in 
+      env, Single t 
+    | Fun b_ts  -> 
+      let env, t = List.fold_map b_ts ~init:env ~f:rewrite_basic in 
+      env, Fun t in 
+
+  rewrite_basic env annot.basic

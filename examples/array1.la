@@ -45,8 +45,9 @@ module Prelude =
       let rec aux get ln (arr : int array) pos left : () = 
         if left = 0 
         then ln ()
-        else printin (get arr pos)
-             aux get ln arr (pos + 1) (left - 1)
+        else 
+          printin (get arr pos)
+          aux get ln arr (pos + 1) (left - 1)
 
       aux get ln arr 0 size
 

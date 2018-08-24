@@ -8,7 +8,7 @@ Codegen:
 
 Bugs:
     ❑ function redefinitions detected in llvmgateway 
-    ❑ make generic types different in separate top let expressions @critical 
+    ✔ make generic types different in separate top let expressions @critical @done(18-08-24 16:28)
 
 Archive:
   ✔ lex tokens @done @project(Lexer)

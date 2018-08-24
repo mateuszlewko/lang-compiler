@@ -16,12 +16,22 @@ let adder x y =
   let innerAdder z = (id1 x) + y + z
   innerAdder x
 
-let idd z = z
+let idd z = z + 1
+(* let idd22 z = z + 1 *)
 
-let rec here n () = 
+let rec here id n () = 
   if n = 0 
-  then idd (n + 1)
+  then here id (n + 1) ()
   else 3
+
+let id1 (x : 'a) = x 
+let id2 (x : 'a) (y : 'b) n = 
+  if n = 0 
+  then x 
+  else y
+
+let test2 = 
+  printn_int ((id2 idd id1 2) 173344)
 
 let dooo x = 
   let rec any n =
@@ -56,4 +66,4 @@ let dooo x =
 
 let _ =
   printn_int (dooo 0)
-  printn_int (here 0 ())
+  printn_int (here idd 0 ())

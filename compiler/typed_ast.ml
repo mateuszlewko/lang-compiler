@@ -461,6 +461,15 @@ let rec expr env =
 and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
+  let prev_annot_mappings = env.annot_mappings in 
+
+  let env, arg_ts = 
+    List.fold_map arg_ts ~init:env 
+      ~f:(fun env -> function None   -> env, None
+                            | Some t -> 
+                              let env, t = rewrite_type_annots env t in
+                              env, Some t) in 
+
   (* let name = name_in env name in  *)
   let g_name      = name ^ ".lifted" in
 
@@ -580,7 +589,7 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   (* added new binding to parent scope *)
   let env = add ~wrapping:`DontWrap env name ~subs (fn_t, AtLevel env.level) in 
 
-  env, (fn_with_env, fn_t)
+  { env with annot_mappings = prev_annot_mappings }, (fn_with_env, fn_t)
 
 and lit env = 
   function
@@ -599,6 +608,12 @@ and lit env =
  and funexp_raw env ?(clear_subs=true) ?(fn_tys=None)
   ({ name; is_rec; args; ret_t; body } as fn) =
   let args_names, arg_ts = List.unzip args in 
+  let env, arg_ts = 
+    List.fold_map arg_ts ~init:env 
+      ~f:(fun env -> function None   -> env, None
+                            | Some t -> 
+                              let env, t = rewrite_type_annots env t in
+                              env, Some t) in 
 
   let env, fn_t, ret_t, arg_ts = 
     match fn_tys with 
@@ -660,7 +675,7 @@ and lit env =
                           else env in 
   
   (* TODO: add equality between old rec_fn_t and new fn_t (or args) *)
-  env, (f, fn_t)
+  { env with annot_mappings = BatMap.empty }, (f, fn_t)
 
 and funexp env let_exp = 
   let env, (f, t) = funexp_raw env let_exp in 

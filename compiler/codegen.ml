@@ -245,7 +245,7 @@ module Codegen = struct
             with _ -> 
               List.fold_map ts ~init:env.substitutions
                                ~f:(convert_type ~find_eqs:true) in 
-
+                               
           let subs, fn_t = convert_type subs fn_t in 
 
           (* let arg_ts = List.map arg_ts (fun t -> 
