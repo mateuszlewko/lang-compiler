@@ -38,7 +38,7 @@ module Prelude =
 
 open Prelude
 
-let main () : int =
+let _ =
   let ar : int array = Array.new 10
 
   Array.set ar 0 9999
@@ -50,5 +50,3 @@ let main () : int =
   (* Array.set ar 10 10 --> this could cause an error (out of bounds) *)
 
   Array.printn ar 10
-
-  0

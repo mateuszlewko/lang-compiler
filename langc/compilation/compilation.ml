@@ -24,6 +24,8 @@ let gen_llvm_exn prog =
   Codegen.gen_prog prog |> string_of_llmodule
   
 let llvm_out_only = ref false
+let keep_temp_file = ref false 
+
 let output_path = ref "a.out"
 let input_path = ref ""
 let usage = "Usage: " ^ Sys.argv.(0) ^ " <source file> [-o <output file> ] [--ll-only]"
@@ -38,6 +40,9 @@ let specs = [
     ("--ll-only", Arg.Set llvm_out_only
                 , " Save only generated llvm code in out.ll, without \
                     building binary");
+                    
+    ("--keep-temp-file", Arg.Set keep_temp_file
+                , " Keeps temp file (.langc_build_temp_*) in case of failure");
     ("-o"       , Arg.Set_string output_path
                 , "<file> Place the output binary into <file>");
   ] |> Arg.align
@@ -64,15 +69,24 @@ let compile ?(log=true) file_name output_path llvm_out_only src =
     let tmp_ll_file = sprintf ".langc_build_temp_%f.ll" (Unix.time ()) in
     let tmp_s_file = tmp_ll_file ^ ".s" in
     save_llvm tmp_ll_file;
-    sprintf "llc \"%s\" -o \"%s\" -relocation-model=pic -O 3" tmp_ll_file
-      tmp_s_file |> do_cmd;
-    sprintf "gcc \"%s\" external.c -o \"%s\"  -O3" tmp_s_file output_path
-    |> do_cmd;
-    Sys.remove tmp_ll_file;
-    Sys.remove tmp_s_file;
 
-    if log
-    then printf "Saved compiled binary to %s.\n" output_path
+    try 
+      sprintf "llc \"%s\" -o \"%s\" -relocation-model=pic -O 3" tmp_ll_file
+        tmp_s_file |> do_cmd;
+      sprintf "gcc \"%s\" external.c -o \"%s\"  -O3" tmp_s_file output_path
+      |> do_cmd;
+  
+      Sys.remove tmp_ll_file;
+      Sys.remove tmp_s_file;
+
+      if log
+      then printf "SUCCESS. Saved compiled binary to %s.\n" output_path
+    with _ ->  
+      printf "Compilation failed.";
+      if not !keep_temp_file
+      then Sys.remove tmp_ll_file;
+           Sys.remove tmp_s_file;
+      
   end
 
 let compile_file ?(log=true) file_path output_path llvm_out_only =

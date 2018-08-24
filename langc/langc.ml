@@ -16,7 +16,7 @@ let _ =
   Llvm.enable_pretty_stacktrace ();
 
   if !input_path = ""
-  then printf "No input files. Provide an input file: langc example.la.\n%s\n"
+  then printf "No input files. Provide an input file: langc.exe example.la\n%s\n"
          usage
   else compile_file !input_path !output_path !llvm_out_only;
 
