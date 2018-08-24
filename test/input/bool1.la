@@ -6,32 +6,26 @@ module Prelude =
   external ll_new_int_array : int -> int array
   external ll_print_bool : bool -> ()
 
-  let ln () : () = ll_print_line ()
+  let ln () = ll_print_line ()
 
-  let printi x : () = ll_putint x
+  let putint x = 
+    ll_putint x
+    ln () 
 
-  let printin x : () = ll_putint x
-                       ln () 
-
-  let putint x : () = ll_putint x
-                      ln () 
-
-  let putbool (b : bool) : () =
+  let putbool b =
     ll_print_bool b
     ln ()
 
 open Prelude
 
-let main () =
+let _ =
 
   let a = 5
   let b = a + 5
 
-  if a + b = 5
+  if (a + b) = 5
   then putint 1
-  elif (a + b = 5) = true
+  elif a = 6
   then putint 2
   else 
     putbool true (* This will be printed *)
-
-  0

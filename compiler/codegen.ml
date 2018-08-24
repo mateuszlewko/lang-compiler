@@ -73,7 +73,8 @@ module Codegen = struct
     function 
     | TA.Int   i    -> [], i32 i, env
     | Bool  b       -> [], i1 (BatBool.to_int b), env
-    | Array xs -> failwith "TODO array"
+    | Array xs -> 
+        failwith "TODO array"
         (* let elems, res = List.fold_map xs 
         List.map xs (expr env %> snd) |> array *)
     | Unit          -> [], i1 0, env

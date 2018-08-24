@@ -1,6 +1,5 @@
 (library
  ((name    langc_compilation)
-  ;;; (public_name langc_lib)
   (wrapped true)
   (libraries (core batteries lang_compiler llvm.analysis))
   (preprocess (pps (ppx_deriving.std ppx_enumerate)))))

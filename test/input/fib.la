@@ -1,0 +1,21 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+
+  let printin x = 
+    ll_putint x
+    ll_print_line () 
+
+open Prelude
+
+let rec fib_aux n a b =
+  if n = 0
+  then b
+  else fib_aux (n - 1) b (a + b)
+
+let fib n = fib_aux n 0 1
+
+let  _ =
+  printin (fib 3)
+  printin (fib 5)
+  printin (fib 35) 

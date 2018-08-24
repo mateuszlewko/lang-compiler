@@ -19,5 +19,3 @@ let _ =
   then printf "No input files. Provide an input file: langc.exe example.la\n%s\n"
          usage
   else compile_file !input_path !output_path !llvm_out_only;
-
-  flush_all ();

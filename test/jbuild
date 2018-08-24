@@ -9,11 +9,11 @@
               batteries))
 ))
 
-;;; (copy_files compiler-test-srcs/*)
+;;; (copy_files input/*)
 ;;; (rule
 ;;;  ((fallback)
 ;;;   (targets (test))
-;;;   (deps    (compiler-test-srcs/in1.la))
+;;;   (deps    (input/array1.la))
 ;;;   (action  (copy ${<} ${@}))))
 
 ;; makes sure the executable is built and run in test mode

@@ -1,5 +1,3 @@
-(* This file can be used as a template for further testing *)
-
 module Prelude =
   external ll_putint : int -> ()
   external ll_print_line : () -> ()
@@ -8,38 +6,15 @@ module Prelude =
   external ll_new_int_array : int -> int array
   external ll_print_bool : bool -> ()
 
-  let ln () : () = ll_print_line ()
+  let ln () = ll_print_line ()
 
-  let printi x : () = ll_putint x
+  let putint x = 
+    ll_putint x
+    ln () 
 
-
-  let printin x : () = ll_putint x
-                       ln () 
-
-  let putint : int -> () = printin
-
-  let putbool (b : bool) : () =
+  let putbool b =
     ll_print_bool b
     ln ()
-
-  module Array = 
-    let new size : int array = 
-      ll_new_int_array size
-
-    let set (arr : int array) ix elem : () = 
-      ll_set_ith_elem_of_int_array  arr ix elem
-
-    let get (arr : int array) ix = 
-      ll_get_ith_elem_of_int_array arr ix
-
-    let printn (arr : int array) size : () = 
-      let rec aux (arr : int array) pos left : () = 
-        if left = 0 
-        then ln ()
-        else printin (get arr pos)
-             aux arr (pos + 1) (left - 1)
-
-      aux arr 0 size
 
 open Prelude
 
@@ -59,7 +34,7 @@ let testA = 999
 
 open A (* opening module A will override top-level definition of testA *)
 
-let main () : int =
+let _ =
 
   putint testA 
   Prelude.putint A.testA (* we can use qualified name although 
