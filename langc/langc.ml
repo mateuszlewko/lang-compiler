@@ -19,8 +19,9 @@ let _ =
   if !input_path = ""
   then printf "No input files. Provide an input file: langc.exe example.la\n%s\n"
          usage
-  else 
+  else (
     Logs.set_reporter (Logs.format_reporter ());
     Logs.set_level ~all:true (Some !log_level);
 
-    compile_file !input_path !output_path !llvm_out_only;
+    compile_file !input_path !output_path !llvm_out_only
+  )
