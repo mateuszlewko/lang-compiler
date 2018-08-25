@@ -52,7 +52,10 @@ let all_files_in_input_folder () =
   |> Array.to_list
 
 let create_test_of input_src_file = 
-  sprintf "Test output of \"%s\"" input_src_file
+  sprintf " Output of program compiled from \"%s\" must be equal \
+          to contents of file \"%s-expected-out.txt\"" 
+    input_src_file
+    (BatString.sub input_src_file 0 (String.length input_src_file - 3))
   >:: create_assert_of input_src_file
 
 let tests = 
