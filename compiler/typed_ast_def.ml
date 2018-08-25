@@ -73,7 +73,7 @@ type top =
 type location = AtLevel of int | Global 
 [@@deriving show]
 
-type bound = t * location * [ `Wrap | `DontWrap]
+type bound = t * location * [ `Wrap | `DontWrap ]
 [@@deriving show]
 
 type bbb = bound * string * subs

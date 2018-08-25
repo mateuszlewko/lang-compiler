@@ -364,6 +364,9 @@ module Codegen = struct
     { env with substitutions = prev_subs }, res
 
   let gen_apply (env : Env.t) expr callee args app_t = 
+    let orig_env, orig_args, orig_app_t, orig_callee =  
+      env, args, app_t, callee in
+
     LT.show_subs env.substitutions    
     |> fun s -> Logs.debug (fun m -> m "subs here: %s\n" s);
     Logs.debug (fun m -> 
@@ -425,23 +428,33 @@ module Codegen = struct
       instrs, typed res, { env with m } in
     let open Env in 
     let of_fun_binding name env { Env.fn = (fn, fn_t); fns_arr; arity } = 
-      Logs.debug 
-        (fun m -> m "fn named: %s, has type: %s\n" name (LT.show fn_t)); 
-      let fn_arg_ts = match fn_t with 
-                      | Fun ts -> List.take ts (List.length ts - 1)   
-                                  |> List.map ~f:LT.to_ollvm 
-                      | _      -> [] in
+      if List.length args > arity 
+      then 
+        let inner_app = 
+          TA.App (orig_callee, List.take orig_args arity)
+          , BatOption.get (LT.just_drop_args arity fn_t) in 
+
+        expr orig_env (App (inner_app, List.drop orig_args arity), app_t)
+      else 
+      begin 
+        Logs.debug 
+          (fun m -> m "fn named: %s, has type: %s\n" name (LT.show fn_t)); 
+        let fn_arg_ts = match fn_t with 
+                        | Fun ts -> List.take ts (List.length ts - 1)   
+                                    |> List.map ~f:LT.to_ollvm 
+                        | _      -> [] in
 
 
-      Logs.debug (fun m -> m "-- DEFS START --\n");
-      List.iter env.m.m_module.m_definitions 
-        (fst %> fun s -> Logs.debug (fun m -> m "def: %s\n" s));
-      Logs.debug (fun m -> m "-- DEFS END --\n");
+        Logs.debug (fun m -> m "-- DEFS START --\n");
+        List.iter env.m.m_module.m_definitions 
+          (fst %> fun s -> Logs.debug (fun m -> m "def: %s\n" s));
+        Logs.debug (fun m -> m "-- DEFS END --\n");
 
-      let m, instrs, res = 
-        Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
-      let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
-      instrs, typed res, { env with m } in 
+        let m, instrs, res = 
+          Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
+        let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
+        instrs, typed res, { env with m } 
+      end in 
 
     let rec extract_found name t =
       function

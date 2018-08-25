@@ -77,7 +77,8 @@ let rec replacements old_t new_t =
     if old_t = new_t 
     then []
     else (
-      printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
+       Logs.err (fun m -> 
+        m "Can't do replacement for %s and %s.\n" (show old_t) (show new_t));
       raise WrongTypeOfApplyArgument)
 
 let rec add_equality ?(both=true) t1 t2 substitutions = 
@@ -131,6 +132,7 @@ let rec drop_args n vis subs t =
       drop_args (n - 1) (BatSet.add t vis) subs (Fun ts)
     | _ -> None 
     end 
+  | n, Fun [t]                 -> drop_args n vis subs t
   | _, t            -> None 
 
 let just_drop_args n t = drop_args n BatSet.empty BatMap.empty t 
@@ -182,7 +184,7 @@ let find_equalities subs =
 
         let equal = find_single BatSet.empty curr |> snd in 
         Logs.debug (fun m -> m "got equal:\n");
-        List.iter equal (show %> printf "%s\n");
+        List.iter equal (show %> fun s -> Logs.debug (fun m -> m "%s\n" s));
         Logs.debug (fun m -> m "end\n");
         merge subs equal
     )
@@ -308,7 +310,7 @@ let rec find_conc ?(find_eqs=false) subs curr =
       end
     else 
       begin 
-      printf "find: %s\n" (show curr);
+      Logs.debug (fun m -> m "find: %s\n" (show curr));
 
       vis := BatMap.add curr None !vis;
 
