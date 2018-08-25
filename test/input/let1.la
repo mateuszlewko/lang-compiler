@@ -1,0 +1,28 @@
+module Prelude = 
+    external ll_putint     : int -> () 
+    external ll_print_line : ()  -> () 
+
+    let print_int = ll_putint
+    let print_nl = ll_print_line
+    let printn_int x : () = 
+        print_int x 
+        print_nl () 
+
+(* 2 * x + a + b + c + d *)
+(* let adder x a b c d = 
+    let do () =
+        let do2 () =  
+            let nested1 x = x + c + d             
+            let nested2 x = x + a + b 
+            (nested1 x) + (nested2 x)
+        do2
+    do () () *)
+    
+let adder a b c d e = a + b + c + d + e 
+
+let aa (x : int) = adder x 2 2 
+
+let _ : () = 
+    let bb x : int -> int -> int = aa x
+
+    Prelude.printn_int (bb 4 4 5)

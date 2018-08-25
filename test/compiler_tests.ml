@@ -40,7 +40,7 @@ let create_assert_of input_src_file =
     else 
       let msg = 
         sprintf 
-          "\nCreate %s file with expected output in order to run test %s" 
+          "\nCreate %s file with expected output in order to test %s" 
           out_file input_src_file in 
       printf "%s\n" msg; 
       todo msg 
