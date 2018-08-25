@@ -113,12 +113,13 @@ module Codegen = struct
   let gen_let_raw (env : Env.t) expr funexp fn_t ts = 
     let { TA.args = ta_args; name; gen_name; is_rec; body } = funexp in 
 
-    printf "fun name: %s\n" name; 
-    List.iter ta_args (TA.show_arg %> printf "arg: %s\n");
+    Logs.debug (fun m -> m "fun name: %s\n" name); 
+    List.iter ta_args (TA.show_arg %> fun s -> 
+      Logs.debug (fun m -> m "arg: %s\n" s));
     LT.show_subs env.substitutions    
-    |> printf "subs here: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "subs here: %s\n" s);
 
-    printf "AND TYPE IS: %s\n" (LT.show (Fun ts));
+    Logs.debug (fun m -> m "AND TYPE IS: %s\n" (LT.show (Fun ts)));
 
     let args_cnt = List.length ta_args in 
     let ret      = List.drop ts args_cnt in 
@@ -180,9 +181,10 @@ module Codegen = struct
         let ret_i     = Ez.Instr.ret ret_v |> Instr in
         let m, blocks = result_to_blocks env.m (iss @ [ret_i]) in 
         
-        printf "\n--- START OF FUN --- \n";
-        List.iter blocks (show_block %> printf "block: %s\n");
-        printf "--- END OF FUN --- \n";
+        Logs.debug (fun m -> m "\n--- START OF FUN --- \n");
+        List.iter blocks (show_block %> fun s ->
+          Logs.debug (fun m -> m "block: %s\n" s));
+        Logs.debug (fun m -> m "--- END OF FUN --- \n");
 
         let df        = define fn args blocks in
         { env with m = M.definition m df } 
@@ -210,7 +212,7 @@ module Codegen = struct
       let m, fn    = M.global env.m ret_t gen_name in 
       let m = declare fn arg_ts |> M.declaration m in
       
-      printf "adding decl of %s\n" name;
+      Logs.debug (fun m -> m "adding decl of %s\n" name);
 
       Fun { fn = fn, fn_t; fns_arr = null; arity } 
       |> Env.add { env with m } name 
@@ -228,17 +230,21 @@ module Codegen = struct
         else env in  *)
 
       LT.show_subs env.substitutions    
-      |> printf "subs here gen_let: %s\n";
+      |> fun s -> Logs.debug (fun m -> m "subs here gen_let: %s\n" s);
 
       if LT.is_generic fn_t
       then begin
-        printf "Exists generic for: %s\n" funexp.name;
+        Logs.debug (fun m -> m "Exists generic for: %s\n" funexp.name);
 
         let poli (env : Env.t) = 
-          printf "Calling poli!\n";
-          printf "trying to convert types for call to: %s.\n" funexp.name;
-          List.iter ts (LT.show %> printf "fn t: %s\n");
-          List.iter arg_ts (LT.show %> printf "arg t: %s\n");
+          Logs.debug (fun m -> m "Calling poli!\n");
+          Logs.debug (fun m -> 
+            m "trying to convert types for call to: %s.\n" funexp.name);
+          
+          List.iter ts (LT.show %> fun s -> 
+            Logs.debug (fun m -> m "fn t: %s\n" s));
+          List.iter arg_ts (LT.show %> fun s -> 
+            Logs.debug (fun m -> m "arg t: %s\n" s));
 
           let subs, ts   = 
             try List.fold_map ts ~init:env.substitutions
@@ -277,7 +283,7 @@ module Codegen = struct
         end
       else 
         begin
-        printf "non generic fun t is: %s\n" (LT.show fn_t);
+        Logs.debug (fun m -> m "non generic fun t is: %s\n" (LT.show fn_t));
 
         let env, fb = gen_let_raw env expr funexp fn_t ts in
         let b       = Env.Fun fb in
@@ -288,10 +294,10 @@ module Codegen = struct
   let gen_top_value (env : Env.t) expr funexp ts = 
     let { TA.name; gen_name; is_rec; body; _ } = funexp in 
 
-    printf "gen_top_value for: %s\n" name;
+    Logs.debug (fun m -> m "gen_top_value for: %s\n" name);
 
     LT.show_subs env.substitutions    
-    |> printf "subs here: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "subs here: %s\n" s);
 
     (* let subs, ts = convert_type env.substitutions ts in 
     let env      = { env with substitutions = subs } in  *)
@@ -299,7 +305,7 @@ module Codegen = struct
     let args   = ["unit_arg", LT.Unit] in 
     let new_ts = LT.merge [LT.Unit] ts in 
     
-    printf "new_ts: %s\n" (LT.show new_ts);
+    Logs.debug (fun m -> m "new_ts: %s\n" (LT.show new_ts));
 
     let ret_t  = LT.to_ollvm ts in 
     let tpv    = ".top_val" in 
@@ -334,19 +340,22 @@ module Codegen = struct
     let substitutions = merge_subs env.substitutions extra_subs in  
     let env           = { env with substitutions } in 
     
-    printf "doing mono\n";
+    Logs.debug (fun m -> m "doing mono\n");
+
     LT.show_subs env.substitutions
-    |> printf "subs: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "subs: %s\n" s);
 
     let env, res = generic_fun.poli env in 
     { env with substitutions = prev_subs }, res
 
   let gen_apply (env : Env.t) expr callee args app_t = 
     LT.show_subs env.substitutions    
-    |> printf "subs here: %s\n";
-    printf "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t);
+    |> fun s -> Logs.debug (fun m -> m "subs here: %s\n" s);
+    Logs.debug (fun m -> 
+      m "callee: \n%s;\ntype: \n%s\n" (TA.show_expr_t callee) (LT.show app_t));
 
-    List.iter args (TA.show_expr_t %> printf "arg ast: %s\n");
+    List.iter args (TA.show_expr_t %> fun s -> 
+      Logs.debug (fun m -> m "arg ast: %s\n" s));
 
     let (arg_instrs, env), args = 
       List.fold_map args ~init:([], env) 
@@ -401,16 +410,18 @@ module Codegen = struct
       instrs, typed res, { env with m } in
     let open Env in 
     let of_fun_binding name env { Env.fn = (fn, fn_t); fns_arr; arity } = 
-      printf "fn named: %s, has type: %s\n" name (LT.show fn_t); 
+      Logs.debug 
+        (fun m -> m "fn named: %s, has type: %s\n" name (LT.show fn_t)); 
       let fn_arg_ts = match fn_t with 
                       | Fun ts -> List.take ts (List.length ts - 1)   
                                   |> List.map ~f:LT.to_ollvm 
                       | _      -> [] in
 
 
-      printf "-- DEFS START --\n";
-      List.iter env.m.m_module.m_definitions (fst %> printf "def: %s\n");
-      printf "-- DEFS END --\n";
+      Logs.debug (fun m -> m "-- DEFS START --\n");
+      List.iter env.m.m_module.m_definitions 
+        (fst %> fun s -> Logs.debug (fun m -> m "def: %s\n" s));
+      Logs.debug (fun m -> m "-- DEFS END --\n");
 
       let m, instrs, res = 
         Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
@@ -421,13 +432,13 @@ module Codegen = struct
       function
       | Fun        fb    -> of_fun_binding name env fb
       | GenericFun gf    -> 
-        printf "HERE1\n";
+        Logs.debug (fun m -> m "HERE1\n");
         monomorphize env extra_subs gf |> uncurry (of_fun_binding name)
       | Val       (v, _) -> 
         let is_ptr = match fst v with 
                      | Ast.TYPE_Pointer _ -> true | _ -> false in 
         
-        printf "name: %s is_ptr: %b\n" name is_ptr;
+        Logs.debug (fun m -> m "name: %s is_ptr: %b\n" name is_ptr);
 
         unknown_apply ~is_ptr env [] v 
       | GlobalVar (v, _) -> 
@@ -435,18 +446,20 @@ module Codegen = struct
         unknown_apply { env with m } [g <-- load v |> Instr] g 
       | Class (c, type_name) ->
           LT.show_subs env.substitutions
-          |> printf "Current subs AA: %s\n";
+          |> fun s -> Logs.debug (fun m -> m "Current subs AA: %s\n" s);
           let substitutions = merge_subs env.substitutions extra_subs in  
 
           match LT.find_conc substitutions (Generic type_name) |> snd with 
           | None        -> sprintf "Couldn't find concrete type for: %s" 
                            type_name |> failwith 
           | Some impl_t -> 
-            printf "Inst for name: %s in class %s found instance with type: %s\n"
-              name c (LT.show impl_t);
+            Logs.debug (fun m -> 
+              m "Inst for name: %s in class %s found instance with type: %s\n"
+                name c (LT.show impl_t));
 
             BatMap.keys env.classes 
-            |> BatEnum.iter (Env.show_instance_key %> printf "+ inst: %s\n");
+            |> BatEnum.iter (Env.show_instance_key %> fun s -> 
+              Logs.debug (fun m -> m "+ inst: %s\n" s));
 
             try BatMap.find (c, impl_t, name) env.classes 
                 |> extract_found name t 
@@ -504,7 +517,7 @@ module Codegen = struct
               let iss, arg, env = expr env arg in
               (all @ iss, env), arg) in
     
-    printf "After exprs\n";
+    Logs.debug (fun m -> m "After exprs\n");
     Env.print_keys env.bindings;
     instrs, List.last_exn args, env
 
@@ -602,16 +615,16 @@ module Codegen = struct
       let m, g = M.local env.m (LT.to_ollvm t) (v ^ "_loaded") in
       [g <-- load g_var |> Instr], g, { env with m }
     | Val b           -> [], fst b, env 
-    | GenericFun gf   -> printf "HERE2\n";
+    | GenericFun gf   -> Logs.debug (fun m -> m "HERE2\n");
                          let env, _ = monomorphize env [] gf in 
                          expr env (TA.App (var, []), t)
 
   let gen_substitute (env : Env.t) expr subs e t = 
     Env.show_substitutions subs
-    |> printf "NEW subs here before: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "NEW subs here before: %s\n" s);
     let subs = List.filter subs (fun (u, v, _) -> u <> v) in 
     Env.show_substitutions subs
-    |> printf "NEW subs here after: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "NEW subs here after: %s\n" s);
     
     let substitutions = List.fold subs ~init:env.substitutions 
                           ~f:(fun m (u, v, both) -> 
@@ -690,7 +703,7 @@ module Codegen = struct
     (* add bindings member_name -> class *)
     List.fold declarations ~init:env 
       ~f:(fun env f -> 
-            printf "adding class binding %s -> %s\n" f name;
+            Logs.debug (fun m -> m "adding class binding %s -> %s\n" f name);
             Env.add env f (Env.Class (name, type_name)))
 
   let gen_instance env expr class_name impl_t definitions = 
@@ -725,7 +738,8 @@ module Codegen = struct
 
   let gen_prog ?(module_name="<stdin>") top_lvl_exprs =
     let tops = TA.of_tops top_lvl_exprs in 
-    List.iter tops (TA.show_top %> printf "top: %s\n");
+    List.iter tops (TA.show_top %> fun s ->
+      Logs.debug (fun m -> m "top: %s\n" s));
 
     let env, main_exprs = List.fold_map tops ~init:Env.empty ~f:gen_top in  
     let env             = List.concat main_exprs |> gen_main env in 

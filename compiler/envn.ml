@@ -63,10 +63,10 @@ let of_binding =
 
 let print_keys bindings =
   let open Core in 
-  printf "bindings:\n";
+  Logs.debug (fun m -> m "bindings:\n");
   BatMap.keys bindings
-  |> BatEnum.iter (Core.printf "+ key: %s\n");
-  printf "end bindings\n"
+  |> BatEnum.iter (fun s -> Logs.debug (fun m -> m "+ key: %s\n" s));
+  Logs.debug (fun m -> m "end bindings\n")
 
 let find env name =
     try BatMap.find name env.bindings 

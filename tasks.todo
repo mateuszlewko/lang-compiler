@@ -1,8 +1,12 @@
 Lexer:
 
 Codegen:
-    ❑ suppress all debug prints @critical 
+    ✔ suppress all debug prints (use logging) @critical @done(18-08-25 14:51)
     ❑ multiple global variables with same name
+    ❑ array literal @critical 
+
+General:
+    ❑ add more working tests (maybe try implementing something real-life)
 
 Bugs:
     ❑ function redefinitions detected in llvmgateway 

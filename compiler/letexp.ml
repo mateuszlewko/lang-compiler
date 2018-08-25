@@ -443,7 +443,7 @@ let known_apply m args raw_arity full_args raw_fn entry_fns_arr =
   let args_cnt  = List.length args in 
   (* let raw_arity = List.length full_args in *)
 
-  printf "args_cnt: %d, raw_arity: %d\n" args_cnt raw_arity;
+  Logs.debug (fun m -> m "args_cnt: %d, raw_arity: %d\n" args_cnt raw_arity);
 
   if args_cnt = raw_arity 
   then (* just call function in c-style *)

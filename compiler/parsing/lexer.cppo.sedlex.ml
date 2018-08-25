@@ -224,13 +224,14 @@ let parse buf p =
       last_token := t, p, q;
       last_state := state;
 
-      printf "token A: %s, p: %s, q: %s\n" (show_token t) (dump p) (dump q);
+      Logs.debug (fun m -> m "token A: %s, p: %s, q: %s\n" 
+        (show_token t) (dump p) (dump q));
       flush_all ();
       !last_token
     else
       let [t], ts = List.split_n !pending_tokens 1 in
       pending_tokens := ts;
-      printf "token B: %s\n" (show_token (fst3 t));
+      Logs.debug (fun m -> m "token B: %s\n" (show_token (fst3 t)));
       flush_all ();
       t
   in

@@ -10,14 +10,14 @@ let gen_llvm_exn prog =
   try Codegen.gen_prog prog |> string_of_llmodule
   with 
   | Failure msg -> begin
-    printf "Compilation failed. \nFailure:\n\t%s\n" msg;
+    Logs.err (fun m -> m "Compilation failed. \nFailure:\n\t%s\n" msg);
     flush_all ();
     
     exit 0 |> ignore;
     ""
     end
   | e ->
-    printf "Compilation failed with unknown error!";
+    Logs.err (fun m -> m "Compilation failed with unknown error!");
     raise e
 
 let gen_llvm_exn prog =
@@ -25,6 +25,8 @@ let gen_llvm_exn prog =
   
 let llvm_out_only = ref false
 let keep_temp_file = ref false 
+
+let log_level = ref Logs.Warning
 
 let output_path = ref "a.out"
 let input_path = ref ""
@@ -50,7 +52,8 @@ let specs = [
 let compile ?(log=true) file_name output_path llvm_out_only src =
   let (Prog prog) = Parser.prog_of_string (src ^ "\n") file_name in
 
-  printf "ast:\n %s\n" (Lang_parsing.Ast.show_program (Prog prog));
+  Logs.debug (fun m -> 
+    m "ast:\n %s\n" (Lang_parsing.Ast.show_program (Prog prog)));
 
   let ll_code     = gen_llvm_exn prog in
   let save_llvm   = write_str_to_file ll_code in
@@ -59,11 +62,12 @@ let compile ?(log=true) file_name output_path llvm_out_only src =
   then begin
     save_llvm "out.ll";
     if log 
-    then printf "Saved generated LLVM IR code to out.ll successfully.\n"
+    then Logs.app (fun m -> 
+      m "Saved generated LLVM IR code to out.ll successfully.")
   end
   else begin
     let do_cmd cmd =
-      if log then printf "%s\n" cmd;
+      if log then Logs.info (fun m -> m "%s" cmd);
       Sys.command_exn cmd |> ignore in
 
     let tmp_ll_file = sprintf ".langc_build_temp_%f.ll" (Unix.time ()) in
@@ -80,9 +84,10 @@ let compile ?(log=true) file_name output_path llvm_out_only src =
       Sys.remove tmp_s_file;
 
       if log
-      then printf "SUCCESS. Saved compiled binary to %s.\n" output_path
+      then Logs.app (fun m -> 
+        m "Success. Saved compiled binary to %s." output_path)
     with _ ->  
-      printf "Compilation failed.";
+      Logs.err (fun m -> m "Compilation failed.");
       if not !keep_temp_file
       then Sys.remove tmp_ll_file;
            Sys.remove tmp_s_file;
