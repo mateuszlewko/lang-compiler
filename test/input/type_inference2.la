@@ -4,7 +4,7 @@ module Prelude =
 
     let printInt (x : int) : () = ll_putint x
     let printNl : () -> () = ll_print_line
-    let printnInt x = 
+    let printnInt x : () = 
         printInt x 
         printNl () 
 
@@ -18,14 +18,11 @@ let rec factorial x =
     if x <= 1 then 1 
     else x * factorial (x - 1)
 
-
 (* compose function f n times *)
 let rec power f n x = 
     if n > 0 
     then compose f (power f (n - 1)) x
-    else 
-        let id x = x 
-        id x
+    else x
 
 let _ = 
     printnInt (120 * 120)
