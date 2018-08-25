@@ -1,0 +1,68 @@
+module Prelude = 
+    external ll_putint      : int -> () 
+    external ll_print_line  : ()  -> () 
+    external ll_print_space : ()  -> () 
+
+    let printInt (x : int) : () = ll_putint x
+    let printNl : () -> () = ll_print_line
+    let printSpace : () -> () = ll_print_space
+    let printnInt (x : int) = 
+        printInt x 
+        printNl () 
+
+open Prelude
+
+type Vec2 = { x : int; y : int }
+type Vec3 = { x : int; y : int; z : int }
+
+let addVec3 (l : Vec3) (r : Vec3) =
+    { l with x = l.x + r.x; 
+             y = l.y + r.y; z = l.z + r.z 
+    }
+
+let addVec2 (l : Vec2) (r : Vec2) =
+    { l with x = l.x + r.x; 
+             y = l.y + r.y
+    }
+
+let printVec2 (v : Vec2) = 
+    printInt v.x 
+    printSpace ()
+    printInt v.y 
+
+let printVec3 (v : Vec3) = 
+    printInt v.x 
+    printSpace ()
+    printInt v.y 
+    printSpace ()
+    printInt v.z
+
+let genericAdder add x y = add x y
+
+let genericPrinter print x = 
+    print x
+    printNl ()
+
+let id x = x
+
+let compose f g x = f (g x)
+
+let apply fn x = fn x
+
+let _ = 
+    let v2 = { x = 1; y = 2 }
+    let v2 = compose id id v2
+    let v2 = compose (addVec2 v2) id v2 (* (1, 1) + (1, 1) *)
+    let v2 = compose (addVec2 v2) (genericAdder addVec2 v2) v2 (* (2, 2) + (2, 2)
+                                                                    + (2, 2)  *)
+
+    let res = compose (genericAdder addVec2 v2) (apply id) v2
+    genericPrinter printVec2 v2
+    genericPrinter printVec2 res
+
+    let v3 = { x = 1; y = 1; z = 1 }
+    let v3 = compose id id v3
+    let v3 = compose (addVec3 v3) id v3
+    let v3 = compose (addVec3 v3) (genericAdder addVec3 v3) v3
+
+    genericPrinter printVec3 v3

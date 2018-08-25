@@ -20,9 +20,14 @@ module Prelude =
     
 let adder a b c d e = a + b + c + d + e 
 
-let aa (x : int) = adder x 2 2 
+let aa x = 
+    let rest b c d =
+        x + b + c + d 
+
+    rest
+    
 
 let _ : () = 
-    let bb x : int -> int -> int = aa x
+    (* let bb x : int -> int -> int = aa x *)
 
-    Prelude.printn_int (bb 4 4 5)
+    Prelude.printn_int (aa 1 4 4 5)
