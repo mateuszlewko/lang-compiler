@@ -9,25 +9,13 @@ module Prelude =
         print_nl () 
 
 (* 2 * x + a + b + c + d *)
-(* let adder x a b c d = 
+let adder x a b c d = 
     let do () =
         let do2 () =  
             let nested1 x = x + c + d             
             let nested2 x = x + a + b 
             (nested1 x) + (nested2 x)
-        do2
-    do () () *)
-    
-let adder a b c d e = a + b + c + d + e 
-
-let aa x = 
-    let rest b c d =
-        x + b + c + d 
-
-    rest
-    
-
-let _ : () = 
-    (* let bb x : int -> int -> int = aa x *)
-
-    Prelude.printn_int (aa 1 4 4 5)
+        do2 
+    do ()
+        
+let _ = Prelude.printn_int (adder 1 2 3 4 5 ())

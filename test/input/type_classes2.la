@@ -58,4 +58,6 @@ let printN x =
 
 let _ = 
     printN (pow 2 10)
+
+(* let m2 =  *)
     printN (pow { x = 2; y = 2} 10)

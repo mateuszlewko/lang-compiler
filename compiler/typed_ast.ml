@@ -139,7 +139,12 @@ let make_fn_t_concrete env ret_t fn_t body =
   let original_fn_t = fn_t in 
 
   let env, body = 
-    let last_t = List.last_exn body |> snd in 
+    let last_t = match List.last body with 
+                 | Some (_, t) -> t 
+                 | None        -> 
+                    sprintf "Function body is empty, fn_t: %s"
+                      (LT.show fn_t) |> failwith in 
+
     match LT.valid_replacements ret_t last_t with 
     | []   -> env, body
     | subs -> LT.show__substitutions subs 
@@ -843,15 +848,18 @@ and top env =
     add_type env name (t, Global, `Wrap), []
   | Class { declarations; name; type_name }    -> 
     let env = 
-    List.fold declarations ~init:env 
-      ~f:(fun env (name, t) -> 
-            let env, t = LT.of_annotation env (Some t) in 
-            add env name (t, Global)) in 
+      List.fold declarations ~init:env 
+        ~f:(fun env (name, t) -> 
+              let env, t = LT.of_annotation env (Some t) in 
+              add env name (t, Global)) in 
 
     (* let class_t = Some { basic = A.Single [type_name]; classes = [] } 
                   |> LT.of_annotation !-> env  in  *)
 
-    env, [Class (name, type_name, List.map declarations (fst %> name_in env))]
+    let make_method (name, t) = 
+      name_in env name, LT.of_annotation env (Some t) |> snd in 
+
+    env, [Class (name, type_name, List.map declarations make_method)]
   | Instance { class_name; definitions; type_ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
@@ -863,7 +871,8 @@ and top env =
     
     let env, impl_t = LT.of_annotation env (Some type_) in 
 
-    Logs.debug (fun m -> m "Adding instance for type: %s\n" (LT.show impl_t));
+    Logs.debug (fun m -> m "Adding class %s instance for type: %s\n" 
+      class_name (LT.show impl_t));
 
     env, [Instance (class_name, impl_t, funexps)]
 

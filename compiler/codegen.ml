@@ -96,7 +96,7 @@ module Codegen = struct
     | Unit          -> [], i1 0, env
     | ZeroInit t    -> [], null_t (LT.to_ollvm t), env
     | other         -> unsupp ~name:"literal" (TA.show_literal other)
-
+    
   let gen_op (env : Envn.t) expr lhs rhs op = 
     let res1, lhs, env = expr env lhs in
     let res2, rhs, env = expr env rhs in
@@ -377,13 +377,13 @@ module Codegen = struct
     List.iter args (TA.show_expr_t %> fun s -> 
       Logs.debug (fun m -> m "arg ast: %s\n" s));
 
-    let (arg_instrs, env), args = 
+    let (arg_instrs2, env), args2 = 
       List.fold_map args ~init:([], env) 
         ~f:(fun (all, env) arg ->  
               let iss, arg, env = expr env arg in
               (iss @ all, env), arg) in
      
-     let env, extra_subs, callee = 
+    let env, extra_subs, callee = 
       match callee with 
       | TA.Substitute (subs, callee), _ -> 
         env, subs, callee
@@ -410,6 +410,12 @@ module Codegen = struct
     let typed t = insert_type (LT.to_ollvm app_t) t in 
 
     let unknown_apply ?(is_ptr=false) (env : Env.t) iss callee = 
+      let (arg_instrs, env), args = 
+        List.fold_map args ~init:([], env) 
+          ~f:(fun (all, env) arg ->  
+                let iss, arg, env = expr env arg in
+                (iss @ all, env), arg) in
+
       let m, sink_b = M.local env.m T.label "sink_b" in 
       let m, res    = M.tmp m in 
       let m, app_iss, blocks, phi_i = 
@@ -452,6 +458,12 @@ module Codegen = struct
           (fst %> fun s -> Logs.debug (fun m -> m "def: %s\n" s));
         Logs.debug (fun m -> m "-- DEFS END --\n");
 
+        let (arg_instrs, env), args = 
+          List.fold_map args ~init:([], env) 
+            ~f:(fun (all, env) arg ->  
+                  let iss, arg, env = expr env arg in
+                  (iss @ all, env), arg) in
+
         let m, instrs, res = 
           Letexp.known_apply env.m args arity fn_arg_ts fn fns_arr in
         let instrs = arg_instrs @ List.map instrs (fun x -> Instr x) in
@@ -459,6 +471,8 @@ module Codegen = struct
       end in 
 
     let rec extract_found name t =
+      Logs.debug (fun m -> m "extract found for: %s\n" name);
+
       function
       | Fun        fb    -> of_fun_binding name env fb
       | GenericFun gf    -> 
@@ -474,14 +488,24 @@ module Codegen = struct
       | GlobalVar (v, _) -> 
         let m, g = M.local env.m (LT.to_ollvm t) (name ^ "_loaded_fn") in
         unknown_apply { env with m } [g <-- load v |> Instr] g 
-      | Class (c, type_name) ->
+      | Class { class_name = c; type_name; generic_t } ->
           LT.show_subs env.substitutions
           |> fun s -> Logs.debug (fun m -> m "Current subs AA: %s\n" s);
-          let substitutions = merge_subs env.substitutions extra_subs in  
-
-          match LT.find_conc substitutions (Generic type_name) |> snd with 
-          | None        -> sprintf "Couldn't find concrete type for: %s" 
-                           type_name |> failwith 
+         
+          let substitutions = 
+            let sub_t = snd orig_callee in 
+            Logs.debug (fun m -> 
+              m "CC Adding sub: %s <-> %s\n" (LT.show generic_t) 
+                                             (LT.show sub_t));
+            let extra_subs = 
+              (generic_t, sub_t, false) :: extra_subs in 
+            merge_subs env.substitutions extra_subs in  
+          
+          match LT.find_conc ~find_eqs:true
+                  substitutions (Generic type_name) |> snd with 
+          | None        -> 
+            sprintf "CC Couldn't find concrete type for: %s" 
+              type_name |> failwith 
           | Some impl_t -> 
             Logs.debug (fun m -> 
               m "Inst for name: %s in class %s found instance with type: %s\n"
@@ -729,18 +753,24 @@ module Codegen = struct
       ; body = main_exprs @ [ TA.Lit (Int 0), LT.Int ] |> Some } in  
     gen_let env gen_expr funexp (Fun [Unit; Int]) |> snd
 
-  let gen_class env name type_name declarations = 
+  let gen_class env class_name type_name declarations = 
     (* add bindings member_name -> class *)
     List.fold declarations ~init:env 
-      ~f:(fun env f -> 
-            Logs.debug (fun m -> m "adding class binding %s -> %s\n" f name);
-            Env.add env f (Env.Class (name, type_name)))
+      ~f:(fun env (fn_name, generic_t) -> 
+            Logs.debug (fun m -> 
+              m "adding class binding %s -> %s\n" fn_name class_name);
+            Env.add env fn_name (Env.Class { fn_name; type_name; class_name
+                                           ; generic_t } ))
 
   let gen_instance env expr class_name impl_t definitions = 
     (* add binging (class_name, impl_type) -> (Map from member_name -> fun value) *)
     let add env ((def : TA.funexp), t) = 
       let gen_name = sprintf "c_%s_%s_%s" class_name (LT.mangle_name impl_t) 
                       def.gen_name in 
+
+      Logs.debug (fun m -> 
+        m "Generating class %s instance for type: %s, method: %s\n" 
+          class_name (LT.show impl_t) gen_name);
                       
       let b, env = gen_let env expr { def with gen_name } t in 
       env, ((class_name, impl_t, def.name), b)
