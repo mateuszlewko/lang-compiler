@@ -30,6 +30,7 @@ and literal =
   | String of string
   | Bool   of bool
   | Array  of expr_t list
+  | ZeroInit of t
   | Unit
 
 and body_expr = 

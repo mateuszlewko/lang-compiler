@@ -1,15 +1,11 @@
 Lexer:
 
-Codegen:
-    ❑ multiple global variables with same name
-
 General:
     ❑ add more working tests (maybe try implementing something real-life) @critical 
 
-Bugs:
-    ❑ function redefinitions detected in llvmgateway 
-
 Archive:
+  ✘ multiple global variables with same name @cancelled(18-08-26 01:20) @project(Codegen)
+  ✘ function redefinitions detected in llvmgateway @cancelled(18-08-26 01:20) @project(Bugs)
   ✔ make generic types different in separate top let expressions @critical @done(18-08-24 16:28) @project(Bugs)
   ✔ suppress all debug prints (use logging) @critical @done(18-08-25 14:51) @project(Codegen)
   ✔ array literal @critical @done(18-08-25 17:09) @project(Codegen)

@@ -94,6 +94,7 @@ module Codegen = struct
       ; Instr (res_casted <-- bitcast malloc_data (T.array 0 T.i32 |> T.ptr)) *)
       ], glob_casted, { env with m }
     | Unit          -> [], i1 0, env
+    | ZeroInit t    -> [], null_t (LT.to_ollvm t), env
     | other         -> unsupp ~name:"literal" (TA.show_literal other)
 
   let gen_op (env : Envn.t) expr lhs rhs op = 

@@ -69,30 +69,25 @@ module Stack =
         }
 
     let create capacity = 
-        let curr : t = 
-          { size = 0
-            capacity = 0
-            data = Array.new capacity 
-          }
-
-        { curr with capacity = capacity; data = Array.new capacity }
+        { size     = 0
+          capacity = capacity
+          data     = Array.new capacity 
+        }
 
     let top (stack : t) = 
         Array.get stack.data (stack.size - 1)  
 
     let push (stack : t) elem = 
         let new_data = Array.clone_array stack.data stack.capacity 
-
         Array.set new_data stack.size elem
 
         { stack with 
-            size = stack.size + 1
+            size     = stack.size + 1
             capacity = stack.capacity 
-            data = new_data            
+            data     = new_data            
         }
 
     let pop (stack : t) = { stack with size = stack.size - 1 }
-
     
 let main = 
   let s0 = Stack.create 30

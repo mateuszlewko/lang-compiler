@@ -230,6 +230,29 @@ let make_fn_t_concrete env ret_t fn_t body =
 
   { env with mono_vars = BatMap.empty }, body, fn_t, try_concrete        
 
+let create_with_exp expr e withs env = 
+  let t      = snd e in 
+  let e      = Clone e, t in 
+  begin 
+  match t with 
+  | Record fields -> 
+    let set (env, e) (field, with_e) =  
+      match List.findi fields (fun _ (f, ft) -> f = field) with 
+      | None        -> failwith "Field not found.\n"
+      | Some (i, _) -> 
+        let env, with_e = expr env with_e in 
+        let ft          = snd (List.nth_exn fields i) in
+        
+        if snd with_e <> ft && not (LT.is_generic (snd with_e))
+        then sprintf "Expression in field %s assignment has incorrect type, \
+                      expected: %s, instead of: %s.\n" 
+                      field (LT.show ft) (LT.show (snd with_e)) |> failwith;
+        env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
+    List.fold withs ~init:(env, e) ~f:set
+  | other         -> sprintf "Expression preceding with must be a record, \
+                              not: %s.\n" (LT.show t) |> failwith
+  end   
+
 let rec expr env = 
   function 
   | VarExp v -> 
@@ -405,43 +428,37 @@ let rec expr env =
     end
   | RecordWithExp (e, withs) -> 
     let env, e = expr env e in 
-    let t      = snd e in 
-    let e      = Clone e, t in 
-    begin 
-    match t with 
-    | Record fields -> 
-      let set (env, e) (field, with_e) =  
-        match List.findi fields (fun _ (f, ft) -> f = field) with 
-        | None        -> failwith "Field not found.\n"
-        | Some (i, _) -> 
-          let env, with_e = expr env with_e in 
-          let ft          = snd (List.nth_exn fields i) in
-          
-          if snd with_e <> ft && not (LT.is_generic (snd with_e))
-          then sprintf "Expression in field %s assignment has incorrect type, \
-                        expected: %s, instead of: %s.\n" 
-                        field (LT.show ft) (LT.show (snd with_e)) |> failwith;
-          env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
-      List.fold withs ~init:(env, e) ~f:set
-    | other         -> sprintf "Expression preceding with must be a record, \
-                                not: %s.\n" (LT.show t) |> failwith
-    end                        
-
-  | RecordLiteral fields as rl -> 
+    create_with_exp expr e withs env
+  | RecordLiteral raw_fields as rl -> 
     (* TODO: sort fields by index *)
-    let env, fs = List.fold_map fields env (fun env (_, f) -> expr env f) in
-    let r       = RecordLit fs in
-    let fields  = List.map fields fst in 
+    let fields  = List.map raw_fields fst in 
     let t       = BatSet.of_list fields |> find_fields env in 
 
     begin
-    match t with 
-    | Some ((t, Global, _), _, _) -> env, (r, t)
-    | other ->
-      sprintf "Couldn't find type for record literal: %s. Fields: %s.\
-               Instead got: %s.\n" 
-        (show_expr rl) (show_named_fields fields) (show_bbb_opt other)
-      |> failwith
+      match t with 
+      | Some ((Record def_fields as t, Global, _), _, _) -> 
+        let def_fields = BatMap.of_enum (BatList.enum def_fields) in 
+        let map_field env (name, f_expr) = 
+          let env, (f, t) = expr env f_expr in 
+          let t = BatMap.Exceptionless.find name def_fields 
+                  |> Option.value ~default:t in 
+          env, (f, t) in 
+
+        let env, fs = List.fold_map raw_fields env map_field in
+
+        let lit_or_zero = function (Lit _, _) as l -> l 
+                                 | _     , t       -> Lit (ZeroInit t), t in 
+
+        let r  = RecordLit (List.map fs ~f:lit_or_zero) in
+
+        if List.exists fs ~f:(function Lit _, _ -> false | _ -> true) 
+        then create_with_exp expr (r, t) raw_fields env 
+        else env, (r, t)
+      | other ->
+        sprintf "Couldn't find type for record literal: %s. Fields: %s.\
+                Instead got: %s.\n" 
+          (show_expr rl) (show_named_fields fields) (show_bbb_opt other)
+        |> failwith
     end
   | LetRecsExp ls -> 
     failwith "Nested mutually recursive let expressions are not supported.\n"
