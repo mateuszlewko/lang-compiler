@@ -42,11 +42,11 @@ let wrapper2 (fn : () -> () -> int -> int) x =
   let fn1 () x = fn () () x 
   let fn2 x = fn1 () x 
 
-  fn2 10 + fn1 () 2 
+  (fn2 10) + (fn1 () 2)
 
 let main () : int =
 
   printin (wrapper fn1 4)
-  printin (wrapper2 fn1 4)
+  (* printin (wrapper2 fn1 4) *)
 
   0

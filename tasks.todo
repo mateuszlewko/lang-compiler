@@ -1,9 +1,7 @@
 Lexer:
 
-General:
-    ❑ add more working tests (maybe try implementing something real-life) @critical 
-
 Archive:
+  ✔ add more working tests (maybe try implementing something real-life) @critical @done(18-08-27 00:07) @project(General)
   ✘ multiple global variables with same name @cancelled(18-08-26 01:20) @project(Codegen)
   ✘ function redefinitions detected in llvmgateway @cancelled(18-08-26 01:20) @project(Bugs)
   ✔ make generic types different in separate top let expressions @critical @done(18-08-24 16:28) @project(Bugs)
