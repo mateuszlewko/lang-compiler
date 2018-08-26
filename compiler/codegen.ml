@@ -79,19 +79,20 @@ module Codegen = struct
                                     let _, x, env = gen_literal env expr l in 
                                     env, x
                                 | other     -> 
-        failwith "Not supported array element. Only integer literal \
+        failwith "Not supported array element. Only integer literals \
                   are currently supported") in 
-      let ll_size = 4 * List.length elems |> i32 in 
+      (* let ll_size = 4 * List.length elems |> i32 in  *)
       let m, glob = M.global_val env.m (array elems) "" in 
-      let m, malloc_data = M.local m (T.ptr T.void) "array" in 
-      let m, res_casted = M.local m (T.ptr T.void) "array" in 
+      (* let m, malloc_data = M.local m (T.ptr T.void) "array" in 
+      let m, res_casted = M.local m (T.ptr T.void) "array" in  *)
       let m, glob_casted = M.tmp m in 
 
-      [ Instr (malloc_data <-- malloc_raw ll_size)
-      ; Instr (glob_casted <-- bitcast malloc_data (T.ptr T.i8))
-      ; Instr (memcpy ~src:glob_casted ~dest:malloc_data ll_size |> snd)
-      ; Instr (res_casted <-- bitcast malloc_data (T.array 0 T.i32 |> T.ptr))
-      ], res_casted, { env with m }
+      [ 
+        (* Instr (malloc_data <-- malloc_raw ll_size) *)
+        Instr (glob_casted <-- bitcast glob (T.array 0 T.i32 |> T.ptr))
+      (* ; Instr (memcpy ~src:glob_casted ~dest:malloc_data ll_size |> snd)
+      ; Instr (res_casted <-- bitcast malloc_data (T.array 0 T.i32 |> T.ptr)) *)
+      ], glob_casted, { env with m }
     | Unit          -> [], i1 0, env
     | other         -> unsupp ~name:"literal" (TA.show_literal other)
 

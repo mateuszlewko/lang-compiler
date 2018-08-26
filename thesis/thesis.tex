@@ -606,7 +606,7 @@ and odd x = 1 + (even (x - 1))
 Składnia rekordów jest podobna do tej z pozostałych języków z rodziny ML. 
 Rekord zawiera wiele pól o różnych nazwach. Każde pole musi mieć zdefiniowany 
 typ. Typem pola może być inny, wcześniej zadeklarowany, rekord.
-Listingi $2..7$ i $2..8$ prezentują odpowiednio gramatykę deklaracji rekord
+Listingi $2..7$ i $2..8$ prezentują odpowiednio gramatykę deklaracji rekordów
 i jej przykład.
 
 \begin{lstlisting}[frame=single, caption=Deklaracja rekordu.]
@@ -681,13 +681,20 @@ w deklaracji rekordu.
 % TODO: samo pole 
 
 \begin{lstlisting}[frame=single, caption=Uaktualnianie rekordu.]
+type simple  = { a : int; b : int    }
+type complex = { n : int; s : simple }
+
 let s : simple = { a = 0; b = 1}
 
-let add (curr : complex) : simple = 
+let add (curr : complex) = 
     {  curr.s with a = curr.s.b
                     b = curr.s.a + curr.s.b 
     }
 \end{lstlisting}
+
+\textbf{Uwaga.} Przy przekazywaniu rekordu jako argument, należy dodać 
+adnotację typu do argumentu. W obecnej implementacji typy rekordów nie są 
+inferowane.
 
 \section{Klasy typów}
 

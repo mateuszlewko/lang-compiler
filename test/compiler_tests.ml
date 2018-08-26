@@ -33,7 +33,9 @@ let create_assert_of input_src_file =
       compile input_src_file;
       Sys.command_exn (sprintf "./%s > %s" binfile stdout_file);
       
-      read_all_text_stripped stdout_file |> assert_equal expected;
+      let actual = read_all_text_stripped stdout_file in 
+      
+      assert_equal expected actual;
 
       Sys.remove binfile;
       Sys.remove stdout_file

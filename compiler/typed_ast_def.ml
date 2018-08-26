@@ -79,12 +79,18 @@ type bound = t * location * [ `Wrap | `DontWrap ]
 type bbb = bound * string * subs
 [@@deriving show]
 
+type bbb_opt = (bound * string * subs) option
+[@@deriving show]
+
+type named_fields = string list
+[@@deriving show]
+
 type fun_arg_type = Generic of string | Concrete of t
 
 type key = 
   | Type       of string 
   | Val        of string 
-  | Fields     of (string * t) BatSet.t
+  | Fields     of string BatSet.t
   
 type bindings_map = (key, bound * string * subs) BatMap.t
 

@@ -417,7 +417,7 @@ let rec expr env =
           let env, with_e = expr env with_e in 
           let ft          = snd (List.nth_exn fields i) in
           
-          if snd with_e <> ft 
+          if snd with_e <> ft && not (LT.is_generic (snd with_e))
           then sprintf "Expression in field %s assignment has incorrect type, \
                         expected: %s, instead of: %s.\n" 
                         field (LT.show ft) (LT.show (snd with_e)) |> failwith;
@@ -431,14 +431,16 @@ let rec expr env =
     (* TODO: sort fields by index *)
     let env, fs = List.fold_map fields env (fun env (_, f) -> expr env f) in
     let r       = RecordLit fs in
-    let t       = List.zip_exn (List.map fields fst) (List.map fs snd)
-                  |> BatSet.of_list |> find_fields env in 
+    let fields  = List.map fields fst in 
+    let t       = BatSet.of_list fields |> find_fields env in 
 
     begin
     match t with 
     | Some ((t, Global, _), _, _) -> env, (r, t)
-    | _                     ->
-      sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
+    | other ->
+      sprintf "Couldn't find type for record literal: %s. Fields: %s.\
+               Instead got: %s.\n" 
+        (show_expr rl) (show_named_fields fields) (show_bbb_opt other)
       |> failwith
     end
   | LetRecsExp ls -> 
@@ -817,7 +819,8 @@ and top env =
                                            env, (f_name, t)) in
 
     let t   = LT.Record fields in
-    let env = add_raw env name (const (Fields (BatSet.of_list fields)))
+    let env = add_raw env name (const (
+                Fields (BatSet.of_list (List.map fields ~f:fst))))
               (t, Global, `Wrap) in 
 
     add_type env name (t, Global, `Wrap), []

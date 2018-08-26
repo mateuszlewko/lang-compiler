@@ -55,9 +55,9 @@ let global_arr : int array =
 (* override previous definition *)
 let global_arr : int array = [|1; 0; 1|] 
 
-let printer _ : () = 
+let printer _ = 
   (* x is unit, side effect of initializing x is printing *)
-  let x : () = 
+  let x = 
     printin (Array.get global_arr 1)
     (* array is mutable so this will change cell at index 1 *)
     Array.set global_arr 1 ((Array.get global_arr 1) + 1)
@@ -65,7 +65,7 @@ let printer _ : () =
   ()
 
 (* this function will be overridden by next let printer2 *)
-(* _ is a valid variable name (no type annotation => int type) *)
+(* _ is a valid variable name *)
 let printer2 _ = 
   let x : () = 
     printin (Array.get global_arr 1)
