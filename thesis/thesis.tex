@@ -1626,8 +1626,16 @@ się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{Mono
 i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \begin{itemize}
+  \item Polimorficzne struktury danych, w tym polimorficzna tablica. Obecnie 
+  wspierane są jedynie rekordy z polami, które muszą mieć konkretny typ. 
+  Przy zastosowaniu monomorfizacji, ich implementacja jest łatwa. Komplikuje
+  się jedynie inferencja typów. Może się okazać koniecznym obsłużenie słabych 
+  polimorficznych typów \cite{weak_poly_ocaml}.
   \item Wyrażenia lambda. Mogłyby być zrealizowane poprzez ich zamianę na 
   globalne wyrażenia let o unikalnych nazwach. 
+  \item Warianty \cite{variants_ocaml} . Są bardzo popularną i użyteczną cechą 
+  języków z rodziny ML. Dzięki nim można łatwo zaimplementować typy danych takie 
+  jak \textit{Optional} lub trwała lista.   
   \item Klasy typów z wieloma parametrami. Nie są obecne w standardzie 
   Haskell 98, jednak istnieje możliwość ich włączenia poprzez odpowiednią 
   dyrektywę. Ich implementacja byłaby łatwym 
@@ -1777,6 +1785,7 @@ kompilowanie z tego folderu.
   \item \texttt{OCaml-parsing: https://github.com/smolkaj/ocaml-parsing}
   \item \texttt{Core: https://github.com/janestreet/core} 
   \item \texttt{Dune (JBuilder): https://github.com/ocaml/dune} 
+  \item \texttt{OUnit: http://ounit.forge.ocamlcore.org/} 
 \end{itemize}
 
 % - OCaml 

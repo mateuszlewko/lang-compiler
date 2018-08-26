@@ -102,4 +102,8 @@ let main =
 
   let s3to2 = Stack.pop s3 
   printin (Stack.top s3to2)
-    
+  printin (Stack.top s3)
+ 
+  let s3to2to1 = Stack.pop (Stack.pop s3)
+  printin (Stack.top s3to2to1)
+  printin (Stack.top s3)

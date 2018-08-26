@@ -18,15 +18,15 @@ open Prelude
 type Vec = { x : int; y : int }
 type Mat2x2 = { r1 : Vec; r2 : Vec }
 
-class Pow 'a where 
+class Mult 'a where 
     one  : () -> 'a
     mult : 'a -> 'a -> 'a
 
-instance Pow int where
+instance Mult int where
     let one () = 1 
     let mult x y = x * y
 
-instance Pow Vec where 
+instance Mult Vec where 
     let one () = { x = 1; y = 1 }
     let mult (l : Vec) (r : Vec) = 
         { l with x = l.x * r.x
