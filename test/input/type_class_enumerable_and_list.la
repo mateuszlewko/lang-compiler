@@ -110,43 +110,6 @@ let rev (stack : List.t) =
   let new_stack : List.t = List.create stack.capacity
   fold List.cons new_stack stack
 
-(* This Option type hold numbers, if not present returns 0 instead of None *)
-(* type Option = { present : bool; value : int }
-
-class Mappable 'a where 
-  map : ('int -> 'int) -> 'a -> 'a (* No multi parameter type classes *)
-
-class Iterable 'a where 
-  iter : (int -> ()) -> 'a -> ()
-
-instance Mappable Stack.t where 
-  let map f arr =  *)
-
-
- (* let rev (stack : List.t) = 
-    let new_stack : List.t = List.create stack.capacity
-    fold List.cons new_stack stack *)
-
-let safe_peek en = 
-  if has_next en 
-  then move en 
-  else en
-
-(* let double_top pusher en = 
-  pusher en (safe_peek en) *)
-
-(* let nothing (xs : List.t) x = xs 
-
-let rec fold2 fn init xs = 
-  if true
-  then 
-    let new_xs = fn xs (peek xs)
-    fold2 fn xs xs
-    xs
-  else xs
-
-let revv (xs : List.t) = fold2 List.cons (List.create xs.size) xs *)
-
 let main = 
   let l0 = List.create 30
   let l1 = List.cons l0 1
@@ -154,8 +117,6 @@ let main =
   let l3 = List.cons l2 3
 
   printin (List.head l3) 
-  (* printin (List.head (safe_peek l3)) *)
-  (* let l33 = double_top List.cons l3 
-  printin (List.head l33) *)
+  printin (List.head l1)
   printin (List.head (rev l3)) 
  

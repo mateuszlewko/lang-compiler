@@ -26,7 +26,7 @@ let gen_llvm_exn prog =
 let llvm_out_only = ref false
 let keep_temp_file = ref false 
 
-let log_level = ref Logs.Debug
+let log_level = ref Logs.Warning
 
 let output_path = ref "a.out"
 let input_path = ref ""

@@ -472,7 +472,7 @@ module Codegen = struct
 
     let rec extract_found name t =
       Logs.debug (fun m -> m "extract found for: %s\n" name);
-
+      
       function
       | Fun        fb    -> of_fun_binding name env fb
       | GenericFun gf    -> 
