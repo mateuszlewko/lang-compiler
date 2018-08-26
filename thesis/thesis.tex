@@ -1705,7 +1705,7 @@ Uprzednio należy wykonać następujące kroki.
   \end{lstlisting}
   \item Kompilacja projektu:
   \begin{lstlisting}[language=bash]
-  $ make -B langc
+  $ make 
   \end{lstlisting}
 \end{enumerate}
 
@@ -1759,22 +1759,36 @@ argumenty.
   \item \texttt{-o} --- Opcjonalny argument dzięki któremu można określić 
   ścieżkę i nazwę skompilowanego programu. Domyślnie jest to \texttt{a.out}.
   \item \texttt{--ll-only} --- Dodanie tego argumentu powoduje wygenerowanie 
-  kodu w pośrednim języku LLVM IR do pliku \texttt{a.out}, bez tworzenia pliku 
+  kodu w języku pośrednim LLVM IR do pliku \texttt{out.ll}, bez tworzenia pliku 
   wykonywalnego. 
 \end{itemize}
 
-Przykładowy program z folderu \texttt{examples} można skompilować następującym 
+Przykładowy program z folderu \texttt{test/input} można skompilować następującym 
 poleceniem: 
 \begin{lstlisting}[language=bash]
-$ _build/default/langc/langc.exe examples/hello_world.la # kompilacja 
+$ _build/default/langc/langc.exe test/input/hello_world.la # kompilacja 
 $ ./a.out # uruchomienie wygenerowanego programu 
 \end{lstlisting}
 
 \textbf{Uwaga.} Podczas kompilacji program szuka pliku \texttt{external.c} w 
 obecnym folderze (tym, w którym znajduje się użytkownik). Zawiera on  
-implementacje kilku funkcji bibliotecznych w \textit{C}. Znajduje on się w 
+implementacje kilku funkcji bibliotecznych w C. Znajduje on się w 
 głównym folderze projektu (\texttt{MonoML-compiler}), dlatego zalecanym jest 
 kompilowanie z tego folderu.
+
+\subsection{Przykładowe programy i testowanie}
+
+W folderze \texttt{test/input} znajduje się dwadzieścia przykładowych programów
+napisanych w MonoMLu (pliki z rozszerzeniem \texttt{.la}). Testują różne funkcjonalności języka m. in 
+częściową aplikację, polimorfizm, klasy typów oraz inferencję. 
+Wszystkie testy można uruchomić następującym poleceniem:
+\begin{lstlisting}[language=bash]
+$ make test
+\end{lstlisting}
+Testy należy uruchomić z głównego folderu projektu.
+Testowanie polega na skompilowaniu każdego programu z rozszerzeniem \texttt{.la}
+z folderu \texttt{test/input}, uruchomieniu go i porównaniu standardowego 
+wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
 
 \section{Użyte narzędzia i biblioteki}
 
