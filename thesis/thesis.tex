@@ -1797,8 +1797,13 @@ wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
 
 \begin{itemize}
   \item \texttt{OCaml: https://ocaml.org/}
-  \item \texttt{Menhir: http://gallium.inria.fr/~fpottier/menhir/}
+  \item \texttt{Menhir: http://gallium.inria.fr/\~fpottier/menhir/}
   \item \texttt{Sedlex: https://github.com/alainfrisch/sedlex}
+  \item \texttt{High OLLVM}: Biblioteka opakowująca oficjalną bibliotekę do 
+  generowania \newline kodu LLVM IR w funkcyjny interfejs. Bazująca w przeważającej większości 
+  na bibliotece \texttt{ollvm}: 
+  \texttt{https://github.com/OCamlPro/ollvm}
+  Ta zależność została dołączona wraz z kodem źródłowym kompilatora.
   \item \texttt{OCaml-parsing: https://github.com/smolkaj/ocaml-parsing}
   \item \texttt{Core: https://github.com/janestreet/core} 
   \item \texttt{Dune (JBuilder): https://github.com/ocaml/dune} 
@@ -1822,7 +1827,8 @@ wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
 
 \begin{itemize}
   \item \texttt{compiler/} -- Biblioteka kompilatora. Zawiera wszystkie 
-  najważniejsze elementy procesu kompilacji.
+  najważniejsze elementy procesu kompilacji. Głównym jej zadaniem jest 
+  wygenerowanie kodu LLVM IR dla podanego kodu MonoMLa.
   \item \texttt{compiler/parsing/grammar.mly} -- Gramatyka w składni Menhira.
   \item \texttt{compiler/parsing/lexer.cppo.sedlex.ml} -- Analiza leksykalna.
   \item \texttt{compiler/parsing/ast.ml} -- Typy reprezentujące drzewo składni 
@@ -1830,7 +1836,7 @@ wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
   \item \texttt{compiler/codegen.ml} -- Zbiór funkcji odpowiedzialnych za 
   generowanie kodu.
   \item \texttt{compiler/lang\_types\_def} -- Definicja typów reprezentujących 
-  typy z Langa.
+  typy z MonoMLa.
   \item \texttt{compiler/lang\_types} -- Funkcje służące znalezieniu
   typu wyrażeń. Inferencja typów.
   \item \texttt{compiler/letexp.ml} -- Generowaniu kodu funkcji 
@@ -1844,8 +1850,20 @@ wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
   sparsowaniu na \newline drzewo z otypowanymi wyrażeniami. Wykonywane są także 
   transformacje: modułów, funkcji zagnieżdżonych, closure conversion
   oraz klasy typów.
-  \item \texttt{langc} -- Plik wykonywalny kompilatora. Obsługa 
-  parametrów programu.
+  \item \texttt{langc/} -- Projekt odpowiedzialny za plik wykonywalny 
+  kompilatora. Kompilacja kodu LLVM IR, obsługa parametrów wywołania programu
+  oraz odczytywanie kodu z pliku wejściowego.
+  \item \texttt{langc/compilation/compilation.ml} -- Kompilacja wygenerowanego 
+  kodu \newline LLVM z użyciem programu \texttt{llc} (kompilator LLVM IR) i 
+  \texttt{gcc}.
+  \item \texttt{test/} -- Projekt zawierający testy kompilatora.
+  \item \texttt{test/input/} -- Kody źródłowe w MonoMLu do przetestowania. W czasie 
+  testowania każdy z nich zostanie skompilowany, uruchomiony, a standardowe
+  wyjście porównane z plikami \texttt{-expected-out.txt} z tego samego folderu.
+  \item \texttt{test/compiler\_tests.ml} -- Moduł generujący testy na podstawie 
+  plików znajdujących się w folderze \texttt{test/input/}.
+  \item \texttt{high-ollvm/} -- Biblioteka udostępniająca funkcyjne api do 
+  generowaniu kodu LLVM IR, bazowana na bibliotece \texttt{ollvm}\cite{ollvm}.
 
 \end{itemize}
 
