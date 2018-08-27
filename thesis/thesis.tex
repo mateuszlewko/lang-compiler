@@ -1,5 +1,5 @@
 % Opcje klasy 'iithesis' opisane sa w komentarzach w pliku klasy. Za ich pomoca
-% ustawia sie przede wszystkim jezyk i rodzaj (lic/inz/mgr) pracy, oraz czy na
+% ustawia się przede wszystkim jezyk i rodzaj (lic/inz/mgr) pracy, oraz czy na
 % drugiej stronie pracy ma byc skladany wzor oswiadczenia o autorskim wykonaniu.
 \documentclass[declaration,shortabstract]{iithesis}
 
@@ -380,6 +380,8 @@ Podstawowe użycie klas typów zaprezentuję na przykładzie Haskella.
 W celu stworzenia klasy typów $C$ dla typu ogólnego $a$, należy 
 zdefiniować zbiór funkcji, które musi zawierać instancja tej klasy. Dla danego 
 typu i klasy może istnieć co najwyżej jedna instancja. 
+\newline
+\newline
 
 Definiujemy klasę $Eq$ zawierającą dwa operatory:~$==$ oraz~$/=$.
 % \lstset{language=llvm}
@@ -599,7 +601,7 @@ rekurencyjne funkcje mają dostęp do zdefiniowanych symboli ze swojej grupy,
 niezależnie ich kolejności. Nie można zdefiniować wzajemnie rekurencyjnych 
 wartości, każde wyrażenie musi definiować niezerową liczbę argumentów.
 
-Poniższy fragment kodu zawiera dwie proste funkcje wzajemnie rekurencyjne.
+Poniższy fragment kodu zawiera dwie funkcje wzajemnie rekurencyjne.
 
 \begin{lstlisting}[frame=single]
 let rec even x = 
@@ -626,8 +628,7 @@ and odd x = 1 + (even (x - 1))
 Składnia rekordów jest podobna do tej z pozostałych języków z rodziny ML. 
 Rekord zawiera wiele pól o różnych nazwach. Każde pole musi mieć zdefiniowany 
 typ. Typem pola może być inny, wcześniej zadeklarowany, rekord.
-Gramatyka deklaracji rekordów znajduje się na kolejnym listingu.
-
+Gramatyka deklaracji rekordów:
 \begin{lstlisting}[frame=single]
   <record-decl> ::=
       type <identifier> =
@@ -1693,7 +1694,7 @@ i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
   dyrektywę. Ich implementacja byłaby łatwym 
   rozszerzeniem obecnej (z jednym parametrem), jednak dołożenie ich do języka 
   wiązałoby się z pewnymi niejednoznacznościami \cite{multi_params_tcs}
-  przy wyborze odpowiedniej instancji klasy. Koniecznym mogłoby by sie okazać 
+  przy wyborze odpowiedniej instancji klasy. Koniecznym mogłoby by się okazać 
   dodanie zależności funkcyjnych (ang. functional dependencies) \cite{fun_deps}.
   \item Kompilacja wielu plików. Obecna implementacja pozwala na skompilowanie 
   jednego pliku. Umożliwienie kompilacji wielu plików w jednym projekcie nie 
@@ -1826,10 +1827,10 @@ $ ./a.out # uruchomienie wygenerowanego programu
 \end{lstlisting}
 
 \textbf{Uwaga.} Podczas kompilacji program szuka pliku \texttt{external.c} w 
-obecnym folderze (tym, w którym znajduje się użytkownik). Zawiera on  
+obecnym \newline folderze (tym, w którym znajduje się użytkownik). Zawiera on  
 implementacje kilku funkcji bibliotecznych w C. Znajduje on się w 
-głównym folderze projektu (\texttt{monoml-compiler}), dlatego zalecanym jest 
-kompilowanie z tego folderu.
+głównym folderze projektu \newline(\texttt{monoml-compiler}), dlatego 
+zalecanym jest kompilowanie z tego folderu.
 
 \subsection{Przykładowe programy i testowanie}
 
