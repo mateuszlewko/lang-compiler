@@ -8,7 +8,8 @@ module A  = Lang_parsing.Ast
 
 let add_raw env name (key_type : string -> key) ?(subs=[]) value = 
   let pref_name = name_in env name in
-  printf "adding to opened, name: %s\n" name;
+  Logs.debug (fun m -> m "adding to opened, name: %s\n" name);
+
   { env with 
     prefixed = 
       BatMap.add (key_type pref_name) (value, pref_name, subs) env.prefixed 
@@ -17,7 +18,7 @@ let add_raw env name (key_type : string -> key) ?(subs=[]) value =
 (** Adds new binding in current scope *)
 let add env name ?(subs=[]) ?(wrapping=`Wrap) value = 
   let value = let x, y = value in x, y, wrapping in 
-  printf "adding binding %s to %s\n" name (show_bound value);
+  Logs.debug (fun m -> m "adding binding %s to %s\n" name (show_bound value));
 
   add_raw env name (fun x -> Val x) ~subs value
 let add_type env name value  = add_raw env name (fun x -> Type x) value
@@ -42,9 +43,11 @@ let find env name =
   with Not_found -> 
   try BatMap.find (Val (name_in env name)) env.prefixed 
   with Not_found ->
-    env.opened 
-    |> BatMap.iter (fun k b -> printf "s: %s, b: %s" ("show_key k") 
-                                 (show_bbb b));
+    (* env.opened 
+    |> BatMap.iter (fun k b -> 
+    Logs.debug (fun m -> m "s: %s, b: %s"
+      ("show_key k") 
+      (show_bbb b))); *)
 
     sprintf "Not found: %s, with prefix: %s\n" name env.prefix 
     |> failwith
@@ -105,14 +108,15 @@ let rec replace_var_exp old_t new_t fn_name try_concrete expr_t =
   let rep_t t = 
     let res_t = try_concrete t in 
     if res_t <> t 
-    then printf "replaced type from %s to %s\n" (LT.show t) (LT.show res_t);
+    then Logs.debug (fun m -> m
+           "replaced type from %s to %s\n" (LT.show t) (LT.show res_t));
     res_t in 
 
   match expr_t with  
   | (Var name), t when name =  fn_name 
                     && t    =  old_t   -> 
-    printf "replaced var: %s, from t: %s to t: %s\n"
-      name (LT.show old_t) (LT.show new_t);
+    Logs.debug (fun m -> m "replaced var: %s, from t: %s to t: %s\n"
+      name (LT.show old_t) (LT.show new_t));
     Var name, new_t
   | Var _, _ as var                    -> var
   | SetVar (n, e), t                   -> SetVar (n, rep e), rep_t t 
@@ -135,10 +139,17 @@ let make_fn_t_concrete env ret_t fn_t body =
   let original_fn_t = fn_t in 
 
   let env, body = 
-    let last_t = List.last_exn body |> snd in 
+    let last_t = match List.last body with 
+                 | Some (_, t) -> t 
+                 | None        -> 
+                    sprintf "Function body is empty, fn_t: %s"
+                      (LT.show fn_t) |> failwith in 
+
     match LT.valid_replacements ret_t last_t with 
     | []   -> env, body
-    | subs -> LT.show__substitutions subs |> printf "adding last subs: %s\n";
+    | subs -> LT.show__substitutions subs 
+              |> fun s -> Logs.debug (fun m -> m "adding last subs: %s\n" s);
+
               let substitutions = List.fold subs ~init:env.substitutions 
                                   ~f:(fun m (u, v, both) -> 
                                         LT.add_equality ~both u v m) in 
@@ -149,7 +160,7 @@ let make_fn_t_concrete env ret_t fn_t body =
     let subs, res = LT.find_concrete_lt subs t in 
     subs, (res |> Option.value ~default:t) in 
                        
-  printf "curr fn_t: %s\n" (LT.show fn_t);
+  Logs.debug (fun m -> m "curr fn_t: %s\n" (LT.show fn_t));
 
   let subs, fn_t = match fn_t with 
                    | LT.Fun ts -> 
@@ -158,7 +169,7 @@ let make_fn_t_concrete env ret_t fn_t body =
                       subs, LT.Fun t
                    | other     -> try_concrete env.substitutions other in        
 
-  printf "concrete fn_t: %s\n" (LT.show fn_t);
+  Logs.debug (fun m -> m "concrete fn_t: %s\n" (LT.show fn_t));
   
   let sets, fn_t = 
     if LT.is_generic fn_t 
@@ -171,7 +182,7 @@ let make_fn_t_concrete env ret_t fn_t body =
     if LT.is_generic t
     then 
       begin 
-      printf "making %s mostly same\n" (LT.show t);
+      Logs.debug (fun m -> m "making %s mostly same\n" (LT.show t));
 
       let s, t = LT.make_mostly_same ~initial_sets:!sets subs t in 
       sets := s;
@@ -179,7 +190,7 @@ let make_fn_t_concrete env ret_t fn_t body =
       end
     else subs, t in
   
-  printf "concrete2 fn_t: %s\n" (LT.show fn_t);
+  Logs.debug (fun m -> m "concrete2 fn_t: %s\n" (LT.show fn_t));
   (* printf "NAME AGAIN: %s\n"  *)
   
   let env = { env with substitutions = subs } in 
@@ -199,7 +210,8 @@ let make_fn_t_concrete env ret_t fn_t body =
     match subs with 
     | []   -> env, body
     | subs -> LT.show__substitutions subs 
-              |> printf "adding MONO last subs: %s\n";
+              |> fun s -> Logs.debug (fun m -> 
+                            m "adding MONO last subs: %s\n" s);
               
               let substitutions = List.fold subs ~init:env.substitutions 
                                   ~f:(fun m (u, v, both) -> 
@@ -209,7 +221,7 @@ let make_fn_t_concrete env ret_t fn_t body =
 
   
   let subs, fn_t = try_concrete env.substitutions fn_t in 
-  printf "once again fn_t: %s\n" (LT.show fn_t);
+  Logs.debug (fun m -> m "once again fn_t: %s\n" (LT.show fn_t));
 
   let last_t = List.last_exn body |> snd in 
   let body   = [Substitute ([original_fn_t, fn_t, true], 
@@ -219,9 +231,32 @@ let make_fn_t_concrete env ret_t fn_t body =
                          LT.add_equality original_fn_t fn_t subs } in 
 
   LT.show_subs env.substitutions 
-  |> printf "ALL SUBS:\n%s\n";
+  |> fun s -> Logs.debug (fun m -> m "ALL SUBS:\n%s\n" s);
 
   { env with mono_vars = BatMap.empty }, body, fn_t, try_concrete        
+
+let create_with_exp expr e withs env = 
+  let t      = snd e in 
+  let e      = Clone e, t in 
+  begin 
+  match t with 
+  | Record fields -> 
+    let set (env, e) (field, with_e) =  
+      match List.findi fields (fun _ (f, ft) -> f = field) with 
+      | None        -> failwith "Field not found.\n"
+      | Some (i, _) -> 
+        let env, with_e = expr env with_e in 
+        let ft          = snd (List.nth_exn fields i) in
+        
+        if snd with_e <> ft && not (LT.is_generic (snd with_e))
+        then sprintf "Expression in field %s assignment has incorrect type, \
+                      expected: %s, instead of: %s.\n" 
+                      field (LT.show ft) (LT.show (snd with_e)) |> failwith;
+        env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
+    List.fold withs ~init:(env, e) ~f:set
+  | other         -> sprintf "Expression preceding with must be a record, \
+                              not: %s.\n" (LT.show t) |> failwith
+  end   
 
 let rec expr env = 
   function 
@@ -241,10 +276,10 @@ let rec expr env =
         (* printf "Introducing equality: %s %s\n" (LT.show new_t) (LT.show t); *)
         let env, subs, t = rewrite_type env t in 
         let subs = 
-          printf "t: %s for var %s\n" (LT.show t) pref_name;
+          Logs.debug (fun m -> m "t: %s for var %s\n" (LT.show t) pref_name);
           BatMap.bindings subs |> BatList.map (fun (k, v) -> 
-            printf "Introducing equality: %s %s for var %s\n" 
-              (LT.show k) (LT.show v) pref_name;
+            Logs.debug (fun m -> m "Introducing equality: %s %s for var %s\n" 
+              (LT.show k) (LT.show v) pref_name);
             k, v, true) in 
 
         let env = 
@@ -286,7 +321,7 @@ let rec expr env =
     if is_rec = true 
     then failwith "Value cannot be defined as recursive.";
 
-    printf "Nested FUN name: %s\n" name;
+    Logs.debug (fun m -> m "Nested FUN name: %s\n" name);
 
     let env, ret_t      = LT.of_annotation env ret_t in
     let env, body       = List.fold_map body ~init:env ~f:expr in
@@ -301,25 +336,28 @@ let rec expr env =
       |> List.concat_map ~f:(fun (x, ys) -> List.map ys (fun y -> x, y, false))
       |> BatList.unique in
   
-    printf "added nested subs (value): %s for name: %s\n" (show_subs subs) name;
+    Logs.debug (fun m -> m 
+      "added nested subs (value): %s for name: %s\n" (show_subs subs) name);
+
     add env name ~subs (t, AtLevel env.level), (Value (name, (Exprs body, t)), t)
   | LetExp exp  -> 
     nested_letexp env exp
   | AppExp (callee, args) -> 
     let env, args   = List.fold_map args ~init:env ~f:expr in 
-    printf "callee: %s\n" (Lang_parsing.Ast.show_expr callee);
+    Logs.debug (fun m -> m "callee: %s\n" (Lang_parsing.Ast.show_expr callee));
     let env, callee = expr env callee in 
-    printf "callee_t: %s\n" (show_expr_t callee);
+    Logs.debug (fun m -> m "callee_t: %s\n" (show_expr_t callee));
 
-    List.iter args (show_expr_t %> printf "arg: %s\n");
+    List.iter args (show_expr_t %> fun s ->
+      Logs.debug (fun m -> m "arg: %s\n" s));
 
     LT.show_subs env.substitutions
-    |> printf "before LT.apply, subs: %s\n";
+    |> fun s -> Logs.debug (fun m -> m "before LT.apply, subs: %s\n" s);
 
     let env, e = 
       LT.apply env (snd callee) (List.map args snd) (App (callee, args)) in 
 
-    printf "after LT.apply\n"; 
+    Logs.debug (fun m -> m "after LT.apply\n"); 
 
     env, e
   | Exprs es ->
@@ -342,7 +380,7 @@ let rec expr env =
     let env, rhs = expr env rhs in 
     let arg_ts   = List.map [lhs; rhs] snd in 
 
-    printf "doing op: %s\n" name;
+    Logs.debug (fun m -> m "doing op: %s\n" name);
 
     let env, e = LT.apply env op_t arg_ts (InfixOp (name, lhs, rhs)) in 
     env, e
@@ -353,7 +391,8 @@ let rec expr env =
     let print_free_vars = 
       BatMultiMap.iter (fun lvl ->
         BatSet.iter (fun (name, _) ->
-          printf "if-exp: free var %s at level %d\n" name lvl)) in 
+          Logs.debug (fun m -> 
+            m "if-exp: free var %s at level %d\n" name lvl))) in 
 
     (* print_free_vars env.free_vars; *)
 
@@ -362,10 +401,11 @@ let rec expr env =
       | [] -> Option.value else_ ~default:(A.LitExp (A.Unit)) |> expr env
       | (cond, then_)::elifs -> expr env (IfExp {cond; then_; elifs; else_}) in
 
-    printf "after if_exp --- * ---\n";
+    Logs.debug (fun m -> m "after if_exp --- * ---\n");
     env.extra_fun 
-    |> List.iter ~f:(function (Fun (f, _)) -> printf "if fun: %s\n" f.name
-                            | _            -> ());
+    |> List.iter ~f:(function | (Fun (f, _)) -> 
+                                Logs.debug (fun m -> m "if fun: %s\n" f.name)
+                              | _            -> ());
 
     (* LT.show_subs env.substitutions
     |> printf "after else funexp subs: %s\n"; *)
@@ -393,41 +433,37 @@ let rec expr env =
     end
   | RecordWithExp (e, withs) -> 
     let env, e = expr env e in 
-    let t      = snd e in 
-    let e      = Clone e, t in 
-    begin 
-    match t with 
-    | Record fields -> 
-      let set (env, e) (field, with_e) =  
-        match List.findi fields (fun _ (f, ft) -> f = field) with 
-        | None        -> failwith "Field not found.\n"
-        | Some (i, _) -> 
-          let env, with_e = expr env with_e in 
-          let ft          = snd (List.nth_exn fields i) in
-          
-          if snd with_e <> ft 
-          then sprintf "Expression in field %s assignment has incorrect type, \
-                        expected: %s, instead of: %s.\n" 
-                        field (LT.show ft) (LT.show (snd with_e)) |> failwith;
-          env, (GepStore { src = with_e; dest = e; idx = [0; i] }, t) in
-      List.fold withs ~init:(env, e) ~f:set
-    | other         -> sprintf "Expression preceding with must be a record, \
-                                not: %s.\n" (LT.show t) |> failwith
-    end                        
-
-  | RecordLiteral fields as rl -> 
+    create_with_exp expr e withs env
+  | RecordLiteral raw_fields as rl -> 
     (* TODO: sort fields by index *)
-    let env, fs = List.fold_map fields env (fun env (_, f) -> expr env f) in
-    let r       = RecordLit fs in
-    let t       = List.zip_exn (List.map fields fst) (List.map fs snd)
-                  |> BatSet.of_list |> find_fields env in 
+    let fields  = List.map raw_fields fst in 
+    let t       = BatSet.of_list fields |> find_fields env in 
 
     begin
-    match t with 
-    | Some ((t, Global, _), _, _) -> env, (r, t)
-    | _                     ->
-      sprintf "Couldn't find type for record literal: %s.\n" (show_expr rl)
-      |> failwith
+      match t with 
+      | Some ((Record def_fields as t, Global, _), _, _) -> 
+        let def_fields = BatMap.of_enum (BatList.enum def_fields) in 
+        let map_field env (name, f_expr) = 
+          let env, (f, t) = expr env f_expr in 
+          let t = BatMap.Exceptionless.find name def_fields 
+                  |> Option.value ~default:t in 
+          env, (f, t) in 
+
+        let env, fs = List.fold_map raw_fields env map_field in
+
+        let lit_or_zero = function (Lit _, _) as l -> l 
+                                 | _     , t       -> Lit (ZeroInit t), t in 
+
+        let r  = RecordLit (List.map fs ~f:lit_or_zero) in
+
+        if List.exists fs ~f:(function Lit _, _ -> false | _ -> true) 
+        then create_with_exp expr (r, t) raw_fields env 
+        else env, (r, t)
+      | other ->
+        sprintf "Couldn't find type for record literal: %s. Fields: %s.\
+                Instead got: %s.\n" 
+          (show_expr rl) (show_named_fields fields) (show_bbb_opt other)
+        |> failwith
     end
   | LetRecsExp ls -> 
     failwith "Nested mutually recursive let expressions are not supported.\n"
@@ -539,8 +575,8 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
   let body = 
     if is_rec 
     then begin
-      printf "replacing var_exps: %s, from t: %s, to t: %s\n"
-        g_name (LT.show rec_fn_t) (LT.show fn_t);
+      Logs.debug (fun m -> m "replacing var_exps: %s, from t: %s, to t: %s\n"
+        g_name (LT.show rec_fn_t) (LT.show fn_t));
 
       List.map body (replace_var_exp rec_fn_t fn_t g_name try_concrete)
       end
@@ -556,8 +592,9 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
 
   let global_fn = 
     let args = extra_args @ args in 
-    printf "fun: %s, extra args:\n" g_name;
-    List.iter extra_args (show_arg %> printf "e_arg: %s\n"); 
+    Logs.debug (fun m -> m "fun: %s, extra args:\n" g_name);
+    List.iter extra_args (show_arg %> fun s -> 
+      Logs.debug (fun m -> m "e_arg: %s\n" s)); 
 
     { name = g_name; gen_name = g_name; is_rec; args
     ; body = if is_rec
@@ -584,7 +621,8 @@ and nested_letexp env ?(kind=`Default) ?(fn_tys=None)
     |> List.concat_map ~f:(fun (x, ys) -> List.map ys (fun y -> x, y, false))
     |> BatList.unique in
   
-  printf "added nested subs: %s for name: %s\n" (show_subs subs) name;
+  Logs.debug (fun m -> 
+    m "added nested subs: %s for name: %s\n" (show_subs subs) name);
 
   (* added new binding to parent scope *)
   let env = add ~wrapping:`DontWrap env name ~subs (fn_t, AtLevel env.level) in 
@@ -637,14 +675,14 @@ and lit env =
   let env = { env with level     = env.level - 1
                      ; free_vars = BatMultiMap.empty } in 
 
-  printf "FUN name: %s\n" name; 
+  Logs.debug (fun m -> m "FUN name: %s\n" name); 
 
   LT.show_subs env.substitutions
-  |> printf "inner funexp subs: %s\n";
+  |> fun s -> Logs.debug (fun m -> m "inner funexp subs: %s\n" s);
 
   let env, body, fn_t, try_concrete = make_fn_t_concrete env ret_t fn_t body in
 
-  printf "final fn_t: %s\n" (LT.show fn_t);
+  Logs.debug (fun m -> m "final fn_t: %s\n" (LT.show fn_t));
 
   let try_concrete t = try_concrete env.substitutions t |> snd in 
 
@@ -654,8 +692,8 @@ and lit env =
   let body = 
     if is_rec 
     then begin
-      printf "replacing var_exps: %s, from t: %s, to t: %s\n"
-        gen_name (LT.show rec_fn_t) (LT.show fn_t);
+      Logs.debug (fun m -> m "replacing var_exps: %s, from t: %s, to t: %s\n"
+        gen_name (LT.show rec_fn_t) (LT.show fn_t));
 
       List.map body (replace_var_exp rec_fn_t fn_t gen_name try_concrete)
       end
@@ -669,7 +707,7 @@ and lit env =
     |> List.concat_map ~f:(fun (x, ys) -> List.map ys (fun y -> x, y, false))
     |> BatList.unique in
 
-  printf "added subs: %s for name: %s\n" (show_subs subs) name;
+  Logs.debug (fun m -> m "added subs: %s for name: %s\n" (show_subs subs) name);
   let env = add env name ~subs (fn_t, Global) in 
   let env = if clear_subs then { env with substitutions = BatMap.empty }
                           else env in 
@@ -717,7 +755,8 @@ and fun_recs env ls =
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in 
   let env, tops   = List.fold_map ls ~init:env ~f:funexp_raw in  *)
 
-  printf "subs after fun_recs: %s\n" (LT.show_subs env.substitutions);
+  Logs.debug (fun m -> 
+    m "subs after fun_recs: %s\n" (LT.show_subs env.substitutions));
 
   let decls = List.map tops (fun (f, t) -> Fun ({ f with body = None}, t)) in 
   let tops  = List.map tops (fun (f, t) -> Fun (f, t)) in 
@@ -746,12 +785,12 @@ and top env =
           let extra_fun = List.rev env.extra_fun in 
           { env with extra_fun = [] }, extra_fun @ tops) in
     
-    printf "--- * ---\n";
+    Logs.debug (fun m -> m "--- * ---\n");
     List.concat tops |> List.filter_map 
       ~f:(function Fun (f, _)     -> Some ("fun => " ^ f.name)
                  | FunDecl (f, _) -> Some ("decl =>" ^ f.name)
                  | _ -> None) 
-    |> List.iter ~f:(printf "top fun: %s\n");
+    |> List.iter ~f:(fun s -> Logs.debug (fun m -> m "top fun: %s\n" s));
     
     let env           = { env with prefix = parent_prefix
                                  ; opened = parent_opened } in
@@ -802,21 +841,25 @@ and top env =
                                            env, (f_name, t)) in
 
     let t   = LT.Record fields in
-    let env = add_raw env name (const (Fields (BatSet.of_list fields)))
+    let env = add_raw env name (const (
+                Fields (BatSet.of_list (List.map fields ~f:fst))))
               (t, Global, `Wrap) in 
 
     add_type env name (t, Global, `Wrap), []
   | Class { declarations; name; type_name }    -> 
     let env = 
-    List.fold declarations ~init:env 
-      ~f:(fun env (name, t) -> 
-            let env, t = LT.of_annotation env (Some t) in 
-            add env name (t, Global)) in 
+      List.fold declarations ~init:env 
+        ~f:(fun env (name, t) -> 
+              let env, t = LT.of_annotation env (Some t) in 
+              add env name (t, Global)) in 
 
     (* let class_t = Some { basic = A.Single [type_name]; classes = [] } 
                   |> LT.of_annotation !-> env  in  *)
 
-    env, [Class (name, type_name, List.map declarations (fst %> name_in env))]
+    let make_method (name, t) = 
+      name_in env name, LT.of_annotation env (Some t) |> snd in 
+
+    env, [Class (name, type_name, List.map declarations make_method)]
   | Instance { class_name; definitions; type_ } -> 
     let parent_env     = env in 
     (* create funexps representing methods in class *)
@@ -828,7 +871,8 @@ and top env =
     
     let env, impl_t = LT.of_annotation env (Some type_) in 
 
-    printf "Adding instance for type: %s\n" (LT.show impl_t);
+    Logs.debug (fun m -> m "Adding class %s instance for type: %s\n" 
+      class_name (LT.show impl_t));
 
     env, [Instance (class_name, impl_t, funexps)]
 

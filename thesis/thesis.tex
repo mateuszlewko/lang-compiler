@@ -606,7 +606,7 @@ and odd x = 1 + (even (x - 1))
 Składnia rekordów jest podobna do tej z pozostałych języków z rodziny ML. 
 Rekord zawiera wiele pól o różnych nazwach. Każde pole musi mieć zdefiniowany 
 typ. Typem pola może być inny, wcześniej zadeklarowany, rekord.
-Listingi $2..7$ i $2..8$ prezentują odpowiednio gramatykę deklaracji rekord
+Listingi $2..7$ i $2..8$ prezentują odpowiednio gramatykę deklaracji rekordów
 i jej przykład.
 
 \begin{lstlisting}[frame=single, caption=Deklaracja rekordu.]
@@ -681,13 +681,20 @@ w deklaracji rekordu.
 % TODO: samo pole 
 
 \begin{lstlisting}[frame=single, caption=Uaktualnianie rekordu.]
+type simple  = { a : int; b : int    }
+type complex = { n : int; s : simple }
+
 let s : simple = { a = 0; b = 1}
 
-let add (curr : complex) : simple = 
+let add (curr : complex) = 
     {  curr.s with a = curr.s.b
                     b = curr.s.a + curr.s.b 
     }
 \end{lstlisting}
+
+\textbf{Uwaga.} Przy przekazywaniu rekordu jako argument, należy dodać 
+adnotację typu do argumentu. W obecnej implementacji typy rekordów nie są 
+inferowane.
 
 \section{Klasy typów}
 
@@ -1619,8 +1626,16 @@ się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{Mono
 i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \begin{itemize}
+  \item Polimorficzne struktury danych, w tym polimorficzna tablica. Obecnie 
+  wspierane są jedynie rekordy z polami, które muszą mieć konkretny typ. 
+  Przy zastosowaniu monomorfizacji, ich implementacja jest łatwa. Komplikuje
+  się jedynie inferencja typów. Może się okazać koniecznym obsłużenie słabych 
+  polimorficznych typów \cite{weak_poly_ocaml}.
   \item Wyrażenia lambda. Mogłyby być zrealizowane poprzez ich zamianę na 
   globalne wyrażenia let o unikalnych nazwach. 
+  \item Warianty \cite{variants_ocaml} . Są bardzo popularną i użyteczną cechą 
+  języków z rodziny ML. Dzięki nim można łatwo zaimplementować typy danych takie 
+  jak \textit{Optional} lub trwała lista.   
   \item Klasy typów z wieloma parametrami. Nie są obecne w standardzie 
   Haskell 98, jednak istnieje możliwość ich włączenia poprzez odpowiednią 
   dyrektywę. Ich implementacja byłaby łatwym 
@@ -1666,6 +1681,9 @@ Uprzednio należy wykonać następujące kroki.
 \begin{enumerate}
   \item Instalacja kompilatora OCamla. Instrukcja dostępna na stronie: \newline
   \texttt{https://ocaml.org/docs/install.html}.
+  \item Instalacja menadżera pakietów \textit{OPAM}. 
+  Instrukcja dostępna na stronie: \newline
+  \texttt{https://opam.ocaml.org/doc/Install.html\#Binary-distribution}
   \item Instalacja LLVMa. Instrukcja dostępna na stronie: \newline
   \texttt{https://llvm.org/}.
   \item Wymagany jest kompilator LLVM w wersji $6$. Zainstalowaną 
@@ -1690,7 +1708,7 @@ Uprzednio należy wykonać następujące kroki.
   \end{lstlisting}
   \item Kompilacja projektu:
   \begin{lstlisting}[language=bash]
-  $ make -B langc
+  $ make 
   \end{lstlisting}
 \end{enumerate}
 
@@ -1744,22 +1762,36 @@ argumenty.
   \item \texttt{-o} --- Opcjonalny argument dzięki któremu można określić 
   ścieżkę i nazwę skompilowanego programu. Domyślnie jest to \texttt{a.out}.
   \item \texttt{--ll-only} --- Dodanie tego argumentu powoduje wygenerowanie 
-  kodu w pośrednim języku LLVM IR do pliku \texttt{a.out}, bez tworzenia pliku 
+  kodu w języku pośrednim LLVM IR do pliku \texttt{out.ll}, bez tworzenia pliku 
   wykonywalnego. 
 \end{itemize}
 
-Przykładowy program z folderu \texttt{examples} można skompilować następującym 
+Przykładowy program z folderu \texttt{test/input} można skompilować następującym 
 poleceniem: 
 \begin{lstlisting}[language=bash]
-$ _build/default/langc/langc.exe examples/hello_world.la # kompilacja 
+$ _build/default/langc/langc.exe test/input/hello_world.la # kompilacja 
 $ ./a.out # uruchomienie wygenerowanego programu 
 \end{lstlisting}
 
 \textbf{Uwaga.} Podczas kompilacji program szuka pliku \texttt{external.c} w 
 obecnym folderze (tym, w którym znajduje się użytkownik). Zawiera on  
-implementacje kilku funkcji bibliotecznych w \textit{C}. Znajduje on się w 
+implementacje kilku funkcji bibliotecznych w C. Znajduje on się w 
 głównym folderze projektu (\texttt{MonoML-compiler}), dlatego zalecanym jest 
 kompilowanie z tego folderu.
+
+\subsection{Przykładowe programy i testowanie}
+
+W folderze \texttt{test/input} znajduje się dwadzieścia przykładowych programów
+napisanych w MonoMLu (pliki z rozszerzeniem \texttt{.la}). Testują różne funkcjonalności języka m. in 
+częściową aplikację, polimorfizm, klasy typów oraz inferencję. 
+Wszystkie testy można uruchomić następującym poleceniem:
+\begin{lstlisting}[language=bash]
+$ make test
+\end{lstlisting}
+Testy należy uruchomić z głównego folderu projektu.
+Testowanie polega na skompilowaniu każdego programu z rozszerzeniem \texttt{.la}
+z folderu \texttt{test/input}, uruchomieniu go i porównaniu standardowego 
+wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
 
 \section{Użyte narzędzia i biblioteki}
 
@@ -1770,6 +1802,7 @@ kompilowanie z tego folderu.
   \item \texttt{OCaml-parsing: https://github.com/smolkaj/ocaml-parsing}
   \item \texttt{Core: https://github.com/janestreet/core} 
   \item \texttt{Dune (JBuilder): https://github.com/ocaml/dune} 
+  \item \texttt{OUnit: http://ounit.forge.ocamlcore.org/} 
 \end{itemize}
 
 % - OCaml 

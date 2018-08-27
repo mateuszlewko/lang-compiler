@@ -8,12 +8,14 @@ module Prelude =
 
   let ln () : () = ll_print_line ()
 
-  let printi x : () = ll_putint x
+  let printi x = 
+    ll_putint x
 
-  let printin x : () = ll_putint x
-                       ln () 
+  let printin x = 
+    ll_putint x
+    ln () 
 
-  let putbool (b : bool) : () =
+  let putbool b =
     ll_print_bool b
     ln ()
 
@@ -21,20 +23,20 @@ module Prelude =
     let new size : int array = 
       ll_new_int_array size
 
-    let set (arr : int array) ix elem : () = 
+    let set (arr : int array) ix elem = 
       ll_set_ith_elem_of_int_array  arr ix elem
 
-    let get (arr : int array) ix = 
+    let get arr ix = 
       ll_get_ith_elem_of_int_array arr ix
 
-    let printn (arr : int array) size : () = 
-      let rec aux (arr : int array) pos left : () = 
+    let printn arr size = 
+      let rec aux pos left = 
         if left = 0 
         then ln ()
         else printin (get arr pos)
-             aux arr (pos + 1) (left - 1)
+             aux (pos + 1) (left - 1)
 
-      aux arr 0 size
+      aux 0 size
 
 open Prelude
 

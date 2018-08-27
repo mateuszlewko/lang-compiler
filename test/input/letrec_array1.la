@@ -8,12 +8,14 @@ module Prelude =
 
   let ln () : () = ll_print_line ()
 
-  let printi x : () = ll_putint x
+  let printi x = 
+    ll_putint x
 
-  let printin x : () = ll_putint x
-                       ln () 
+  let printin x = 
+    ll_putint x
+    ln () 
 
-  let putbool (b : bool) : () =
+  let putbool b =
     ll_print_bool b
     ln ()
 
@@ -21,15 +23,14 @@ module Prelude =
     let new size : int array = 
       ll_new_int_array size
 
-    let set (arr : int array) ix elem : () = 
+    let set (arr : int array) ix elem = 
       ll_set_ith_elem_of_int_array  arr ix elem
 
-    let get (arr : int array) ix = 
+    let get arr ix = 
       ll_get_ith_elem_of_int_array arr ix
 
-    let printn (arr : int array) size : () = 
-
-      let rec aux pos left : () = 
+    let printn arr size = 
+      let rec aux pos left = 
         if left = 0 
         then ln ()
         else printin (get arr pos)
@@ -54,9 +55,9 @@ let global_arr : int array =
 (* override previous definition *)
 let global_arr : int array = [|1; 0; 1|] 
 
-let printer _ : () = 
+let printer _ = 
   (* x is unit, side effect of initializing x is printing *)
-  let x : () = 
+  let x = 
     printin (Array.get global_arr 1)
     (* array is mutable so this will change cell at index 1 *)
     Array.set global_arr 1 ((Array.get global_arr 1) + 1)
@@ -64,8 +65,8 @@ let printer _ : () =
   ()
 
 (* this function will be overridden by next let printer2 *)
-(* _ is a valid variable name (no type annotation => int type) *)
-let printer2 _ : () = 
+(* _ is a valid variable name *)
+let printer2 _ = 
   let x : () = 
     printin (Array.get global_arr 1)
     ln ()
@@ -76,11 +77,11 @@ let printer2 _ : () =
   ()
 
 (* wrapper for print *)
-let printer2 () : () = printer 0
+let printer2 () = printer 0
 
 let dec x = x - 1
 
-let rec repeat (fn : () -> ()) times : () =
+let rec repeat (fn : () -> ()) times =
   if times > 0
   then 
     fn ()
@@ -88,7 +89,7 @@ let rec repeat (fn : () -> ()) times : () =
 
 let mult2 x = x * 2
 
-let main () : int =
+let _ =
 
   repeat printer2 10
   
@@ -106,5 +107,3 @@ let main () : int =
   printin (2 + mult2 2)
   printin (mult2 2 + 4) (* prints result of 2 * 2 + 4 
                                  instead of 2 * (2 + 4) *)
-
-  0

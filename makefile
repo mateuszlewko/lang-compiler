@@ -1,31 +1,12 @@
-INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
-
-langc:
+compiler:
 	jbuilder build @runlangc
-
-# astprinter:
-# 	jbuilder build @run_ast_printer
-
-build:
-	jbuilder build @install
-
-# install:
-# 	jbuilder install $(INSTALL_ARGS)
-
-# uninstall:
-# 	jbuilder uninstall $(INSTALL_ARGS)
-
-# reinstall: uninstall reinstall
 
 clean:
 	jbuilder clean
 
-# doc:
-# 	jbuilder build @doc
-
 test:
-	jbuilder build @runtest
+	jbuilder build @runtest && _build/default/test/test.exe
 
-all: build test doc
+all: compiler test 
 
-.PHONY: langc build install uninstall reinstall clean doc test all
+.PHONY: compiler test all

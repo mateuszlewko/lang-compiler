@@ -19,5 +19,5 @@ let adder x a b c d =
     do () ()
     
 let _ : () = 
-    let a : int -> int -> int = adder 10 2 2 
-    Prelude.printn_int (a -1 -1)
+    let a x : int -> int = adder x 10 2 2 
+    Prelude.printn_int ((a -1) -1)

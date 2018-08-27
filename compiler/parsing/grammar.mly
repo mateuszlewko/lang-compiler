@@ -47,8 +47,8 @@ empty_line:
   | INDENT; empty_line*; DEDENT { }
 
 single_type_elem:
-  | UNIT        { "()" }
-  | ts = SYMBOL { ts   }
+  | UNIT            { "()" }
+  | ts = nested_sym { ts   }
 
 single_type_anot: s = single_type_elem+ { Single s }
 

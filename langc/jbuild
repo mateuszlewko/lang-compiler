@@ -6,6 +6,7 @@
               batteries
               langc_compilation
               lang_compiler
+              logs
               llvm.analysis))))
 
 (alias

@@ -1,0 +1,122 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () : () = ll_print_line ()
+
+  let printi x = 
+    ll_putint x
+
+  let printin x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+  let rec iter n fn = 
+    if n > 0 
+    then 
+      fn () 
+      iter (n - 1) fn 
+
+  let iteri n fn = 
+    let rec go ix = 
+      if ix < n 
+      then 
+        fn ix 
+        go (ix + 1)
+
+    go 0 
+
+  module Array = 
+    let new size : int array = 
+      ll_new_int_array size
+
+    let set (arr : int array) ix elem = 
+      ll_set_ith_elem_of_int_array  arr ix elem
+
+    let get arr ix = 
+      ll_get_ith_elem_of_int_array arr ix
+
+    let printn arr size = 
+      let rec aux pos left = 
+        if left = 0 
+        then ln ()
+        else printin (get arr pos)
+             aux (pos + 1) (left - 1)
+
+      aux 0 size
+
+    let clone_array old_arr size = 
+        let arr2 = new size 
+        let copy_ith ix = set arr2 ix (get old_arr ix) 
+        iteri size copy_ith
+        arr2
+
+open Prelude
+
+class Enumerable 'a where
+  has_next : 'a -> bool 
+  peek     : 'a -> int 
+  move     : 'a -> 'a 
+
+let rec fold f init enumerable = 
+  if has_next enumerable 
+  then 
+    let curr = peek enumerable 
+    fold f (f init curr) (move enumerable)
+  else init 
+
+module List = (* Same implementation as in Stack *)
+  type t = 
+      { size     : int
+        capacity : int  
+        data     : int array
+      }
+
+  let create capacity = 
+      { size     = 0
+        capacity = capacity
+        data     = Array.new capacity 
+      }
+
+  let head (stack : t) = 
+      Array.get stack.data (stack.size - 1)  
+
+  let cons (stack : t) elem = 
+      let new_data = Array.clone_array stack.data stack.capacity 
+      Array.set new_data stack.size elem
+
+      { stack with 
+          size     = stack.size + 1
+          capacity = stack.capacity 
+          data     = new_data            
+      }
+
+  let tail (stack : t) = { stack with size = stack.size - 1 }
+
+instance Enumerable List.t where 
+  let has_next (xs : List.t) = xs.size > 0
+  let peek (xs : List.t) = List.head xs
+  let move (xs : List.t) = List.tail xs
+
+let rev (stack : List.t) = 
+  let new_stack : List.t = List.create stack.capacity
+  fold List.cons new_stack stack
+
+let main = 
+  let l0 = List.create 30
+  let l1 = List.cons l0 1
+  let l2 = List.cons l1 2
+  let l3 = List.cons l2 3
+
+  printin (List.head l3) 
+  printin (List.head l1)
+  printin (List.head (rev l3)) 
+ 

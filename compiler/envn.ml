@@ -16,6 +16,13 @@ type fun_binding  = { fn : bound; fns_arr : Ez.Value.t; arity : int }
 type instance_key = string * LT.t * string
 [@@deriving show]
 
+type class_method = { 
+    fn_name : string; 
+    type_name : string;
+    class_name : string; 
+    generic_t : LT.t }
+[@@deriving show]
+
 type generic_fun  = { poli : t -> t * fun_binding
                     ; mono : (Ez.Type.t list, fun_binding) BatMap.t }
 
@@ -24,7 +31,7 @@ and binding =
   | Val        of bound 
   | GlobalVar  of bound
   | GenericFun of generic_fun 
-  | Class      of string * string
+  | Class      of class_method
 
 and bindings_map = (string, binding) BatMap.t
 
@@ -63,10 +70,10 @@ let of_binding =
 
 let print_keys bindings =
   let open Core in 
-  printf "bindings:\n";
+  Logs.debug (fun m -> m "bindings:\n");
   BatMap.keys bindings
-  |> BatEnum.iter (Core.printf "+ key: %s\n");
-  printf "end bindings\n"
+  |> BatEnum.iter (fun s -> Logs.debug (fun m -> m "+ key: %s\n" s));
+  Logs.debug (fun m -> m "end bindings\n")
 
 let find env name =
     try BatMap.find name env.bindings 

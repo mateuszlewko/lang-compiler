@@ -1,14 +1,12 @@
 Lexer:
 
-Codegen:
-    ❑ suppress all debug prints @critical 
-    ❑ multiple global variables with same name
-
-Bugs:
-    ❑ function redefinitions detected in llvmgateway 
-    ✔ make generic types different in separate top let expressions @critical @done(18-08-24 16:28)
-
 Archive:
+  ✔ add more working tests (maybe try implementing something real-life) @critical @done(18-08-27 00:07) @project(General)
+  ✘ multiple global variables with same name @cancelled(18-08-26 01:20) @project(Codegen)
+  ✘ function redefinitions detected in llvmgateway @cancelled(18-08-26 01:20) @project(Bugs)
+  ✔ make generic types different in separate top let expressions @critical @done(18-08-24 16:28) @project(Bugs)
+  ✔ suppress all debug prints (use logging) @critical @done(18-08-25 14:51) @project(Codegen)
+  ✔ array literal @critical @done(18-08-25 17:09) @project(Codegen)
   ✔ lex tokens @done @project(Lexer)
   ✔ handle in grammar (type is either specified of integer) @done(18-01-09 00:40) @project(Parser)
   ✔ mutually recursive functions @done(18-06-08 19:23) @project(Codegen)

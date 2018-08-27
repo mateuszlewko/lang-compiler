@@ -30,6 +30,7 @@ and literal =
   | String of string
   | Bool   of bool
   | Array  of expr_t list
+  | ZeroInit of t
   | Unit
 
 and body_expr = 
@@ -62,7 +63,7 @@ type declaration = { name : string; gen_name : string }
 type top = 
   | Expr     of expr_t
   | Fun      of funexp * t
-  | Class    of string * string * string list
+  | Class    of string * string * (string * t) list
   | Instance of string * t * (funexp * t) list
   | Extern   of declaration * t
   | Module   of string * top list
@@ -73,10 +74,16 @@ type top =
 type location = AtLevel of int | Global 
 [@@deriving show]
 
-type bound = t * location * [ `Wrap | `DontWrap]
+type bound = t * location * [ `Wrap | `DontWrap ]
 [@@deriving show]
 
 type bbb = bound * string * subs
+[@@deriving show]
+
+type bbb_opt = (bound * string * subs) option
+[@@deriving show]
+
+type named_fields = string list
 [@@deriving show]
 
 type fun_arg_type = Generic of string | Concrete of t
@@ -84,7 +91,7 @@ type fun_arg_type = Generic of string | Concrete of t
 type key = 
   | Type       of string 
   | Val        of string 
-  | Fields     of (string * t) BatSet.t
+  | Fields     of string BatSet.t
   
 type bindings_map = (key, bound * string * subs) BatMap.t
 

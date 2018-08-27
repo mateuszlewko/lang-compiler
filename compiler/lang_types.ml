@@ -77,7 +77,8 @@ let rec replacements old_t new_t =
     if old_t = new_t 
     then []
     else (
-      printf "Can't do replacement for %s and %s.\n" (show old_t) (show new_t);
+       Logs.err (fun m -> 
+        m "Can't do replacement for %s and %s.\n" (show old_t) (show new_t));
       raise WrongTypeOfApplyArgument)
 
 let rec add_equality ?(both=true) t1 t2 substitutions = 
@@ -131,6 +132,7 @@ let rec drop_args n vis subs t =
       drop_args (n - 1) (BatSet.add t vis) subs (Fun ts)
     | _ -> None 
     end 
+  | n, Fun [t]                 -> drop_args n vis subs t
   | _, t            -> None 
 
 let just_drop_args n t = drop_args n BatSet.empty BatMap.empty t 
@@ -144,7 +146,7 @@ let rec take_arg =
 
 let find_equalities subs = 
   let rec find_single vis curr =
-    printf "find single: %s\n" (show curr);
+    Logs.debug (fun m -> m "find single: %s\n" (show curr));
 
     if BatSet.mem curr vis 
     then vis, []
@@ -159,7 +161,7 @@ let find_equalities subs =
     function 
     | [] | [_]     -> subs 
     | x1::x2::rest -> 
-      printf "adding equality: %s %s\n" (show x1) (show x2);
+      Logs.debug (fun m -> m "adding equality: %s %s\n" (show x1) (show x2));
       add_subs (add_equality x1 x2 subs) (x2::rest) in 
 
   let rec merge subs = 
@@ -178,12 +180,12 @@ let find_equalities subs =
   |> BatList.of_enum
   |> List.fold ~init:subs ~f:(
       fun subs curr -> 
-        printf "finding for: %s\n" (show curr);
+        Logs.debug (fun m -> m "finding for: %s\n" (show curr));
 
         let equal = find_single BatSet.empty curr |> snd in 
-        printf "got equal:\n";
-        List.iter equal (show %> printf "%s\n");
-        printf "end\n";
+        Logs.debug (fun m -> m "got equal:\n");
+        List.iter equal (show %> fun s -> Logs.debug (fun m -> m "%s\n" s));
+        Logs.debug (fun m -> m "end\n");
         merge subs equal
     )
 
@@ -207,7 +209,7 @@ let make_mostly_same ?(initial_sets) subs t =
     | None      -> ref BatMap.empty in  
 
   let rec find t =
-    printf "u-find: %s\n" (show t);
+    Logs.debug (fun m -> m "u-find: %s\n" (show t));
 
     let f = BatMap.find_default t t !sets in 
     if t <> f 
@@ -232,9 +234,9 @@ let make_mostly_same ?(initial_sets) subs t =
     | Fun ts -> Fun (List.map ts make)
     | other  -> find other in 
 
-  printf "initial: %s\n" (show t);
+  Logs.debug (fun m -> m "initial: %s\n" (show t));
   let res = make t |> make in 
-  printf "simplified: %s\n" (show res);
+  Logs.debug (fun m -> m "simplified: %s\n" (show res));
   !sets, res
 
 let rec find_conc ?(find_eqs=false) subs curr =
@@ -246,7 +248,7 @@ let rec find_conc ?(find_eqs=false) subs curr =
     else subs |> shrink in 
 
   let res_subs = ref subs in 
-  printf "--------\n";
+  Logs.debug (fun m -> m "--------\n");
 
   let vis = ref BatMap.empty in 
 
@@ -266,17 +268,20 @@ let rec find_conc ?(find_eqs=false) subs curr =
   and find funs prev curr : _ option =
     if not (is_generic curr)
     then (
-      List.iter funs (show %> printf "one of funs: %s\n");
+      List.iter funs (show %> 
+        fun s -> Logs.debug (fun m -> m "one of funs: %s\n" s));
       
       vis := 
         List.fold funs ~init:!vis 
           ~f:(fun m f -> BatMap.add f (Some curr) m);
 
-      printf "found: %s\n" (show curr);
+      Logs.debug (fun m -> m "found: %s\n" (show curr));
 
       BatMap.iter (fun k -> 
-        function Some v -> printf "vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "vis %s -> none\n" (show k)) !vis;
+        function Some v -> 
+                Logs.debug (fun m -> m "vis %s -> some %s\n" (show k) (show v)) 
+               | None   -> 
+                Logs.debug (fun m -> m "vis %s -> none\n" (show k))) !vis;
 
       vis := (match prev with Some prev -> BatMap.add prev (Some curr) !vis 
                            | None      -> !vis);
@@ -287,10 +292,13 @@ let rec find_conc ?(find_eqs=false) subs curr =
     then 
       begin 
 
-      printf "curr A: %s\n" (show curr);
+      Logs.debug (fun m -> m "curr A: %s\n" (show curr));
+
       BatMap.iter (fun k -> 
-        function Some v -> printf "s vis %s -> some %s\n" (show k) (show v) 
-               | None   -> printf "s vis %s -> none\n" (show k)) !vis;
+        function Some v -> Logs.debug (fun m -> 
+                              m "s vis %s -> some %s\n" (show k) (show v))
+               | None   -> Logs.debug (fun m -> 
+                              m "s vis %s -> none\n" (show k))) !vis;
 
       match BatMap.find curr !vis with 
       | Some _ as res -> res 
@@ -302,7 +310,7 @@ let rec find_conc ?(find_eqs=false) subs curr =
       end
     else 
       begin 
-      printf "find: %s\n" (show curr);
+      Logs.debug (fun m -> m "find: %s\n" (show curr));
 
       vis := BatMap.add curr None !vis;
 
@@ -447,7 +455,8 @@ let rec apply (env : TAD.environment) fn_t arg_ts =
     with 
     | []   -> no_substitution fn_t
     | subs -> 
-      show__substitutions subs |> printf "adding subs: %s\n";
+      show__substitutions subs 
+      |> fun s -> Logs.debug (fun m -> m "adding subs: %s\n" s);
 
       (* let t = List.find subs (fst %> (=) fn_t) 
               |> Option.map ~f:snd |> Option.value ~default:fn_t in  *)
