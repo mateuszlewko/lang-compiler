@@ -1478,6 +1478,13 @@ jeśli tak to definicja funkcji jest aktualizowana, jeśli nie to typ pozostaje
 ogólny. Graf równości typów jest także używany w celu znalezienia konkretnych 
 typów przy wywoływaniu polimorficznej funkcji (dzieję się to w fazie 
 generowania kodu). 
+
+\textbf{Uwaga.} Przy wywoływaniu polimorficznej funkcji, kompilator 
+musi być w stanie ukonkretnić wszystkie typy ogólne. Typ argumentu może pozostać 
+nieukonkretniony, jeśli argument nie będzie używany w ciele funkcji. W takim 
+przypadku kompilator zwróci błąd, bo nie będzie w stanie wygenerować kodu dla 
+funkcji z polimorficznym argumentem (już po przeprowadzeniu monomorfizacji).
+
 % TODO: O optymalizacji z union finda.
 
 \section{Klasy typów}
