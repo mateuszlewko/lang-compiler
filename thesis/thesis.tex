@@ -52,20 +52,26 @@ z wykorzystaniem infrastruktury LLVM }
 \englishtitle   
 {An implementation of a ML-family functional language 
 \newline using the LLVM compiler infrastructure}
-\polishabstract { 
+\polishabstract {
+Tematem niniejszej pracy jest eksperymentalna implementacja modelowego języka 
+funkcyjnego \textit{MonoML}, która zapewnienia efektywną obsługę częściowej 
+aplikacji funkcji i polimorfizmu parametrycznego przy jednoczesnym wsparciu dla
+\textit{ad--hoc} polimorfizmu w postaci klas typów.
 Popularne kompilatory języków funkcyjnych z rodziny ML często charakteryzują się 
 podobnymi kompromisami przy implementacji częściowej aplikacji i polimorfizmu 
 parametrycznego. Zazwyczaj wymagają jednorodnej reprezentacji danych, więc 
 opakowują wszystkie polimorficzne argumenty we wskaźnik. 
-Częścią tej pracy jest implementacja 
+Głównym celem tej pracy jest zastosowanie monomorfizacji w procesie kompilacji 
+języka MonoML, co pozwala na uniknięcie jednorodnej reprezentacji danych.
+% Częścią tej pracy jest implementacja 
 % W swojej pracy przedstawię // Czas przyszły - źle
 % implementację 
-kompilatora języka funkcyjnego \textit{MonoML},
-w której dzięki monomorfizacji unikam jednorodnej reprezentacji danych.
+% kompilatora języka funkcyjnego \textit{MonoML},
+% w której dzięki monomorfizacji unikam jednorodnej reprezentacji danych.
 % w której unikam jednorodnej 
 % reprezentacji danych przez wskaźnik dzięki monomorfizacji. 
                             %   // związany z implementacją 
-Zmniejszając narzut pamięciowy związany z implementacją funkcji polimorficznych,
+Zmniejszając narzut czasowy związany z implementacją funkcji polimorficznych,
 decyduję się na zwiększenie rozmiaru wygenerowanego programu.
 Moja implementacja częściowej aplikacji, choć bazowana na popularnym modelu 
 \textit{push/enter}, radzi sobie z problemem manualnego zarządzania stosem.
@@ -133,7 +139,6 @@ allows us to statically choose an appropriate instance for each class.
 %%%%% POCZĄTEK ZASADNICZEGO TEKSTU PRACY
 
 \chapter{Wprowadzenie}
-
 Pierwsze prace nad językiem ML zaczął Robin Milner na początku lat 70. W~1984, 
 dzięki jego inicjatywie, powstał Standard ML --- standaryzowana wersja języka 
 ML. Już wtedy zawierał m.in. rozwijanie funkcji, dopasowanie do wzorca, 
@@ -160,11 +165,17 @@ bibliotek.
 Języki z rodziny ML zazwyczaj zawierają skomplikowany system modułów, jako 
 główną cechę pozwalającą na modularyzację pisanych w nich programów.
 \textit{Klasy typów}, choć spopularyzowane przez Haskella, pojawiają
-się w nowy językach ogólnego zastosowania. Są prostsze w implementacji
+się w nowych językach ogólnego zastosowania. Są prostsze w implementacji
 i użyciu niż system modułów oraz umożliwiają pisanie skomplikowanych i modularnych 
 programów, bez duplikowania kodu. Mimo to nieznany jest żaden 
 popularny język z rodziny ML zawierający klasy typów, dlatego zdecydowałem się je 
 zaimplementować w MonoMLu.
+
+W Rozdziale \textit{Wprowadzenie} przedstawię dokładniej cechy języków funkcyjnych, 
+które zdecydowałem się zaimplementować oraz omówię czym jest infrastruktura LLVM. 
+Rozdział poświęcony językowi MonoML zawiera jego składnię i semantykę oraz 
+fragmenty przykładowych kodów. W Rozdziale \textit{Kompilator} w szczegółach
+prezentuję, w jaki sposób zaimplementowałem najistotniejsze cechy języka.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
 
@@ -416,7 +427,7 @@ instance Eq Bool where
   l /= r = not (l == r)
 \end{lstlisting}
 
-\chapter{Język \textit{MonoML}}
+\chapter{Język MonoML}
 
 \section{Inspiracja}
 Składnia języka \textit{MonoML} jest w większości zapożyczona z języka F\#, należącego
@@ -789,7 +800,7 @@ przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem
 systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
 Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
 modułów oraz deklaracje funkcji zewnętrznych. Nazwa modułu musi się zaczynać 
-z wielkiej litery. 
+wielką litery. 
 
 Otwarcie modułu powoduje wprowadzenie zawartych w nim symboli do 
 lokalnej przestrzeni nazw. Przykład modułów z definicjami 
@@ -1675,7 +1686,7 @@ jest to standardowa cecha wielu języków i istnieją opisy jej implementacji
 w części z nich, to cele, które postawiłem, zaowocowały odmiennym rozwiązaniem.
 
 Drugim celem projektu było wprowadzenie klas typów do języka z rodziny ML. 
-Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. Te proste
+Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. To proste
 rozszerzenie języka znacznie zwiększyło jego możliwości. Pozwoliło na 
 pisanie modularnych funkcji oraz abstrakcję funkcjonalności od reprezentacji 
 danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
