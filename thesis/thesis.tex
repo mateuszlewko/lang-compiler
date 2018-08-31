@@ -8,6 +8,7 @@
 \usepackage{listings}
 \usepackage[epsilon]{backnaur}
 \usepackage{url}
+\usepackage{caption}
 \usepackage[numbers,square]{natbib}
 
 % \usepackage{tikz}
@@ -84,6 +85,9 @@ stosowanego systemu modułów w większości języków z rodziny ML.
 Monomorfizacja funkcji pozwala na statyczne 
 wybranie odpowiednich instancji klasy. 
 }
+
+% Main goal of this thesis is experimental compiler of 
+% functional programming language --- \textit{MonoML}, with effective
 \englishabstract{Popular compilers for ML-family functional programming 
 languages, often made similiar trade-offs when implementing partial aplication
 and parametric polimorphism. They usually require uniform type representation 
@@ -176,6 +180,8 @@ które zdecydowałem się zaimplementować oraz omówię czym jest infrastruktu
 Rozdział poświęcony językowi MonoML zawiera jego składnię i semantykę oraz 
 fragmenty przykładowych kodów. W Rozdziale \textit{Kompilator} w szczegółach
 prezentuję, w jaki sposób zaimplementowałem najistotniejsze cechy języka.
+W Rozdziale \textit{Testy wydajnościowe} opisałem testowanie wydajności MonoMLa
+na tle innych języków, oraz pokazałem narzut opakowywania argumentów we wskaźnik.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
 
@@ -1675,9 +1681,233 @@ korzysta MLton \cite{okmij}.
 
 % 3. Jak zostały zaimplementowane, dlaczego tak
 
+\chapter{Testy wydajnościowe}
+
+W celu sprawdzenia czy zastosowanie monomorfizacji faktycznie pozwala na 
+zmniejszenie narzutu czasowego, związanego z częściową aplikacją, zdecydowałem 
+się przeprowadzić testy wydajnościowe. Test ma na celu porównanie czasu wykonania 
+programu wykorzystującego funkcję polimorficzną z czasem wykonania 
+podobnego programu z monomorficzną wersją tej funkcji. Testowana funkcja musi 
+być na tyle prosta, aby to process wywoływania funkcja i przekazywania 
+argumentów zajmował większość czasu wykonania programu. 
+
+\section{Sposób testowania}
+Testy zostaną przeprowadzone z użyciem narzędzia \textit{hyperfine}\cite{hyperfine}. 
+Pozwala ono na uruchomienie wybranego programu wielokrotnie. 
+Automatycznie oblicza średni czas działania programu i odchylenie standardowe.
+Uruchamia także na początku wybrane programy, bez mierzenia czasu, aby zminimalizować 
+wpływ pamięci podręcznej.
+
+W tym przypadku testowana 
+funkcja będzie rekurencyjnie obliczała $n * change + init$, gdzie $n$, $change$ i $init$ 
+to parametry wywołania będące liczbami całkowitymi. Parametr $n$ będzie określał 
+liczbę wywołań funkcji. Kod testowanej funkcji:
+\begin{lstlisting}[frame=lines]
+let rec sumPoly n (curr : 'a) (x : 'a) : 'a = 
+    if n = 0 then curr 
+    else sumPoly (n - 1) (add curr x) x 
+\end{lstlisting}
+Aby mieć pewność, że testowana funkcja jest rzeczywiście traktowana jako 
+polimorficzna, nie użyłem wbudowanego operator $+$ obsługującego jedynie typ 
+\texttt{int}. Dodałem klasę typów \texttt{Num} z polimorficzną funkcją 
+\texttt{add}, oraz instancję klasy dla typu \texttt{int}:
+\begin{lstlisting}[frame=lines]
+class Num 'a where 
+    add : 'a -> 'a -> 'a 
+
+instance Num int where 
+    let add x y = x + y 
+\end{lstlisting}
+Łatwo można dodać kolejną instancję klasy \texttt{Num} dla innego typu i sprawdzić, 
+że funkcja \texttt{sumPoly} działa dla nowego typu bez żadnych zmian w jej 
+implementacji:
+\begin{lstlisting}[frame=lines]
+type pair = { first : int; second : int }
+
+instance Num pair where 
+    let add (x : pair) (y : pair) = 
+        { x with first = x.first + y.first
+                 second = x.second + y.second
+        }
+
+let _ = 
+    let init = { first = 12; second = 1}
+    let change = { first = 2; second = 3} 
+    let res = sumPoly 10000 init change 
+    printn_int (res.first) 
+\end{lstlisting}
+
+Dla porównania monomorficzna wersja funkcji \texttt{sumPoly}: 
+\begin{lstlisting}[frame=lines]
+let rec sumMono n (curr : int) (x : int) = 
+    if n = 0 then curr 
+    else sumMono (n - 1) (add curr x) x 
+\end{lstlisting}
+
+Jako że obie funkcje chcę wywołać $10^8$ razy, a w obecnej implementacji
+MonoMLa nie jest wykonywana optymalizacja rekursji ogonowej (ang. tail call 
+recursion), wystąpiłoby przepełnienie stosu. Dlatego testowane funkcje 
+\texttt{sumMono} i \texttt{sumPoly} są jednorazowo uruchamiane dla parametru 
+$n$ równego $10^4$. Jeśli takich uruchomień będzie $10^4$ to sumarycznie
+testowana funkcja zostanie uruchomiona $10^8$ razy. Testowana funkcja została 
+opakowana w funkcje \texttt{iter}:
+\begin{lstlisting}[frame=lines]
+let rec iter n count init change = 
+    if n > 0
+    then 
+        sumPoly count init change
+        iter (n - 1) count init change
+    else sumPoly count init change
+\end{lstlisting}
+Teraz głębokość rekursji wywołań obu funkcji nie przekroczy $10^4$, nie powodując 
+przepełnienia stosu. Pełna implementacja testowanych funkcji znajduje się w plikach:
+\texttt{benchmarks/MonoML/sumMono.la} i \texttt{benchmarks/MonoML/sumPoly.la}.
+
+\section{Porównanie z innymi językami}
+
+W celu sprawdzenia korzyści wynikających z przekazywania prostych typów danych 
+przez wartość zamiast przez wskaźnik, postanowiłem porównać czas wykonania 
+testowanej funkcji zaimplementowanej w innych językach. Dla trzech wybranych 
+języków: Haskell, Standard ML i Java, porównałem czas działania testowanej funkcji 
+w wersji polimorficznej, dla której argumenty są opakowane i w wersji wyspecjalizowanej 
+dla typu int. Czas działania tej samej funkcji w innych językach daje także pewną 
+orientację o tym jak optymalną implementację otrzymałem.
+
+\subsection{Haskell}
+
+Haskell udostępnia typy prymitywne, które są reprezentowane przez wartość. Nie 
+mogą być one użyte w funkcji polimorficznej oraz są gorliwe. Ukonkretniona 
+wersja funkcji \texttt{sum} w Haskellu, dla odpakowanego typu \texttt{Int\#}, 
+wygląda następująco:
+\begin{lstlisting}[frame=lines]
+sumMono :: Int# -> Int# -> Int# -> Int# 
+sumMono 0# curr _ = curr 
+sumMono n curr x = sumMono (n -# 1#) (curr +# x) x
+\end{lstlisting}
+Konieczne jest używanie specjalnych operatorów arytmetycznych \texttt{-\#}
+i \texttt{+\#}. 
+
+W wersji polimorficzną musiałem się jedynie upewnić się, że wywołania rekurencyjne 
+będą wykonywane gorliwie, aby możliwie dokładnie zmierzyć koszt opakowywania 
+argumentów. Zastosowałem operator gorliwej aplikacji \texttt{\$!}:
+
+\begin{lstlisting}[frame=lines]
+sumPoly :: Num a => Int -> a ->  a -> a
+sumPoly 0 curr _ = curr 
+sumPoly n curr x = sumPoly (n - 1) (curr + x) $! x
+\end{lstlisting}
+
+Implementacja w Haskellu znajduje się w plikach \newline
+\texttt{benchmarks/Haskell/sumMono.hs} i \texttt{benchmarks/Haskell/sumPoly.hs}.
+
+\subsection{Standard ML}
+
+Do kompilacji programu w Standard MLu użyłem dwóch kompilatorów, MLton i SML/NJ.
+MLton wykonuje monomorfizację funkcji polimorficznych, a SML/NJ opakowuje we 
+wskaźnik nawet wyspecjalizowaną wersję funkcji dla typu int. Program skompilowany 
+przez MLton posłuży jako porównanie wersji monomorficznej.
+
+Kod w SMLu wygląda następująco:
+\begin{lstlisting}[frame=lines]
+fun sum add n curr x =
+  if n = 0 
+  then curr 
+  else sum add (n - 1) (add (curr, x)) x
+
+val _ = 
+  print (Int.toString (
+    sum (fn (x:int, y:int) => x + y) 100000000 12 2));
+\end{lstlisting}
+Pełna implementacja dla obu kompilatorów znajduje się w plikach \newline
+\texttt{benchmarks/SmlNJ/sumPoly.sml} i \texttt{benchmarks/MLton/sumMono.sml}.
+
+\subsection{Java}
+
+Polimorfizm parametryczny jest także obecny w Javie (funkcje generyczne). 
+Argumenty funkcji polimorficznych są automatycznie opakowywane we wskaźnik. 
+Jednocześnie istnieje możliwość zaimplementowania wyspecjalizowanych wersji 
+funkcji, które mogą przyjmować prymitywne typy danych przez wartość. Porównałem
+czas działania funkcji generycznej i wyspecjalizowanej dla argumentów o tym samym 
+typie. 
+
+Kod programu w Javie: 
+\begin{lstlisting}[frame=lines]
+private static int sumMono(int n, int curr, int change) {
+    while (n-- > 0) {
+        curr += change;
+    }
+
+    return curr;
+}
+
+private static <T> T sumPoly(BiFunction<T, T, T> add, 
+                             int n, 
+                             T curr, 
+                             T change) {
+    while (n-- > 0) {
+        curr = add.apply(curr, change);
+    }
+
+    return curr;
+}
+\end{lstlisting}
+Całość znajduje się w pliku \texttt{benchmarks/Java/Sum.java}.
+
+% \section{Oczekiwany wynik eksperymentu}
+
+% Spodziew
+
+\section{Otrzymane wyniki}
+
+Każdy program wywoływał testowaną funkcje $10^8$ razy.
+Po wielokrotnym uruchomieniu każdego programu otrzymałem średnią z czasu wywołań
+oraz odchylenie standardowe. Wyniki są przedstawione na Tablicy $4.1$.
+Podane czasy działania są w milisekundach.
+W ostatniej kolumnie podaję współczynnik czasu działania danej implementacji 
+względem polimorficznej wersji w MonoMLu.
+\pagebreak
+
+% \begin{center}
+\begin{table}
+\caption{Wyniki testów wydajnościowych}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Implementacja & Średni czas & $\sigma$ & Współczynnik \\ 
+ \hline\hline
+ Haskell (GHC)        & Wyspecjalizowana & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Polimorficzna    & 696.8 & 63.2 & 1.86 \\ 
+%  \hline
+ Java                 & Wyspecjalizowana & 140.1 & 65.7 & 0.37 \\ 
+ Java                 & Polimorficzna    & 564.9 & 24.8 & 1.50 \\ 
+%  \hline
+ SML (MLton)  & Wyspecjalizowana & 151.0 & 13.7 & 0.40 \\ 
+ SML (SML/NJ) & Polimorficzna    & 357.6 & 14.4 & 0.95 \\ 
+%  \hline
+ Mono ML              & Wyspecjalizowana & 327.0 & 52.3 & 0.88 \\ 
+ Mono ML              & Polimorficzna    & 375.4 & 46.9 & 1.00 \\ 
+ \hline
+\end{tabular}
+\end{table}
+% \end{center}
+
 \chapter{Podsumowanie}
 
 \section{Wnioski}
+
+Z wyników widocznych na Tablicy $4.1$ jasno wynika, że w przypadku gdy 
+argumenty funkcji były opakowywane we wskaźnik, istotnie wydłużał się czas 
+działania programu. Największa różnica wystąpiła dla Haskella --- najszybsza była 
+wyspecjalizowana wersja testowanej funkcji w Haskellu. Najpewniej wynika to 
+ze złożonych optymalizacji, które wykonuje kompilator GHC, wiedząc, że
+funkcja jest wywoływana gorliwie dla typu int. Jedynie w MonoMLu różnica między 
+czasem działania funkcji polimorficznej i wyspecjalizowanej była znikoma.
+Choć implementacja funkcji polimorficznych w MonoMLu nie okazała się najszybsza, 
+to nie odstaje od popularnych kompilatorów. Dodatkowo dzięki zastosowaniu 
+monomorfizacji, narzut czasowy związany z funkcjami polimorficznymi jest 
+minimalny. Oznacza to, że dowolne optymalizacje zastosowane do wyspecjalizowanych
+funkcji, będą mogły być automatycznie użyte przez funkcje polimorficzne.
+
 Najtrudniejszym elementem przy tworzeniu kompilatora dla języka funkcyjnego 
 okazała się efektywna implementacja częściowej aplikacji. Główną trudnością
 było spełnienie założeń o optymalnym przekazywaniu zmiennych i unikaniu 
@@ -1690,6 +1920,8 @@ Zastosowanie monomorfizacji znacznie ułatwiło ich implementację. To proste
 rozszerzenie języka znacznie zwiększyło jego możliwości. Pozwoliło na 
 pisanie modularnych funkcji oraz abstrakcję funkcjonalności od reprezentacji 
 danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
+
+% \pagebreak
 
 \section{Dalsze prace}
 
@@ -1851,6 +2083,25 @@ obecnym folderze (tym, w którym znajduje się użytkownik). Zawiera on
 implementacje kilku funkcji bibliotecznych w C. Znajduje on się w 
 głównym folderze projektu \newline(\texttt{monoml-compiler}), dlatego 
 zalecanym jest kompilowanie z tego folderu.
+
+\subsection{Uruchomienie testów wydajnościowych}
+Kody programów użytych do testów wydajnościowych znajdują się w folderze 
+\texttt{benchmarks/}. W celu uruchomienia testów wydajnościowych należy najpierw 
+zainstalować następujące narzędzia i kompilatory:
+
+\begin{itemize}
+  \item \texttt{hyperfine: https://github.com/sharkdp/hyperfine}
+  \item \texttt{GHC: https://www.haskell.org/ghc/}
+  \item \texttt{SML/NJ: http://smlnj.org/}
+  \item \texttt{MLton: http://mlton.org/}
+  \item \texttt{Java: http://openjdk.java.net/} 
+\end{itemize}
+
+Testy wydajnościowe uruchamia się następującym poleceniem (w głównym folderze 
+projektu):
+\begin{lstlisting}[language=bash]
+$ make benchmark
+\end{lstlisting}
 
 \subsection{Przykładowe programy i testowanie}
 

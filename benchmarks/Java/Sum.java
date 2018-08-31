@@ -1,4 +1,5 @@
 import java.util.function.BiFunction;
+// package benchmarks.Java;
 
 public class Sum {
     private static int sumMono(int n, int curr, int change) {

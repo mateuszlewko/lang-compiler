@@ -4,4 +4,3 @@ sumPoly n curr x = sumPoly (n - 1) (curr + x) $! x
 
 main = do 
   putStrLn (show (sumPoly 100000000 12 2))
-
