@@ -1860,8 +1860,8 @@ Całość znajduje się w pliku \texttt{benchmarks/Java/Sum.java}.
 \section{Otrzymane wyniki}
 
 Każdy program wywoływał testowaną funkcje $10^8$ razy.
-Po wielokrotnym uruchomieniu każdego programu otrzymałem średnią z czasu wywołań
-oraz odchylenie standardowe. Wyniki są przedstawione w Tablicy $4.1$.
+Po wielokrotnym uruchomieniu każdego programu otrzymałem średnią z czasów ich 
+wykonań oraz odchylenie standardowe. Wyniki są przedstawione w Tablicy $4.1$.
 Podane czasy działania są w milisekundach.
 W ostatniej kolumnie podaję współczynnik czasu działania danej implementacji 
 względem polimorficznej wersji w MonoMLu.
@@ -1927,7 +1927,7 @@ danych. Ponadto nie wprowadziły one żadnego narzutu pamięciowego i czasowego.
 
 Tworzenie kompilatorów jest obszernym i czasochłonnym zadaniem. Zdecydowałem 
 się pominąć pewne standardowe cechy języków funkcyjnych, aby lepiej skupić 
-się na celach projektu. W przypadku kontynuacji pracy na językiem \textit{MonoML}
+się na celach projektu. W przypadku kontynuacji pracy nad językiem \textit{MonoML}
 i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
 
 \begin{itemize}
@@ -1936,7 +1936,7 @@ i kompilatorem, naturalnym rozwinięciem byłby następujące elementy:
   Przy zastosowaniu monomorfizacji, ich implementacja jest łatwa. Komplikuje
   się jedynie inferencja typów. Może się okazać koniecznym obsłużenie słabych 
   polimorficznych typów \cite{weak_poly_ocaml}.
-  \item Wyrażenia lambda. Mogłyby być zrealizowane poprzez ich zamianę na 
+  \item Wyrażenia lambda. Mogłyby być zrealizowane poprzez zamianę ich na 
   globalne wyrażenia let o unikalnych nazwach. 
   \item Warianty \cite[Chapter 6]{real_ocaml}. Są bardzo popularną i użyteczną cechą 
   języków z rodziny ML. Dzięki nim można łatwo zaimplementować typy danych takie 
@@ -2126,7 +2126,7 @@ wyjścia z odpowiadającym plikiem o sufiksie \texttt{-expected-out.txt}.
   \item \texttt{High OLLVM}: Biblioteka opakowująca oficjalną bibliotekę do 
   generowania kodu LLVM IR w funkcyjny interfejs. Bazująca w przeważającej większości 
   na bibliotece \texttt{ollvm}: 
-  \texttt{https://github.com/OCamlPro/ollvm}
+  \texttt{https://github.com/OCamlPro/ollvm}.
   Ta zależność została dołączona wraz z kodem źródłowym kompilatora.
   \item \texttt{OCaml-parsing: https://github.com/smolkaj/ocaml-parsing}
   \item \texttt{Core: https://github.com/janestreet/core} 
@@ -2161,7 +2161,7 @@ Projekt znajduje się w folderze \texttt{monoml-compiler}.
   po parsowaniu.
   \item \texttt{compiler/codegen.ml} --- Zbiór funkcji odpowiedzialnych za 
   generowanie kodu.
-  \item \texttt{compiler/lang\_types\_def} --- Definicja typów reprezentujących 
+  \item \texttt{compiler/lang\_types\_def} --- Definicje typów reprezentujących 
   typy z MonoMLa.
   \item \texttt{compiler/lang\_types} --- Funkcje służące znalezieniu
   typu wyrażeń. Inferencja typów.
