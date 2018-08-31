@@ -1683,12 +1683,12 @@ korzysta MLton \cite{okmij}.
 
 \chapter{Testy wydajnościowe}
 
-W celu sprawdzenia czy zastosowanie monomorfizacji faktycznie pozwala na 
+W celu sprawdzenia, czy zastosowanie monomorfizacji faktycznie pozwala na 
 zmniejszenie narzutu czasowego, związanego z częściową aplikacją, zdecydowałem 
 się przeprowadzić testy wydajnościowe. Test ma na celu porównanie czasu wykonania 
 programu wykorzystującego funkcję polimorficzną z czasem wykonania 
 podobnego programu z monomorficzną wersją tej funkcji. Testowana funkcja musi 
-być na tyle prosta, aby to process wywoływania funkcja i przekazywania 
+być na tyle prosta, aby to proces wywoływania funkcji i przekazywania 
 argumentów zajmował większość czasu wykonania programu. 
 
 \section{Sposób testowania}
@@ -1710,7 +1710,7 @@ let rec sumPoly n (curr : 'a) (x : 'a) : 'a =
 Aby mieć pewność, że testowana funkcja jest rzeczywiście traktowana jako 
 polimorficzna, nie użyłem wbudowanego operator $+$ obsługującego jedynie typ 
 \texttt{int}. Dodałem klasę typów \texttt{Num} z polimorficzną funkcją 
-\texttt{add}, oraz instancję klasy dla typu \texttt{int}:
+\texttt{add} oraz instancję klasy dla typu \texttt{int}:
 \begin{lstlisting}[frame=lines]
 class Num 'a where 
     add : 'a -> 'a -> 'a 
@@ -1766,12 +1766,12 @@ przepełnienia stosu. Pełna implementacja testowanych funkcji znajduje się w p
 \section{Porównanie z innymi językami}
 
 W celu sprawdzenia korzyści wynikających z przekazywania prostych typów danych 
-przez wartość zamiast przez wskaźnik, postanowiłem porównać czas wykonania 
+przez wartość zamiast przez wskaźnik postanowiłem porównać czas wykonania 
 testowanej funkcji zaimplementowanej w innych językach. Dla trzech wybranych 
 języków: Haskell, Standard ML i Java, porównałem czas działania testowanej funkcji 
 w wersji polimorficznej, dla której argumenty są opakowane i w wersji wyspecjalizowanej 
 dla typu int. Czas działania tej samej funkcji w innych językach daje także pewną 
-orientację o tym jak optymalną implementację otrzymałem.
+orientację o tym, jak optymalną implementację otrzymałem.
 
 \subsection{Haskell}
 
@@ -1787,7 +1787,7 @@ sumMono n curr x = sumMono (n -# 1#) (curr +# x) x
 Konieczne jest używanie specjalnych operatorów arytmetycznych \texttt{-\#}
 i \texttt{+\#}. 
 
-W wersji polimorficzną musiałem się jedynie upewnić się, że wywołania rekurencyjne 
+W wersji polimorficznej musiałem jedynie upewnić się, że wywołania rekurencyjne 
 będą wykonywane gorliwie, aby możliwie dokładnie zmierzyć koszt opakowywania 
 argumentów. Zastosowałem operator gorliwej aplikacji \texttt{\$!}:
 
@@ -1841,9 +1841,9 @@ private static int sumMono(int n, int curr, int change) {
 }
 
 private static <T> T sumPoly(BiFunction<T, T, T> add, 
-                             int n, 
-                             T curr, 
-                             T change) {
+                                int n, 
+                                T curr, 
+                                T change) {
     while (n-- > 0) {
         curr = add.apply(curr, change);
     }
@@ -1861,13 +1861,13 @@ Całość znajduje się w pliku \texttt{benchmarks/Java/Sum.java}.
 
 Każdy program wywoływał testowaną funkcje $10^8$ razy.
 Po wielokrotnym uruchomieniu każdego programu otrzymałem średnią z czasu wywołań
-oraz odchylenie standardowe. Wyniki są przedstawione na Tablicy $4.1$.
+oraz odchylenie standardowe. Wyniki są przedstawione w Tablicy $4.1$.
 Podane czasy działania są w milisekundach.
 W ostatniej kolumnie podaję współczynnik czasu działania danej implementacji 
 względem polimorficznej wersji w MonoMLu.
 \pagebreak
 
-% \begin{center}
+\begin{center}
 \begin{table}
 \caption{Wyniki testów wydajnościowych}
 \begin{tabular}{|| l | l | r | r | r ||} 
@@ -1889,7 +1889,7 @@ względem polimorficznej wersji w MonoMLu.
  \hline
 \end{tabular}
 \end{table}
-% \end{center}
+\end{center}
 
 \chapter{Podsumowanie}
 
