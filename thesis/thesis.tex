@@ -177,11 +177,11 @@ zaimplementować w MonoMLu.
 
 W Rozdziale \textit{Wprowadzenie} przedstawię dokładniej cechy języków funkcyjnych, 
 które zdecydowałem się zaimplementować oraz omówię czym jest infrastruktura LLVM. 
-Rozdział poświęcony językowi MonoML zawiera jego składnię i semantykę oraz 
+Rozdział poświęcony językowi MonoML zawiera opis jego składni i semantyki oraz 
 fragmenty przykładowych kodów. W Rozdziale \textit{Kompilator} w szczegółach
 prezentuję, w jaki sposób zaimplementowałem najistotniejsze cechy języka.
 W Rozdziale \textit{Testy wydajnościowe} opisałem testowanie wydajności MonoMLa
-na tle innych języków, oraz pokazałem narzut opakowywania argumentów we wskaźnik.
+na tle innych języków oraz pokazałem narzut opakowywania argumentów we wskaźnik.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
 
@@ -228,11 +228,9 @@ językiem stworzonym na potrzeby pisania
 kompilatorów. Przykładowy program napisany w LLVM IR:
 
 \renewcommand{\thelstlisting}{\thesection\arabic{lstlisting}}
-
 % \lstset{language=llvm}
 \begin{lstlisting}[frame=lines]
 @.str = internal constant [14 x i8] c"hello, world\0A\00"
-
 declare i32 @printf(i8*, ...)
 
 define i32 @main(i32 %argc, i8** %argv) nounwind {
@@ -266,18 +264,17 @@ maszynowego.
 
 \section{Let-polimorfizm}
 
-Istnieją funkcje, których implementacja jest taka sama niezależenie od typu dla
-którego ją aplikujemy. Przykładowo, funkcja obliczają długość generycznej 
+Istnieją funkcje, których implementacja jest taka sama niezależenie od typu, dla
+którego ją aplikujemy. Przykładowo funkcja obliczająca długość generycznej
 listy nie zależy od typu elementów, które się w niej znajdują. 
-Funkcja $map :: (a \rightarrow b) \rightarrow [a] \rightarrow [b]$, 
+Funkcja $map :: (a \rightarrow b) \rightarrow [a] \rightarrow [b]$
 transformująca zawartość listy 
 z użyciem podanej funkcji mapującej, także nie zależy od zawartości listy. Nie 
 oznacza to jednak, że podana funkcja mapująca i lista mogą mieć dowolny typ. 
 Funkcja mapująca $(a \rightarrow b)$ musi przyjmować taki sam typ, jaki 
-znajduje się w liście. W statycznie typowanym języku, kompilator, musi mieć 
+znajduje się w liście. W statycznie typowanym języku kompilator musi mieć 
 pewność, że taki warunek zachodzi. Aby uniknąć powielania kodu, w większości 
-języków funkcyjnych 
-występuje let polimorfizm. 
+języków funkcyjnych występuje let polimorfizm. 
 
 Dzięki let polimorfizmowi w definicji funkcji dany argument może 
 mieć ogólny typ, jeśli nie został on ukonkretniony w jej ciele.
@@ -297,7 +294,7 @@ dla funkcji $f: (A \times B \times C) \rightarrow D$ o arności $3$,
 po częściowym zaaplikowaniu jej do pierwszego 
 argumentu $a : A$ otrzymujemy funkcję $g : (B \times C) \rightarrow D$ o arność $2$.
 Formalnie, w trakcie procesu częściowej aplikacji,
-funkcja $f$ musiała zostać zamieniona na funkcję 
+funkcja $f$ musiała zostać zamieniona na funkcję o typie
 $A \rightarrow (B \times C) \rightarrow D$, aby następnie móc zaaplikować do niej 
 argument $a : A$. Wartość $a$ musi być zapamiętana w środowisku nowo powstałej 
 funkcji $g$.
@@ -308,11 +305,11 @@ dla dowolnego $b : B$ i $c : C$  musi zachodzić: $g(b, c) = f(a, b, c)$.
 % argumenty. 
 
 Częściowa aplikacja jest spotykana nie tylko w językach funkcyjnych. 
-Przykładowo, biblioteka standardowa języka C++ dostarcza funkcję
-$bind$ \cite{cpp_bind}, która pozwala na zaaplikowanie części argumentów,
+Przykładowo biblioteka standardowa języka C++ dostarcza funkcję
+$bind$ \cite{cpp_bind}, która pozwala na zaaplikowanie części argumentów
 w dowolnej kolejności. 
 
-Częściową aplikacje można osiągnąć poprzez rozwinięcie funkcji (ang. currying) 
+Częściową aplikację można osiągnąć poprzez rozwinięcie funkcji (ang. currying) 
 do wielu funkcji jednoargumentowych. Funkcja $f$ z powyższego przykładu 
 w rozwiniętej
 formie ma typ $f : A \rightarrow B \rightarrow C \rightarrow D$. Funkcje w 
@@ -342,11 +339,11 @@ print_int (add 3 12)
 \end{lstlisting}
 
 Funkcja \texttt{add} w języku w OCaml jest już w postaci rozwiniętej, więc jej 
-deklaracja i wywołanie mają bardziej atrakcyjną formę, niż w poprzednim 
+deklaracja i wywołanie mają bardziej atrakcyjną formę niż w poprzednim 
 przykładzie. Dlatego zdecydowałem się ją zaimplementować.
 
 W praktyce taka metoda realizacji częściowej aplikacji, jak pokazałem na 
-przykładzie Javascriptu, byłaby niepotrzebnie nieefektywna. Bardziej optymalny,
+przykładzie Javascriptu, byłaby niepotrzebnie nieefektywna. Efektywniejszy,
 ale też i złożony sposób obsługi aplikacji częściowej, który zastosowałem w tym 
 kompilatorze, zaprezentuję w sekcji $3.4$.
 
@@ -390,7 +387,7 @@ arytmetycznych i równości. Od tego czasu
 znaleziono dla nich więcej zastosowań w różnych językach programowania. W języku
 Haskell, poza tym, że umożliwiają użycie przeładowanych funkcji i definiowania 
 funkcjonalności wspólnej dla wielu typów (interfejsów), okazały się niezbędne 
-do implementacji Monad. W języku systemowym Rust, odpowiednikiem klas typów są
+do implementacji Monad. W języku systemowym Rust odpowiednikiem klas typów są
 \textit{cechy} (ang. trait). W podstawowych użyciach nie różnią się od klas typów, ale 
 nie pozwalają na implementacje polimorfizmu wyższych rzędów 
 \cite{no_hkt_in_rust} (ang. 
@@ -541,7 +538,7 @@ Wyrażenia arytmetyczne i logiczne mają taką samą składnię i semantykę
 jak w pozostałych językach z rodziny ML. Obsługiwane są operatory $\$\$$, 
 $||$, $=$, $+$, $-$, $*$, $/$, oraz pozostałe operatory porównywania. 
 Operatory logiczne wymagają operandów o typie 
-bool lub int i zwracają typ bool, operatory arytmetyczne typów int. 
+bool lub int i zwracają typ bool, a operatory arytmetyczne wymagają typów int. 
 Operatory porównywania 
 sprawdzają równość fizyczną zmiennych o tym samym typie.
 Poniższy listing prezentuje gramatykę wyrażeń arytmetycznych i logicznych.
@@ -627,9 +624,9 @@ let _ =
 Możliwe jest także zdefiniowanie globalnych (ang. top level) funkcji wzajemnie 
 rekurencyjnych z użyciem słowa \textit{and}. Deklaracja pierwszej funkcji 
 musi zaczynać się od \textit{let rec}, a kolejne od \textit{and}. Wzajemnie 
-rekurencyjne funkcje mają dostęp do zdefiniowanych symboli ze swojej grupy,
-niezależnie ich kolejności. Nie można zdefiniować wzajemnie rekurencyjnych 
-wartości, każde wyrażenie musi definiować niezerową liczbę argumentów.
+rekurencyjne funkcje mają dostęp do symboli zdefiniowanych w swojej grupie,
+niezależnie od ich kolejności. Nie można zdefiniować wzajemnie rekurencyjnych 
+wartości --- każde wyrażenie let rec musi definiować niezerową liczbę argumentów.
 
 Poniższy fragment kodu zawiera dwie funkcje wzajemnie rekurencyjne.
 
@@ -720,7 +717,7 @@ Typ wyrażenia, które uaktualniana dane pole musi być taki sam jak typ pola
 w deklaracji rekordu.
 % Dlatego to
 % wyrażenie ma inną składnię niż ta znana z języków imperatywnych.
-Gramatyka uaktualniana rekordu:
+Gramatyka uaktualniania rekordu:
 \begin{lstlisting}[frame=lines]
 <record-update> ::=
       { <simple-exp>  with 
@@ -757,9 +754,9 @@ zdecydowałem się zapożyczyć z Haskella.
 
 \subsection{Deklaracja klasy}
 
-Deklaracja klasy została zaadoptowana z Haskella. Deklaracja 
+Deklaracja 
 definiuje typ ogólny, który może być użyty w definicji metod klasy.
-Metody klasy muszą być funkcjami, nie mogą być wartościami. Obecna implementacja
+Metody klasy muszą być funkcjami --- nie mogą być wartościami. Obecna implementacja
 nie wspiera metod klasy, które muszą być ewaluowane przy uruchomieniu programu, 
 ale nie ma przeszkód utrudniających ich dodanie.
 Poniższy fragment kodu prezentuje przykładowe deklaracje 
@@ -801,9 +798,9 @@ instance Print Vec where
 
 \section{Moduły}
 
-Moduły w MonoMLu spełniają takie zadanie jak te w F\# -- służą jako 
+Moduły w MonoMLu spełniają takie zadanie jak te w F\# --- służą jako 
 przestrzeń nazw dla związanych ze sobą definicji. Nie są odpowiednikiem 
-systemu dużo bardziej zaawansowanych modułów SMLa czy OCamla.
+dużo bardziej zaawansowanych modułów SMLa czy OCamla.
 Moduł zawiera: wyrażenia let, zagnieżdżone moduły, import innych 
 modułów oraz deklaracje funkcji zewnętrznych. Nazwa modułu musi się zaczynać 
 wielką litery. 
@@ -841,7 +838,7 @@ Tablice są ulotną strukturą danych. Na poziomie języka można
  stworzyć literał 
 tablicy. Zmiana i odczytanie komórki tablicy bądź utworzenie niezainicjalizowanej 
 tablicy odbywa się poprzez zewnętrzne funkcje zaimplementowane w C. 
-Tablice w MonoMLu są reprezentowane tak samo jak języku w C --- jako spójny
+Tablice w MonoMLu są reprezentowane tak samo, jak języku w C --- jako spójny
 ciąg w pamięci.
 
 Elementami literału tablicy mogą być literały liczbowe oddzielone średnikiem. 
@@ -919,8 +916,8 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   \item Następnie wykonywana jest transformacja drzewa składni, która:
 
   \begin{enumerate}
-    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka \textit{MonoML} (na późniejszym etapie, wyrażenia będą miał typ 
-    z \textit{LLVM IR}). 
+    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka MonoML (na późniejszym etapie, wyrażenia będą miał typ 
+    z LLVM IR). 
     \item Eliminuje zagnieżdżone wyrażenia \textit{let}.
     \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
     ich w pełni kwalifikowanych nazw (ang. fully qualified name).
@@ -936,7 +933,7 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   \path{monoml-compiler/compiler/codegen.ml}
 
   \item Konwersja drzewa wyrażeń LLVM IR na kod LLVM IR. Odbywa się to dzięki 
-  interfejsowi programistycznemu (ang. api), udostępnionym przez oficjalną 
+  interfejsowi programistycznemu (ang. api), udostępnionemu przez oficjalną 
   bibliotekę LLVM dla OCamla \cite{llvm_in_ocaml}.
 
 \end{enumerate}
@@ -971,13 +968,13 @@ Analiza wcięć w MonoMLu jest zbliżona do tej w Pythonie
 \cite{python_indentation}. Dla każdego wiersza
 na bieżąco jest obliczany numer kolumny pierwszego znaku (wcięcie). Długości 
 wcięć z poprzednich wierszy są trzymane na stosie. Na początku na stosie
-znajduję się wcięcie długości $0$. Gdy wcięcie w obecnym wierszu jest większe od 
-ostatniego na stosie, generowany jest token \textit{INDENT}, oznaczający 
+znajduje się wcięcie długości $0$. Gdy wcięcie w obecnym wierszu jest większe od 
+ostatniego na stosie, generowany jest token \textit{INDENT} oznaczający 
 początek wciętego bloku. Gdy wcięcie jest mniejsze od ostatniego na stosie, 
 wszystkie większe wcięcia są zdejmowane ze stosu i dla każdego zdjętego wcięcia 
 generowany jest token \textit{DEDENT}. Oznacza on koniec wciętego bloku. 
 Po zdjęciu 
-wszystkich większych wcięć, ostatnie wcięcie, które zostanie na stosie musi być 
+wszystkich większych wcięć, ostatnie wcięcie, które zostanie na stosie, musi być 
 równe wcięciu z obecnie przetwarzanego wiersza, a w szczególności może być równe $0$. 
 W przeciwnym 
 przypadku kod źródłowy jest źle wcięty i kompilator zwróci błąd.
@@ -999,13 +996,13 @@ ekspresywność składni w porównaniu do podobnych narzędzi takich jak \textit
 
 Jak wspomniałem we wprowadzeniu, generowanie wszystkich funkcji w rozwiniętej 
 formie (każda funkcja przyjmuje tylko jeden argument) jest nieoptymalne pod
-względem rozmiaru kodu jak i szybkości jego wykonania. Pomimo że aplikacja 
+względem rozmiaru kodu, jak i szybkości jego wykonania. Pomimo że aplikacja 
 częściowa jest bardzo przydatną cechą języków funkcyjnych, to często funkcje
 wywoływane są ze wszystkimi argumentami. W takich przypadkach chcielibyśmy 
-korzystać z wywołania funkcji, które jest tak szybkie jak w Caml. 
+korzystać z wywołania funkcji, które jest tak szybkie, jak w C. 
 W kompilatorze MonoMLa pracowałem nad rozwiązaniem, które w pozostałych 
 przypadkach korzystałoby z przekazywania argumentów funkcji przez rejestry i 
-pozwalałoby, na przekazywanie typów danych o różnych rozmiarach przez ich 
+pozwalałoby na przekazywanie typów danych, o różnych rozmiarach, przez ich 
 wartość (bez opakowywania we wskaźnik). 
 
 \subsection{Opis działania}
@@ -1240,7 +1237,7 @@ wejściowych. Oznacza to, że typ pola \texttt{fn} w języku C to
 \texttt{void ($\ast\ast$fn)()}, oraz że przed wywołaniem funkcji ze struktury,
 należy zdereferować (ang. dereference) wskaźnik. Wskaźnik na wołaną funkcją 
 musi być w każdym momencie programu aktualny --- musi odpowiadać liczbie 
-początkowych argumentów zapamiętanych w środowisku. Dlatego gdy 
+początkowych argumentów zapamiętanych w środowisku. Dlatego, gdy 
 funkcja jest aplikowana do kolejnych argumentów, wskaźnik jest zwiększany. 
 
 % \subsubsection{Funkcje wejściowe}
@@ -1464,7 +1461,7 @@ To czy do funkcji został przekazany wskaźnik, czy int
 przez wartość jest rozpoznawane na podstawie najniższego bitu, który jest 
 traktowany jak znacznik \cite[Chapter 20]{real_ocaml}.
 Jeśli wynosi $1$ to dana wartość jest intem.
-To rozwiązania pozwala na uniknięcie większości narzutu przy wykonywaniu 
+To rozwiązanie pozwala na uniknięcie większości narzutu przy wykonywaniu 
 operacji na typach prymitywnych, ale wiąże się z niestandardowym podejściem do 
 arytmetyki liczb i wciąż nie pozwala na przekazywanie przez wartość typów danych 
 większych niż słowo maszynowe. W związku ze wspominanymi wadami tego 
