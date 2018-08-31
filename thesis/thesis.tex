@@ -185,12 +185,14 @@ zaimplementować w MonoMLu.
 
 W dalszej części tego rozdziału przedstawię dokładniej cechy języków funkcyjnych, 
 które zdecydowałem się zaimplementować oraz omówię czym jest infrastruktura LLVM. 
-Drugi rozdział zawiera opis składni i semantyki języka MonoML oraz 
-fragmenty przykładowych kodów. W trzecim rozdziale w szczegółach
+Rozdział 2 zawiera opis składni i semantyki języka MonoML oraz 
+fragmenty przykładowych kodów. W rozdziale 3 w szczegółach
 prezentuję, w jaki sposób zaimplementowałem najistotniejsze cechy języka.
-W czwartym rozdziale opisałem testowanie wydajności MonoMLa
+W rozdziale 4 opisałem testowanie wydajności MonoMLa
 na tle innych języków oraz pokazałem narzut czasowy opakowywania argumentów 
-we wskaźnik.
+we wskaźnik. W rozdziale 5 zawarłem wnioski, które wysunąłem po zaimplementowaniu 
+kompilatora i przeprowadzeniu testów wydajnościowych. Instrukcja obsługi 
+wraz ze sposobem instalacji i potrzebnymi zależnościami znajduje się w rozdziale 6.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
 
@@ -465,7 +467,7 @@ Dokładniejszy opis
 sposobu parsowania składni bazującej na wcięciach znajduje się w rozdziale 
 \ref{wciecia_omowienie}. 
 
-\section{Podstawowe wyrażania}
+\section{Podstawowe wyrażenia}
 
 \subsection{Wyrażenia warunkowe}
 
@@ -703,7 +705,7 @@ Gramatyka literału rekordu:
 <field-lit> ::=
       <identifier} = <simple-exp> (<newline> | ; )
 \end{lstlisting}
-\pagebreak
+
 Przykładowe literały rekordu:
 
 \begin{lstlisting}[frame=lines]
@@ -857,7 +859,7 @@ kończy symbolem~$|]$.
 \textbf{Uwaga.} Dla wielowierszowego literału tablicy symbole rozpoczynający 
 $[|$ i kończący $|]$ muszą być w tej samej kolumnie.
 
-\pagebreak
+% \pagebreak
 Przykład jedno i wielo wierszowego literału:
 \begin{lstlisting}[frame=lines]
 let arr : int array = [| 1; 1; 2; 3; 5 |]
@@ -925,7 +927,8 @@ wyprodukowania pliku wykonywalnego, składa się z następujących etapów:
   \item Następnie wykonywana jest transformacja drzewa składni, która:
 
   \begin{enumerate}
-    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu jego typ z języka MonoML (na późniejszym etapie, wyrażenia będą miał typ 
+    \item Dzięki przeprowadzeniu inferencji typów, nadaje każdemu wyrażeniu 
+    jego typ z języka MonoML (na późniejszym etapie, wyrażenia będą miał typ 
     z LLVM IR). 
     \item Eliminuje zagnieżdżone wyrażenia \textit{let}.
     \item Eliminuje moduły oraz otwarcia modułów poprzez translacje symboli do 
@@ -991,7 +994,7 @@ przypadku kod źródłowy jest źle wcięty i kompilator zwróci błąd.
 \section{Parsowanie}
 
 Popularnym narzędziem do generowania parserów jest \textit{Menhir} 
-\cite{menhir}. Na podstawie podanej gramatyki \textit{LR(1)}, generuje kod OCamla, 
+\cite{menhir}. Na podstawie podanej gramatyki \textit{LR(1)} generuje kod OCamla, 
 który ją parsuje. Częściowo wspiera składnię \textit{EBNF}, m. in. operatory: $
 +$, $?$, $\ast$. Zdecydowałem się skorzystać z tego narzędzia ze względu na 
 łatwość użycia, możliwość interaktywnego debugowania gramatyki oraz 
@@ -1106,7 +1109,7 @@ zawierającą następujące pola:
   \item liczba bajtów w środowisku.
 \end{itemize}
 
-% \pagebreak
+% \pagebreak 
 Definicja takiej struktury w C wyglądałaby następująco.
 
 \begin{lstlisting}[frame=lines]
