@@ -88,14 +88,22 @@ wybranie odpowiednich instancji klasy.
 
 % Main goal of this thesis is experimental compiler of 
 % functional programming language --- \textit{MonoML}, with effective
-\englishabstract{Popular compilers for ML-family functional programming 
-languages, often made similiar trade-offs when implementing partial aplication
-and parametric polimorphism. They usually require uniform type representation 
-which leads to boxing of all polymorphic arguments. In this thesis I present 
-an implementation of a compiler for \textit{MonoML} --- 
-a functional programming language, 
-in which I choose to avoid uniform data representation by boxing. 
-Monomorphization allows to decrease memory overhead for polymorphic functions,
+\englishabstract{In this thesis I present an experimental compiler for 
+\textit{MonoML} --- a functional programming language with efficient 
+implementation of 
+partial application and parametric polymorphism while offering \textit{ad--hoc}
+polymorphism in a form of type classes. 
+Popular compilers for ML-family functional programming 
+languages, often made similar trade-offs when implementing partial application
+and parametric polymorphism. They usually require uniform type representation 
+which leads to boxing of all polymorphic arguments. 
+Main goal of this thesis is to apply monomorphization during compilation phase, 
+which allows to avoid uniform data representation.
+% In this thesis I present 
+% an implementation of a compiler for \textit{MonoML} --- 
+% a functional programming language, 
+% in which I choose to avoid uniform data representation by boxing. 
+Monomorphization allows to decrease time overhead for polymorphic functions,
 however it increases overall code size. My implementation of 
 partial application is based on the \textit{push/enter} model. 
 However, I manage to overcome the
@@ -175,12 +183,12 @@ programów, bez duplikowania kodu. Mimo to nieznany jest żaden
 popularny język z rodziny ML zawierający klasy typów, dlatego zdecydowałem się je 
 zaimplementować w MonoMLu.
 
-W Rozdziale \textit{Wprowadzenie} przedstawię dokładniej cechy języków funkcyjnych, 
+W dalszej części tego rozdziału przedstawię dokładniej cechy języków funkcyjnych, 
 które zdecydowałem się zaimplementować oraz omówię czym jest infrastruktura LLVM. 
-Rozdział poświęcony językowi MonoML zawiera opis jego składni i semantyki oraz 
-fragmenty przykładowych kodów. W Rozdziale \textit{Kompilator} w szczegółach
+Drugi rozdział zawiera opis składni i semantyki języka MonoML oraz 
+fragmenty przykładowych kodów. W trzecim rozdziale w szczegółach
 prezentuję, w jaki sposób zaimplementowałem najistotniejsze cechy języka.
-W Rozdziale \textit{Testy wydajnościowe} opisałem testowanie wydajności MonoMLa
+W czwarty rozdziale opisałem testowanie wydajności MonoMLa
 na tle innych języków oraz pokazałem narzut opakowywania argumentów we wskaźnik.
 
 % tych podstawowych cechach języków z rodziny ML. Ponadto 
@@ -1322,16 +1330,13 @@ Ciało zagnieżdżonej funkcji \texttt{add} odwołuje się do zmiennej z
 zewnętrznego zakresu.
 % \pagebreak
 \begin{lstlisting}[frame=lines]
-let make_adder x = 
-    let add y = x + y in 
-    add 
+let make_adder x = let add y = x + y in add 
   
-let _ = 
-    let add1 = make_adder 1 in 
-    let add5 = make_adder 5 in 
-    
-    print_int (add1 1);
-    print_int (add5 5) 
+let _ = let add1 = make_adder 1 in 
+         let add5 = make_adder 5 in 
+     
+         print_int (add1 1);
+         print_int (add5 5) 
 \end{lstlisting}
 Powyższy kod wypisze wynik działań $1 + 1$ oraz $5 + 5$. 
 
@@ -1622,11 +1627,9 @@ let printArg show_instance arg =
     show_instance.show arg
     |> printf "arg: %s" 
 
-let main1 = 
-    printArg show_bool true 
+let main1 = printArg show_bool true 
 
-let main2 = 
-    printArg show_string "Hello"
+let main2 = printArg show_string "Hello"
 \end{lstlisting}
 Korzystanie z instancji klasy w Haskellu jest dużo bardziej przejrzyste.
 % \noindent\begin{minipage}{.45\textwidth}
@@ -1862,7 +1865,7 @@ wykonań oraz odchylenie standardowe. Wyniki są przedstawione w Tablicy $4.1$.
 Podane czasy działania są w milisekundach.
 W ostatniej kolumnie podaję współczynnik czasu działania danej implementacji 
 względem polimorficznej wersji w MonoMLu.
-\pagebreak
+% \pagebreak
 
 \begin{center}
 \begin{table}
