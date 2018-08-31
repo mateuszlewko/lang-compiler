@@ -1,0 +1,46 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () = ll_print_line ()
+
+  let putint x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+open Prelude
+
+let zero = 0
+
+module A = 
+  let testA = 1
+
+  module B = 
+    let testB  = 2
+    (* we can use values defined in outer scope *)
+    let testB2 = testA + testB + zero
+
+  let testA = 4 (* overrides previous definition of testA *)
+
+let testA = 999
+
+open A (* opening module A will override top-level definition of testA *)
+
+let _ =
+
+  putint testA 
+  Prelude.putint A.testA (* we can use qualified name although 
+                            Prelude has been opened *)
+  Prelude.putint B.testB (* we opened module A so module B is available *)
+
+  putint A.B.testB2 (* qualified name is still fine *)
+
+  0

@@ -1,0 +1,33 @@
+module Prelude = 
+    external ll_putint     : int -> () 
+    external ll_print_line : ()  -> () 
+
+    let printInt (x : int) : () = ll_putint x
+    let printNl : () -> () = ll_print_line
+    let printnInt x = 
+        printInt x 
+        printNl () 
+
+open Prelude
+
+let rec even x = 
+    if x = 0
+    then 0 
+    else odd (x - 1)
+
+and odd x = 1 + (even (x - 1))
+
+let rec twice x = 
+    if x = 0 
+    then 0
+    else add2 (twice (x - 1))
+
+and add2 x = 2 + x
+
+let _ = 
+    printnInt (odd 11)
+    printnInt (odd 23)
+    printnInt (even 10)
+
+    printNl ()
+    printInt (twice 100)

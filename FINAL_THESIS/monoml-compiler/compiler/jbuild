@@ -1,0 +1,20 @@
+(jbuild_version 1)
+
+(library
+ ((name lang_compiler)
+  (libraries
+    (lang_parsing
+     core
+     sedlex
+     menhirLib
+     batteries
+     ppx_deriving
+     ppx_enumerate
+     ppx_jane
+     high_ollvm
+     logs
+     llvm))
+  (preprocess (pps (ppx_deriving.std 
+                    ppx_deriving.show
+                    ppx_jane
+                    ppx_enumerate)))))

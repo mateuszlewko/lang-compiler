@@ -1,0 +1,16 @@
+(jbuild_version 1)
+
+(rule
+ ((targets (ast.ml))
+  (deps    (ast.mli))
+  (action  (run ${bin:cppo} ${<} -n -o ${@}))))
+
+(library
+ ((name high_ollvm)
+  (public_name high_ollvm)
+  (preprocess (pps (ppx_deriving.std 
+                    ppx_enumerate)))
+  (libraries (core 
+              llvm 
+              batteries
+              logs))))

@@ -1,0 +1,62 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () : () = ll_print_line ()
+
+  let printi x = 
+    ll_putint x
+
+  let printin x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+  module Array = 
+    let new size : int array = 
+      ll_new_int_array size
+
+    let set (arr : int array) ix elem = 
+      ll_set_ith_elem_of_int_array  arr ix elem
+
+    let get arr ix = 
+      ll_get_ith_elem_of_int_array arr ix
+
+    let printn arr size = 
+      let rec aux pos left = 
+        if left = 0 
+        then ln ()
+        else printin (get arr pos)
+             aux (pos + 1) (left - 1)
+
+      aux 0 size
+
+open Prelude
+
+let rec binary_search first last array x = 
+    if last < first then false 
+    else 
+        let mid = (first + last) / 2
+        let curr = Array.get array mid
+        
+        if curr = x 
+        then true 
+        elif curr > x 
+        then binary_search first (mid - 1) array x 
+        else binary_search (mid + 1) last array x
+
+let _ =
+    let cnt = 7
+    let data = [| 1; 4; 7; 20; 123; 459; 2003 |]
+
+    putbool (binary_search 0 cnt data 7)  (* true  *)
+    putbool (binary_search 0 cnt data 20) (* true  *)
+    putbool (binary_search 0 cnt data 1)  (* true  *)
+    putbool (binary_search 0 cnt data 2)  (* false *)
