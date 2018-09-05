@@ -1,0 +1,28 @@
+\frametitle{Motywacja}
+
+    %     % \newline\newline
+    % \item Zawierają
+    \begin{itemize}
+        \item {
+        Polimorfizm parametryczny
+
+% \begin{lstlisting}
+% let twice (f : 'a -> 'a) (x : 'a) = f (f a)
+% let _ =
+%     print_float (twice (+.) 42.0);
+%     print_int   (twice (+ ) 42  )
+
+% \end{lstlisting}
+
+
+        \pause\newline$\Rightarrow$ jednorodna
+        reprezentacja danych
+        \pause\newline$\Rightarrow$ opakowywanie argumentów we wskaźnik
+        }
+        \item Częściową aplikację
+        \item Zagnieżdżone funkcje
+        \item Funkcje wyższych rzędów
+        \item Rekordy, Algebraiczne typy danych, itp.
+    \end{itemize}
+    % }
+% \end{itemize}

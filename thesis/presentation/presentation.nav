@@ -1,0 +1,69 @@
+\headcommand {\slideentry {0}{0}{1}{1/1}{}{0}}
+\headcommand {\beamer@framepages {1}{1}}
+\headcommand {\slideentry {0}{0}{2}{2/2}{}{0}}
+\headcommand {\beamer@framepages {2}{2}}
+\headcommand {\beamer@sectionpages {1}{2}}
+\headcommand {\beamer@subsectionpages {1}{2}}
+\headcommand {\sectionentry {1}{Wst\IeC {\k e}p}{3}{Wst\IeC {\k e}p}{0}}
+\headcommand {\beamer@subsectionpages {3}{2}}
+\headcommand {\beamer@subsectionentry {0}{1}{1}{3}{Obecnie}}
+\headcommand {\slideentry {1}{1}{1}{3/10}{Obecnie}{0}}
+\headcommand {\beamer@framepages {3}{10}}
+\headcommand {\slideentry {1}{1}{2}{11/11}{Obecnie}{0}}
+\headcommand {\beamer@framepages {11}{11}}
+\headcommand {\slideentry {1}{1}{3}{12/12}{Obecnie}{0}}
+\headcommand {\beamer@framepages {12}{12}}
+\headcommand {\beamer@subsectionpages {3}{12}}
+\headcommand {\beamer@subsectionentry {0}{1}{2}{13}{Motywacja}}
+\headcommand {\slideentry {1}{2}{1}{13/18}{Motywacja}{0}}
+\headcommand {\beamer@framepages {13}{18}}
+\headcommand {\beamer@subsectionpages {13}{18}}
+\headcommand {\beamer@subsectionentry {0}{1}{3}{19}{J\IeC {\k e}zyk MonoML}}
+\headcommand {\slideentry {1}{3}{1}{19/23}{J\IeC {\k e}zyk MonoML}{0}}
+\headcommand {\beamer@framepages {19}{23}}
+\headcommand {\beamer@sectionpages {3}{23}}
+\headcommand {\beamer@subsectionpages {19}{23}}
+\headcommand {\sectionentry {2}{Polimorfizm Parametryczny}{24}{Polimorfizm Parametryczny}{0}}
+\headcommand {\beamer@subsectionpages {24}{23}}
+\headcommand {\beamer@subsectionentry {0}{2}{1}{24}{First Subsection}}
+\headcommand {\slideentry {2}{1}{1}{24/24}{First Subsection}{0}}
+\headcommand {\beamer@framepages {24}{24}}
+\headcommand {\beamer@subsectionpages {24}{24}}
+\headcommand {\beamer@subsectionentry {0}{2}{2}{25}{Second Subsection}}
+\headcommand {\slideentry {2}{2}{1}{25/30}{Second Subsection}{0}}
+\headcommand {\beamer@framepages {25}{30}}
+\headcommand {\beamer@sectionpages {24}{30}}
+\headcommand {\beamer@subsectionpages {25}{30}}
+\headcommand {\sectionentry {3}{Cz\IeC {\k e}\IeC {\'s}ciowa aplikacja}{31}{Cz\IeC {\k e}\IeC {\'s}ciowa aplikacja}{0}}
+\headcommand {\beamer@subsectionpages {31}{30}}
+\headcommand {\beamer@subsectionentry {0}{3}{1}{31}{Another Subsection}}
+\headcommand {\slideentry {3}{1}{1}{31/31}{Another Subsection}{0}}
+\headcommand {\beamer@framepages {31}{31}}
+\headcommand {\beamer@sectionpages {31}{31}}
+\headcommand {\beamer@subsectionpages {31}{31}}
+\headcommand {\sectionentry {4}{Klasy typ\IeC {\'o}w}{32}{Klasy typ\IeC {\'o}w}{0}}
+\headcommand {\slideentry {4}{0}{1}{32/32}{}{0}}
+\headcommand {\beamer@framepages {32}{32}}
+\headcommand {\beamer@sectionpages {32}{32}}
+\headcommand {\beamer@subsectionpages {32}{32}}
+\headcommand {\sectionentry {5}{Podsumowanie}{33}{Podsumowanie}{0}}
+\headcommand {\slideentry {5}{0}{1}{33/33}{}{0}}
+\headcommand {\beamer@framepages {33}{33}}
+\headcommand {\gdef \insertmainframenumber {12}}
+\headcommand {\partentry {Dodatek}{1}}
+\headcommand {\beamer@partpages {1}{33}}
+\headcommand {\beamer@sectionpages {33}{33}}
+\headcommand {\beamer@subsectionpages {33}{33}}
+\headcommand {\beamer@appendixpages {34}}
+\headcommand {\beamer@sectionpages {34}{33}}
+\headcommand {\beamer@subsectionpages {34}{33}}
+\headcommand {\sectionentry {6}{Dodatek}{34}{Dodatek}{1}}
+\headcommand {\beamer@subsectionpages {34}{33}}
+\headcommand {\beamer@subsectionentry {1}{6}{1}{34}{For Further Reading}}
+\headcommand {\slideentry {6}{1}{1}{34/34}{For Further Reading}{1}}
+\headcommand {\beamer@framepages {34}{34}}
+\headcommand {\beamer@partpages {34}{34}}
+\headcommand {\beamer@subsectionpages {34}{34}}
+\headcommand {\beamer@sectionpages {34}{34}}
+\headcommand {\beamer@documentpages {34}}
+\headcommand {\gdef \inserttotalframenumber {13}}

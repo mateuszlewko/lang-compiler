@@ -1,0 +1,434 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{polski}
+\usepackage{listings}
+\usepackage[normalem]{ulem}
+
+% \usepackage{syntax}
+
+\usetheme{Warsaw}
+
+\title[Implementacja~języka~funkcyjnego z~rodziny~ML]
+{Implementacja~języka~funkcyjnego \newline z~rodziny~ML \newline
+z wykorzystaniem infrastruktury LLVM}
+
+\author{Mateusz Lewko}
+% - Give the names in the same order as the appear in the paper.
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+% \institute[Universities of Somewhere and Elsewhere] % (optional, but mostly needed)
+% {
+%   \inst{1}%
+%   Department of Computer Science\\
+%   University of Somewhere
+%   \and
+%   \inst{2}%
+%   Department of Theoretical Philosophy\\
+%   University of Elsewhere}
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+% \date{Conference Name, 2013}
+% - Either use conference name or its abbreviation.
+% - Not really informative to the audience, more for people (including
+%   yourself) who are reading the slides online
+
+% \subject{Theoretical Computer Science}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+% Delete this, if you do not want the table of contents to pop up at
+% the beginning of each subsection:
+% \AtBeginSubsection[]
+% {
+%   \begin{frame}<beamer>{Outline}
+%     \tableofcontents[currentsection,currentsubsection]
+%   \end{frame}
+% }
+
+% Let's get started
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Spis treści}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+\section{Wstęp}
+
+\subsection{Obecnie}
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item {
+        Jest wiele języków z rodziny ML
+        % \newline\newline
+    \pause
+    \item Zawierają
+        \begin{itemize}
+            \pause
+            \item Polimorfizm parametryczny \pause
+            \item Częściową aplikację \pause
+            \item Zagnieżdżone funkcje \pause
+            \item Funkcje wyższych rzędów \pause
+            \item System modułów (OCaml, SML) lub obiektowe klasy (F\#) \pause
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+% \begin{frame}{Obecnie}
+% \begin{itemize}
+%     \item {
+%         Jest wiele języków z rodziny ML
+%         % \newline\newline
+%         \item Zawierają
+%         \begin{itemize}
+%             \item Polimorfizm parametryczny,
+%             \item Częściową aplikację 
+%             \item Zagnieżdżone funkcje 
+%             \item Funkcje wyższych rzędów
+%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#) 
+%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, algebraiczne typy danych, itp.
+%         \end{itemize}
+%     }
+% \end{itemize}
+% \end{frame}
+
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item {
+        Jest wiele języków z rodziny ML
+        % \newline\newline
+    \item Zawierają
+        \begin{itemize}
+            \item \textbf{Polimorfizm parametryczny $\rightarrow$ Opakowywanie 
+            argumentów we wskaźnik}
+            \item Częściową aplikację
+            \item Zagnieżdżone funkcje 
+            \item Funkcje wyższych rzędów 
+            \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item {
+        Jest wiele języków z rodziny ML
+        % \newline\newline
+    \item Zawierają
+        \begin{itemize}
+            \item \textbf{Polimorfizm parametryczny $\Rightarrow$ Opakowywanie 
+            argumentów we wskaźnik}
+            \item Częściową aplikację
+            \item Zagnieżdżone funkcje 
+            \item Funkcje wyższych rzędów 
+            \item \textbf{System modułów (OCaml, SML)} lub obiektowe klasy (F\#)
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+\subsection{Motywacja}
+
+\begin{frame}{Motywacja}
+\begin{itemize}
+    \item Wady opakowywania we wskaźnik
+    \begin{itemize}
+        \pause
+        \item Narzut pamięciowy --- nawet 3x w przypadku typu int
+        \pause
+        \item Narzut czasowy 
+        \begin{itemize}
+            \item Automatyczne zarządzenie pamięcią
+            \item Konieczność odczytywania pamięci ze sterty 
+            \item Gorsze wykorzystanie pamięci cache
+        \end{itemize}
+    \end{itemize}
+
+    \pause
+    \item Wady systemu modułów
+    \begin{itemize}
+        \pause
+        \item Brak możliwości przeładowaniu operatorów i funkcji (np. dla różnych 
+        typów numerycznych)
+        \pause
+        \item Nietrywialne w implementacji i skomplikowane w użyciu
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+% \subsection{Co zostało wykonane?}
+% \begin{frame}{Co zostało wykonane?}
+% \begin{itemize}
+%     \item {
+%         Jest wiele języków z rodziny ML
+%         % \newline\newline
+%     \item Zawierają
+%         \begin{itemize}
+%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
+%             \item Częściową aplikację
+%             \item Zagnieżdżone funkcje 
+%             \item Funkcje wyższych rzędów 
+%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
+%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+%             inferencja typów, algebraiczne typy danych, itp.
+%         \end{itemize}
+%     }
+% \end{itemize}
+% \end{frame}
+
+% \begin{frame}{Co zostało wykonane?}
+% \begin{itemize}
+%     \item {
+%         Jest wiele języków z rodziny ML
+%         % \newline\newline
+%     \item Zawierają
+%         \begin{itemize}
+%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
+%             \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
+%             push/enter}
+%             \item Zagnieżdżone funkcje 
+%             \item Funkcje wyższych rzędów 
+%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
+%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+%             inferencja typów, algebraiczne typy danych, itp.
+%         \end{itemize}
+%     }
+% \end{itemize}
+% \end{frame}
+
+% \begin{frame}{Co zostało wykonane?}
+% \begin{itemize}
+%     \item {
+%         Jest wiele języków z rodziny ML
+%         % \newline\newline
+%     \item Zawierają
+%         \begin{itemize}
+%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
+%             \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
+%             push/enter}
+%             \item Zagnieżdżone funkcje 
+%             \item Funkcje wyższych rzędów 
+%             \item \sout{System modułów (OCaml, SML) lub obiektowe klasy (F\#)}
+%             \item \textbf{Klasy typów (ad--hoc polimorfizm)}
+%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+%             inferencja typów, algebraiczne typy danych, itp.
+%         \end{itemize}
+%     }
+% \end{itemize}
+% \end{frame}
+\subsection{Język MonoML}
+
+\begin{frame}{Język MonoML}
+\begin{itemize}
+    % \item {
+        % Jest wiele języków z rodziny ML
+        % \newline\newline
+    % \item Język MonoML zawiera
+        % \begin{itemize}
+    \pause
+    \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
+    \pause
+    \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
+    push/enter}
+    \pause
+    \item \textbf{Klasy typów (ad--hoc polimorfizm)}
+    \pause
+    \item Zagnieżdżone funkcje 
+    \item Funkcje wyższych rzędów 
+    % \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
+    \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, inferencja typów
+        % \end{itemize}
+    
+\end{itemize}
+\end{frame}
+
+% \begin{frame}[fragile]{Co zostało wykonane?}
+% \begin{itemize}
+    % \item {
+    %     Jest wiele języków z rodziny ML
+
+    %     % \newline\newline
+    % \item Zawierają
+    % \begin{itemize}
+    %     \item {
+    %     Polimorfizm parametryczny 
+
+% \begin{lstlisting}
+% let twice (f : 'a -> 'a) (x : 'a) = f (f a)
+% let _ =
+%     print_float (twice (+.) 42.0);
+%     print_int   (twice (+ ) 42  )
+
+% \end{lstlisting}
+
+
+%         \pause\newline$\rightarrow$ jednorodna 
+%         reprezentacja danych 
+%         \pause\newline$\rightarrow$ opakowywanie argumentów we wskaźnik 
+%         }
+%         \item Częściową aplikację 
+%         \item Zagnieżdżone funkcje 
+%         \item Funkcje wyższych rzędów 
+%         \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, algebraiczne typy danych, itp.
+%     \end{itemize}
+%     % }
+% % \end{itemize}
+% \end{frame}
+% Section and subsections will appear in the presentation overview
+% and table of contents.
+\section{Polimorfizm Parametryczny}
+
+\subsection{First Subsection}
+
+\begin{frame}{First Slide Title}{Optional Subtitle}
+  \begin{itemize}
+  \item {
+    My first point.
+  }
+  \item {
+    My second point.
+  }
+  \end{itemize}
+\end{frame}
+
+\subsection{Second Subsection}
+
+% You can reveal the parts of a slide one at a time
+% with the \pause command:
+\begin{frame}{Second Slide Title}
+  \begin{itemize}
+  \item {
+    First item.
+    \pause % The slide will pause after showing the first item
+  }
+  \item {   
+    Second item.
+  }
+  % You can also specify when the content should appear
+  % by using <n->:
+  \item<3-> {
+    Third item.
+  }
+  \item<4-> {
+    Fourth item.
+  }
+  % or you can use the \uncover command to reveal general
+  % content (not just \items):
+  \item<5-> {
+    Fifth item. \uncover<6->{Extra text in the fifth item.}
+  }
+  \end{itemize}
+\end{frame}
+
+\section{Częściowa aplikacja}
+
+\subsection{Another Subsection}
+
+\begin{frame}{Blocks}
+\begin{block}{Block Title}
+You can also highlight sections of your presentation in a block, with it's own title
+\end{block}
+\begin{theorem}
+There are separate environments for theorems, examples, definitions and proofs.
+\end{theorem}
+\begin{example}
+Here is an example of an example block.
+\end{example}
+\end{frame}
+
+\section{Klasy typów}
+
+\begin{frame}{Blocks}
+\begin{block}{Block Title}
+You can also highlight sections of your presentation in a block, with it's own title
+\end{block}
+\begin{theorem}
+There are separate environments for theorems, examples, definitions and proofs.
+\end{theorem}
+\begin{example}
+Here is an example of an example block.
+\end{example}
+\end{frame}
+
+% Placing a * after \section means it will not show in the
+% outline or table of contents.
+\section*{Podsumowanie}
+
+\begin{frame}{Summary}
+  \begin{itemize}
+  \item
+    The \alert{first main message} of your talk in one or two lines.
+  \item
+    The \alert{second main message} of your talk in one or two lines.
+  \item
+    Perhaps a \alert{third message}, but not more than that.
+  \end{itemize}
+  
+  \begin{itemize}
+  \item
+    Outlook
+    \begin{itemize}
+    \item
+      Something you haven't solved.
+    \item
+      Something else you haven't solved.
+    \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% All of the following is optional and typically not needed. 
+\appendix
+\section<presentation>*{\appendixname}
+\subsection<presentation>*{For Further Reading}
+
+\begin{frame}[allowframebreaks]
+  \frametitle<presentation>{For Further Reading}
+    
+  \begin{thebibliography}{10}
+    
+  \beamertemplatebookbibitems
+  % Start with overview books.
+
+  \bibitem{Author1990}
+    A.~Author.
+    \newblock {\em Handbook of Everything}.
+    \newblock Some Press, 1990.
+ 
+    
+  \beamertemplatearticlebibitems
+  % Followed by interesting articles. Keep the list short. 
+
+  \bibitem{Someone2000}
+    S.~Someone.
+    \newblock On this and that.
+    \newblock {\em Journal of This and That}, 2(1):50--100,
+    2000.
+  \end{thebibliography}
+\end{frame}
+
+\end{document}
+
+
