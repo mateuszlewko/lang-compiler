@@ -73,7 +73,6 @@ z wykorzystaniem infrastruktury LLVM}
 \begin{itemize}
     \item {
         Jest wiele języków z rodziny ML
-        % \newline\newline
     \pause
     \item Zawierają
         \begin{itemize}
@@ -90,29 +89,10 @@ z wykorzystaniem infrastruktury LLVM}
 \end{itemize}
 \end{frame}
 
-% \begin{frame}{Obecnie}
-% \begin{itemize}
-%     \item {
-%         Jest wiele języków z rodziny ML
-%         % \newline\newline
-%         \item Zawierają
-%         \begin{itemize}
-%             \item Polimorfizm parametryczny,
-%             \item Częściową aplikację 
-%             \item Zagnieżdżone funkcje 
-%             \item Funkcje wyższych rzędów
-%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#) 
-%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, algebraiczne typy danych, itp.
-%         \end{itemize}
-%     }
-% \end{itemize}
-% \end{frame}
-
 \begin{frame}{Obecnie}
 \begin{itemize}
-    \item {
+    \item { 
         Jest wiele języków z rodziny ML
-        % \newline\newline
     \item Zawierają
         \begin{itemize}
             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Opakowywanie 
@@ -132,7 +112,6 @@ z wykorzystaniem infrastruktury LLVM}
 \begin{itemize}
     \item {
         Jest wiele języków z rodziny ML
-        % \newline\newline
     \item Zawierają
         \begin{itemize}
             \item \textbf{Polimorfizm parametryczny $\Rightarrow$ Opakowywanie 
@@ -179,75 +158,10 @@ z wykorzystaniem infrastruktury LLVM}
 \end{itemize}
 \end{frame}
 
-% \subsection{Co zostało wykonane?}
-% \begin{frame}{Co zostało wykonane?}
-% \begin{itemize}
-%     \item {
-%         Jest wiele języków z rodziny ML
-%         % \newline\newline
-%     \item Zawierają
-%         \begin{itemize}
-%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
-%             \item Częściową aplikację
-%             \item Zagnieżdżone funkcje 
-%             \item Funkcje wyższych rzędów 
-%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
-%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
-%             inferencja typów, algebraiczne typy danych, itp.
-%         \end{itemize}
-%     }
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}{Co zostało wykonane?}
-% \begin{itemize}
-%     \item {
-%         Jest wiele języków z rodziny ML
-%         % \newline\newline
-%     \item Zawierają
-%         \begin{itemize}
-%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
-%             \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
-%             push/enter}
-%             \item Zagnieżdżone funkcje 
-%             \item Funkcje wyższych rzędów 
-%             \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
-%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
-%             inferencja typów, algebraiczne typy danych, itp.
-%         \end{itemize}
-%     }
-% \end{itemize}
-% \end{frame}
-
-% \begin{frame}{Co zostało wykonane?}
-% \begin{itemize}
-%     \item {
-%         Jest wiele języków z rodziny ML
-%         % \newline\newline
-%     \item Zawierają
-%         \begin{itemize}
-%             \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
-%             \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
-%             push/enter}
-%             \item Zagnieżdżone funkcje 
-%             \item Funkcje wyższych rzędów 
-%             \item \sout{System modułów (OCaml, SML) lub obiektowe klasy (F\#)}
-%             \item \textbf{Klasy typów (ad--hoc polimorfizm)}
-%             \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
-%             inferencja typów, algebraiczne typy danych, itp.
-%         \end{itemize}
-%     }
-% \end{itemize}
-% \end{frame}
 \subsection{Język MonoML}
 
 \begin{frame}{Język MonoML}
 \begin{itemize}
-    % \item {
-        % Jest wiele języków z rodziny ML
-        % \newline\newline
-    % \item Język MonoML zawiera
-        % \begin{itemize}
     \pause
     \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
     \pause
@@ -255,50 +169,13 @@ z wykorzystaniem infrastruktury LLVM}
     push/enter}
     \pause
     \item \textbf{Klasy typów (ad--hoc polimorfizm)}
-    \pause
+    \pause 
     \item Zagnieżdżone funkcje 
     \item Funkcje wyższych rzędów 
-    % \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
     \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, inferencja typów
-        % \end{itemize}
-    
 \end{itemize}
 \end{frame}
 
-% \begin{frame}[fragile]{Co zostało wykonane?}
-% \begin{itemize}
-    % \item {
-    %     Jest wiele języków z rodziny ML
-
-    %     % \newline\newline
-    % \item Zawierają
-    % \begin{itemize}
-    %     \item {
-    %     Polimorfizm parametryczny 
-
-% \begin{lstlisting}
-% let twice (f : 'a -> 'a) (x : 'a) = f (f a)
-% let _ =
-%     print_float (twice (+.) 42.0);
-%     print_int   (twice (+ ) 42  )
-
-% \end{lstlisting}
-
-
-%         \pause\newline$\rightarrow$ jednorodna 
-%         reprezentacja danych 
-%         \pause\newline$\rightarrow$ opakowywanie argumentów we wskaźnik 
-%         }
-%         \item Częściową aplikację 
-%         \item Zagnieżdżone funkcje 
-%         \item Funkcje wyższych rzędów 
-%         \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, algebraiczne typy danych, itp.
-%     \end{itemize}
-%     % }
-% % \end{itemize}
-% \end{frame}
-% Section and subsections will appear in the presentation overview
-% and table of contents.
 \section{Polimorfizm Parametryczny}
 
 \subsection{First Subsection}
