@@ -3,6 +3,7 @@
 \usepackage{polski}
 \usepackage{listings}
 \usepackage[normalem]{ulem}
+\usepackage{minted}
 
 % \usepackage{syntax}
 
@@ -178,47 +179,291 @@ z wykorzystaniem infrastruktury LLVM}
 
 \section{Polimorfizm Parametryczny}
 
-\subsection{First Subsection}
+\subsection{Opis problemu}
 
-\begin{frame}{First Slide Title}{Optional Subtitle}
-  \begin{itemize}
-  \item {
-    My first point.
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Wygenerowany LLVM IR \#1,
+framesep=2mm]{llvm}
+  define i32 @twice(i32 (i32)*, i32) {
+      ...
   }
-  \item {
-    My second point.
-  }
-  \end{itemize}
+\end{minted}
+\end{minipage}
+\end{center}
 \end{frame}
 
-\subsection{Second Subsection}
-
-% You can reveal the parts of a slide one at a time
-% with the \pause command:
-\begin{frame}{Second Slide Title}
-  \begin{itemize}
-  \item {
-    First item.
-    \pause % The slide will pause after showing the first item
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Wygenerowany LLVM IR \#2,
+framesep=2mm]{llvm}
+  define float @twice(float (float)*, float) {
+      ...
   }
-  \item {   
-    Second item.
-  }
-  % You can also specify when the content should appear
-  % by using <n->:
-  \item<3-> {
-    Third item.
-  }
-  \item<4-> {
-    Fourth item.
-  }
-  % or you can use the \uncover command to reveal general
-  % content (not just \items):
-  \item<5-> {
-    Fifth item. \uncover<6->{Extra text in the fifth item.}
-  }
-  \end{itemize}
+\end{minted}
+\end{minipage}
+\end{center}
 \end{frame}
+
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Argumenty opakowane we wskaźnik,
+framesep=2mm]{llvm}
+  define i8* @twice(i8* (i8*)*, i8*) {
+      ...
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Moje podejście --- Monomorfizacja}
+
+\begin{frame}[fragile]{Moje podejście --- Monomorfizacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Po monomorfizacji,
+framesep=4mm]{ocaml}
+  let twice_int (f : int -> int) (x : int) : int = 
+    f (f x)
+  let twice_float (f : float -> float) (x : float) 
+    : float = f (f x)
+
+  let _ = 
+    print_int   (twice_int identity_int 42  );
+    print_float (twice_float identity_float 42.0)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Testy wydajnościowe}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Cele}
+    \begin{itemize}
+    \item Porównanie czasów wykonania funkcji polimorficznej i monomorficznej
+    \pause 
+    \begin{itemize}
+        \item w MonoMLu
+        \pause
+        \item w Haskellu, Javie i Standard MLu
+    \pause
+    \end{itemize}
+    \item Narzut czasowy wywoływania funkcji w MonoMLu na tle innych języków
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Przygotowanie}
+ \begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja polimorficzna,
+framesep=4mm]{ocaml}
+  let rec sum n (curr : 'a) (x : 'a) : 'a = 
+      if n = 0 then curr 
+      else sum (n - 1) (add curr x) x 
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Monomorficzna,
+framesep=4mm]{ocaml}
+  let rec sum n (curr : int) (x : int) : int = 
+      if n = 0 then curr 
+      else sum (n - 1) (add curr x) x 
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Przygotowanie}
+ \begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja polimorficzna,
+framesep=4mm]{ocaml}
+    sumPoly :: Num a => Int -> a ->  a -> a
+    sumPoly 0 curr _ = curr 
+    sumPoly n curr x = sumPoly (n - 1) (curr + x) $! x
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Monomorficzna,
+framesep=4mm]{ocaml}
+    sumMono :: Int# -> Int# -> Int# -> Int# 
+    sumMono 0# curr _ = curr 
+    sumMono n curr x = sumMono (n -# 1#) (curr +# x) x
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & \textbf{39.1}  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli & \textbf{696.8} & 63.2 & 1.86 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & \textbf{140.1} & 65.7 & 0.37 \\ 
+ Java                 & Poli & \textbf{564.9} & 24.8 & 1.50 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & 140.1 & 65.7 & 0.37 \\ 
+ Java                 & Poli    & 564.9 & 24.8 & 1.50 \\ 
+ SML (MLton)          & Mono & \textbf{151.0} & 13.7 & 0.40 \\ 
+ SML (SML/NJ)         & Poli & \textbf{357.6} & 14.4 & 0.95 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & 140.1 & 65.7 & 0.37 \\ 
+ Java                 & Poli    & 564.9 & 24.8 & 1.50 \\ 
+ SML (MLton)          & Mono & 151.0 & 13.7 & 0.40 \\ 
+ SML (SML/NJ)         & Poli    & 357.6 & 14.4 & 0.95 \\ 
+ Mono ML              & Mono & \textbf{327.0} & 52.3 & 0.88 \\ 
+ Mono ML              & Poli & \textbf{375.4} & 46.9 & 1.00 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+
+
 
 \section{Częściowa aplikacja}
 

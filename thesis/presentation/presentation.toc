@@ -3,8 +3,9 @@
 \beamer@subsectionintoc {1}{2}{Motywacja}{13}{0}{1}
 \beamer@subsectionintoc {1}{3}{J\IeC {\k e}zyk MonoML}{19}{0}{1}
 \beamer@sectionintoc {2}{Polimorfizm Parametryczny}{24}{0}{2}
-\beamer@subsectionintoc {2}{1}{First Subsection}{24}{0}{2}
-\beamer@subsectionintoc {2}{2}{Second Subsection}{25}{0}{2}
-\beamer@sectionintoc {3}{Cz\IeC {\k e}\IeC {\'s}ciowa aplikacja}{31}{0}{3}
-\beamer@subsectionintoc {3}{1}{Another Subsection}{31}{0}{3}
-\beamer@sectionintoc {4}{Klasy typ\IeC {\'o}w}{32}{0}{4}
+\beamer@subsectionintoc {2}{1}{Opis problemu}{24}{0}{2}
+\beamer@subsectionintoc {2}{2}{Moje podej\IeC {\'s}cie --- Monomorfizacja}{28}{0}{2}
+\beamer@subsectionintoc {2}{3}{Testy wydajno\IeC {\'s}ciowe}{29}{0}{2}
+\beamer@sectionintoc {3}{Cz\IeC {\k e}\IeC {\'s}ciowa aplikacja}{40}{0}{3}
+\beamer@subsectionintoc {3}{1}{Another Subsection}{40}{0}{3}
+\beamer@sectionintoc {4}{Klasy typ\IeC {\'o}w}{41}{0}{4}

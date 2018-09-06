@@ -1,28 +1,21 @@
-\frametitle{Motywacja}
+\frametitle{Testy wydajnościowe}\framesubtitle {Wyniki}
 
-    %     % \newline\newline
-    % \item Zawierają
-    \begin{itemize}
-        \item {
-        Polimorfizm parametryczny
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||}
 
-% \begin{lstlisting}
-% let twice (f : 'a -> 'a) (x : 'a) = f (f a)
-% let _ =
-%     print_float (twice (+.) 42.0);
-%     print_int   (twice (+ ) 42  )
-
-% \end{lstlisting}
-
-
-        \pause\newline$\Rightarrow$ jednorodna
-        reprezentacja danych
-        \pause\newline$\Rightarrow$ opakowywanie argumentów we wskaźnik
-        }
-        \item Częściową aplikację
-        \item Zagnieżdżone funkcje
-        \item Funkcje wyższych rzędów
-        \item Rekordy, Algebraiczne typy danych, itp.
-    \end{itemize}
-    % }
-% \end{itemize}
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\
+ Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\
+ Java                 & Mono & 140.1 & 65.7 & 0.37 \\
+ Java                 & Poli    & 564.9 & 24.8 & 1.50 \\
+ SML (MLton)          & Mono & 151.0 & 13.7 & 0.40 \\
+ SML (SML/NJ)         & Poli    & 357.6 & 14.4 & 0.95 \\
+ Mono ML              & Mono & \textbf{327.0} & 52.3 & 0.88 \\
+ Mono ML              & Poli & \textbf{375.4} & 46.9 & 1.00 \\
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
