@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{n}{f} \PYG{o}{:} \PYG{k}{function}
+\PYG{n}{f}\PYG{o}{.}\PYG{n}{fn}\PYG{o}{(}\PYG{l+m+mi}{2}\PYG{o}{,} \PYG{n}{f}\PYG{o}{.}\PYG{n}{args}\PYG{o}{,} \PYG{n}{y}\PYG{o}{,} \PYG{n}{z}\PYG{o}{);}
+\end{Verbatim}

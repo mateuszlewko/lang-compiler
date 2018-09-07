@@ -1,0 +1,9 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{struct} \PYG{n}{function} \PYG{p}{\PYGZob{}}
+  \PYG{k+kt}{void} \PYG{p}{(}\PYG{o}{**}\PYG{n}{fn}\PYG{p}{)();}
+  \PYG{k+kt}{unsigned} \PYG{k+kt}{char} \PYG{o}{*}\PYG{n}{args}\PYG{p}{;}
+  \PYG{k+kt}{unsigned} \PYG{k+kt}{char} \PYG{n}{left\PYGZus{}args}\PYG{p}{;}
+  \PYG{k+kt}{unsigned} \PYG{k+kt}{char} \PYG{n}{arity}\PYG{p}{;}
+  \PYG{k+kt}{int} \PYG{n}{used\PYGZus{}bytes}\PYG{p}{;}
+\PYG{p}{\PYGZcb{};}
+\end{Verbatim}

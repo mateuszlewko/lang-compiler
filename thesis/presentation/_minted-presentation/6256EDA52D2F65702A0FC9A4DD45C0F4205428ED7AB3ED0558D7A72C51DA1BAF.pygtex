@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{let} \PYG{k}{rec} \PYG{n}{sum} \PYG{n}{n} \PYG{o}{(}\PYG{n}{curr} \PYG{o}{:} \PYG{k}{\PYGZsq{}}\PYG{n}{a}\PYG{o}{)} \PYG{o}{(}\PYG{n}{x} \PYG{o}{:} \PYG{k}{\PYGZsq{}}\PYG{n}{a}\PYG{o}{)} \PYG{o}{:} \PYG{k}{\PYGZsq{}}\PYG{n}{a} \PYG{o}{=}
+    \PYG{k}{if} \PYG{n}{n} \PYG{o}{=} \PYG{l+m+mi}{0} \PYG{k}{then} \PYG{n}{curr}
+    \PYG{k}{else} \PYG{n}{sum} \PYG{o}{(}\PYG{n}{n} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{o}{)} \PYG{o}{(}\PYG{n}{add} \PYG{n}{curr} \PYG{n}{x}\PYG{o}{)} \PYG{n}{x}
+\end{Verbatim}

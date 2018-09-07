@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{i32} \PYG{n+nv+vg}{@diverge\PYGZus{}main}\PYG{p}{(}\PYG{k}{i1} \PYG{n+nv}{\PYGZpc{}cond}\PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}x}\PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}y}\PYG{p}{)}
+
+\PYG{k}{i32} \PYG{n+nv+vg}{@diverge\PYGZus{}entry0}\PYG{p}{(}\PYG{k}{i8} \PYG{n+nv}{\PYGZpc{}args\PYGZus{}cnt}\PYG{p}{,} \PYG{k}{i8}\PYG{p}{*} \PYG{n+nv}{\PYGZpc{}env}\PYG{p}{,} \PYG{k}{i1} \PYG{n+nv}{\PYGZpc{}cond}
+                                \PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}x}  \PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}y}\PYG{p}{)}
+
+\PYG{k}{i32} \PYG{n+nv+vg}{@diverge\PYGZus{}entry1}\PYG{p}{(}\PYG{k}{i8} \PYG{n+nv}{\PYGZpc{}args\PYGZus{}cnt}\PYG{p}{,} \PYG{k}{i8}\PYG{p}{*} \PYG{n+nv}{\PYGZpc{}env}\PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}x}
+                                          \PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}y}\PYG{p}{)}
+
+\PYG{k}{i32} \PYG{n+nv+vg}{@diverge\PYGZus{}entry2}\PYG{p}{(}\PYG{k}{i8} \PYG{n+nv}{\PYGZpc{}args\PYGZus{}cnt}\PYG{p}{,} \PYG{k}{i8}\PYG{p}{*} \PYG{n+nv}{\PYGZpc{}env}\PYG{p}{,} \PYG{k}{i32} \PYG{n+nv}{\PYGZpc{}y}\PYG{p}{)}
+\end{Verbatim}

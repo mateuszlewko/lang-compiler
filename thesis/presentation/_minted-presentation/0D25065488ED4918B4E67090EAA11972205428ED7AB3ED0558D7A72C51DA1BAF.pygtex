@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{type} \PYG{n}{pair} \PYG{o}{=} \PYG{o}{\PYGZob{}} \PYG{n}{a} \PYG{o}{:} \PYG{k+kt}{int}\PYG{o}{;} \PYG{n}{b} \PYG{o}{:} \PYG{k+kt}{int} \PYG{o}{\PYGZcb{}}
+
+\PYG{k}{let} \PYG{n+nc}{Num\PYGZus{}add\PYGZus{}int} \PYG{n}{x} \PYG{n}{y} \PYG{o}{=} \PYG{n}{x} \PYG{o}{+} \PYG{n}{y}
+\PYG{k}{let} \PYG{n+nc}{Num\PYGZus{}add\PYGZus{}pair} \PYG{o}{(}\PYG{n}{x} \PYG{o}{:} \PYG{n}{pair}\PYG{o}{)} \PYG{o}{(}\PYG{n}{y} \PYG{o}{:} \PYG{n}{pair}\PYG{o}{)} \PYG{o}{=}
+  \PYG{o}{\PYGZob{}} \PYG{n}{x} \PYG{k}{with} \PYG{n}{a} \PYG{o}{=} \PYG{n}{x}\PYG{o}{.}\PYG{n}{a} \PYG{o}{+} \PYG{n}{y}\PYG{o}{.}\PYG{n}{a}\PYG{o}{;} \PYG{n}{b} \PYG{o}{=} \PYG{n}{x}\PYG{o}{.}\PYG{n}{b} \PYG{o}{+} \PYG{n}{y}\PYG{o}{.}\PYG{n}{b} \PYG{o}{\PYGZcb{}}
+
+\PYG{k}{let} \PYG{o}{\PYGZus{}} \PYG{o}{=}
+  \PYG{k}{let} \PYG{n}{sum}  \PYG{o}{=} \PYG{n+nc}{Num\PYGZus{}add\PYGZus{}int} \PYG{l+m+mi}{2} \PYG{l+m+mi}{3}
+  \PYG{k}{let} \PYG{n}{sum2} \PYG{o}{=} \PYG{n+nc}{Num\PYGZus{}add\PYGZus{}pair} \PYG{o}{\PYGZob{}}\PYG{n}{a} \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{o}{;} \PYG{n}{b} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{o}{\PYGZcb{}} \PYG{o}{\PYGZob{}}\PYG{n}{a} \PYG{o}{=} \PYG{l+m+mi}{3}\PYG{o}{;} \PYG{n}{b} \PYG{o}{=} \PYG{l+m+mi}{4}\PYG{o}{\PYGZcb{}}
+\end{Verbatim}

@@ -1,0 +1,7 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{n+nv+vg}{@diverge\PYGZus{}entry\PYGZus{}points} \PYG{p}{=} \PYG{k}{global} \PYG{p}{[}\PYG{l+m}{3} \PYG{k}{x} \PYG{k+kt}{void} \PYG{p}{()*]} \PYG{p}{[}
+    \PYG{n+nv+vg}{@diverge\PYGZus{}entry0}\PYG{p}{,}
+    \PYG{n+nv+vg}{@diverge\PYGZus{}entry1}\PYG{p}{,}
+    \PYG{n+nv+vg}{@diverge\PYGZus{}entry2}
+\PYG{p}{]}
+\end{Verbatim}

@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{let} \PYG{n}{show\PYGZus{}string} \PYG{o}{=} \PYG{o}{\PYGZob{}}
+  \PYG{n}{show} \PYG{o}{=} \PYG{k}{fun} \PYG{n}{s} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{l+s+s2}{\PYGZdq{}’\PYGZdq{}} \PYG{o}{\PYGZca{}} \PYG{n}{s} \PYG{o}{\PYGZca{}} \PYG{l+s+s2}{\PYGZdq{}’\PYGZdq{}}
+\PYG{o}{\PYGZcb{}}
+
+\PYG{k}{let} \PYG{n}{show\PYGZus{}bool} \PYG{o}{=} \PYG{o}{\PYGZob{}}
+  \PYG{n}{show} \PYG{o}{=} \PYG{k}{function}
+         \PYG{o}{|} \PYG{n+nb+bp}{false} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{l+s+s2}{\PYGZdq{}false\PYGZdq{}}
+         \PYG{o}{|} \PYG{n+nb+bp}{true}  \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{l+s+s2}{\PYGZdq{}true\PYGZdq{}}
+\PYG{o}{\PYGZcb{}}
+\end{Verbatim}

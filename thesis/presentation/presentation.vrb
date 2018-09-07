@@ -1,21 +1,22 @@
-\frametitle{Testy wydajnościowe}\framesubtitle {Wyniki}
-
+\frametitle{Klasy typów}\framesubtitle {Implementacja w MonoMLu}
 \begin{center}
-\begin{table}
-\begin{tabular}{|| l | l | r | r | r ||}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  type pair = { a : int; b : int }
 
- \hline
- Język & Wersja & Czas (ms) & $\sigma$ & x \\
- \hline\hline
- Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\
- Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\
- Java                 & Mono & 140.1 & 65.7 & 0.37 \\
- Java                 & Poli    & 564.9 & 24.8 & 1.50 \\
- SML (MLton)          & Mono & 151.0 & 13.7 & 0.40 \\
- SML (SML/NJ)         & Poli    & 357.6 & 14.4 & 0.95 \\
- Mono ML              & Mono & \textbf{327.0} & 52.3 & 0.88 \\
- Mono ML              & Poli & \textbf{375.4} & 46.9 & 1.00 \\
- \hline
-\end{tabular}
-\end{table}
+  let Num_add_int x y = x + y
+  let Num_add_pair (x : pair) (y : pair) =
+    { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ =
+    let sum  = Num_add_int 2 3
+    let sum2 = Num_add_pair {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
 \end{center}

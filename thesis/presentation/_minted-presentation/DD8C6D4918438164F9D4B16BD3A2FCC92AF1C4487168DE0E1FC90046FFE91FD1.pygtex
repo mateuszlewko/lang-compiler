@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{n}{env} \PYG{o}{=} \PYG{n}{malloc} \PYG{p}{(}\PYG{l+m+mi}{1}\PYG{p}{);} \PYG{n}{env}\PYG{p}{[}\PYG{l+m+mi}{0}\PYG{p}{]} \PYG{o}{=} \PYG{n+nb}{true}
+\PYG{n}{function} \PYG{n}{papp} \PYG{o}{=} \PYG{p}{\PYGZob{}}
+  \PYG{n}{fn}         \PYG{o}{=} \PYG{n}{diverge\PYGZus{}entry\PYGZus{}points}\PYG{p}{[}\PYG{l+m+mi}{1}\PYG{p}{],}
+  \PYG{n}{args}       \PYG{o}{=} \PYG{n}{env}\PYG{p}{,}
+  \PYG{n}{left\PYGZus{}args}  \PYG{o}{=} \PYG{l+m+mi}{2}\PYG{p}{,}
+  \PYG{n}{arity}      \PYG{o}{=} \PYG{l+m+mi}{3}\PYG{p}{,}
+  \PYG{n}{used\PYGZus{}bytes} \PYG{o}{=} \PYG{l+m+mi}{1}\PYG{p}{,}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

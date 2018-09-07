@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{let} \PYG{n}{printArg} \PYG{n}{show\PYGZus{}instance} \PYG{n}{arg} \PYG{o}{=}
+  \PYG{n}{show\PYGZus{}instance}\PYG{o}{.}\PYG{n}{show} \PYG{n}{arg}
+  \PYG{o}{|\PYGZgt{}} \PYG{n}{printf} \PYG{l+s+s2}{\PYGZdq{}arg: \PYGZpc{}s\PYGZdq{}}
+
+\PYG{k}{let} \PYG{n}{main1} \PYG{o}{=} \PYG{n}{printArg} \PYG{n}{show\PYGZus{}bool} \PYG{n+nb+bp}{true}
+\PYG{k}{let} \PYG{n}{main2} \PYG{o}{=} \PYG{n}{printArg} \PYG{n}{show\PYGZus{}string} \PYG{l+s+s2}{\PYGZdq{}Hello\PYGZdq{}}
+\end{Verbatim}

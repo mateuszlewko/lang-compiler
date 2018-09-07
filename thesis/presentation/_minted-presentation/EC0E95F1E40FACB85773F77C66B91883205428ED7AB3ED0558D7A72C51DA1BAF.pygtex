@@ -1,0 +1,4 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{val} \PYG{n}{diverge} \PYG{o}{:} \PYG{k+kt}{bool} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int}
+\PYG{o}{(}\PYG{n}{diverge} \PYG{n+nb+bp}{true}\PYG{o}{)}
+\end{Verbatim}

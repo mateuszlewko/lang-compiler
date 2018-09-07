@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+  \PYG{n}{sumPoly} \PYG{o}{::} \PYG{n+nc}{Num} \PYG{n}{a} \PYG{o}{=\PYGZgt{}} \PYG{n+nc}{Int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{a} \PYG{o}{\PYGZhy{}\PYGZgt{}}  \PYG{n}{a} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n}{a}
+  \PYG{n}{sumPoly} \PYG{l+m+mi}{0} \PYG{n}{curr} \PYG{o}{\PYGZus{}} \PYG{o}{=} \PYG{n}{curr}
+  \PYG{n}{sumPoly} \PYG{n}{n} \PYG{n}{curr} \PYG{n}{x} \PYG{o}{=} \PYG{n}{sumPoly} \PYG{o}{(}\PYG{n}{n} \PYG{o}{\PYGZhy{}} \PYG{l+m+mi}{1}\PYG{o}{)} \PYG{o}{(}\PYG{n}{curr} \PYG{o}{+} \PYG{n}{x}\PYG{o}{)} \PYG{o}{\PYGZdl{}!} \PYG{n}{x}
+\end{Verbatim}

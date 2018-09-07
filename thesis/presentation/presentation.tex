@@ -4,6 +4,10 @@
 \usepackage{listings}
 \usepackage[normalem]{ulem}
 \usepackage{minted}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\usepackage{xcolor}
 
 % \usepackage{syntax}
 
@@ -96,7 +100,7 @@ z wykorzystaniem infrastruktury LLVM}
         Jest wiele języków z rodziny ML
     \item Zawierają
         \begin{itemize}
-            \item \textbf{Polimorfizm parametryczny $\rightarrow$ Opakowywanie 
+            \item \textbf{Polimorfizm parametryczny $\Rightarrow$ Opakowywanie 
             argumentów we wskaźnik}
             \item Częściową aplikację
             \item Zagnieżdżone funkcje 
@@ -463,92 +467,434 @@ framesep=4mm]{ocaml}
 \end{frame}
 
 
+\section{Częściowa aplikacja i generowanie funkcji}
 
+\subsection{Opis problemu}
 
-\section{Częściowa aplikacja}
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Opis problemu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{ocaml}    
+  let diverge cond x y = if cond then x else y
 
-\subsection{Another Subsection}
+  val apply : (int -> int -> int) -> int -> int -> int
+  let apply f x y = 
+    let z = diverge true x y
+    f y z
 
-\begin{frame}{Blocks}
-\begin{block}{Block Title}
-You can also highlight sections of your presentation in a block, with it's own title
-\end{block}
-\begin{theorem}
-There are separate environments for theorems, examples, definitions and proofs.
-\end{theorem}
-\begin{example}
-Here is an example of an example block.
-\end{example}
+  ...
+  apply (diverge true) 2 3 
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Opis problemu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{ocaml}    
+  val f : int -> int -> int
+  f y z
+  ------------------
+  (diverge true) y z
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{llvm}    
+  %result = call i32 %f(i32 %y, i32 %z)
+  ;----------------------------------
+  %f = @diverge(i1 %cond, i32 %x, i32 %y)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Implementacja}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{c}    
+  struct function {
+    void (**fn)();
+    unsigned char *args;
+    unsigned char left_args;
+    unsigned char arity;
+    int used_bytes;   
+  };
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Oryginalna funkcja,
+framesep=4mm]{ocaml}    
+  val diverge : bool -> int -> int -> int
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wygenerowane funkcje,
+framesep=4mm]{llvm} 
+  i32 @diverge_main(i1 %cond, i32 %x, i32 %y)
+
+  i32 @diverge_entry0(i8 %args_cnt, i8* %env, i1 %cond 
+                                  , i32 %x  , i32 %y)
+
+  i32 @diverge_entry1(i8 %args_cnt, i8* %env, i32 %x
+                                            , i32 %y)
+
+  i32 @diverge_entry2(i8 %args_cnt, i8* %env, i32 %y)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wygenerowane funkcje,
+framesep=4mm]{llvm} 
+  @diverge_entry_points = global [3 x void ()*] [
+      @diverge_entry0,
+      @diverge_entry1,
+      @diverge_entry2
+  ]
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja częściowo zaaplikowana,
+framesep=4mm]{ocaml}
+  val diverge : bool -> int -> int -> int
+  (diverge true)
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Tworzenie częściowo zaaplikowanej funkcji,
+framesep=4mm]{c}
+  env = malloc (1); env[0] = true
+  function papp = { 
+    fn         = diverge_entry_points[1], 
+    args       = env, 
+    left_args  = 2, 
+    arity      = 3, 
+    used_bytes = 1,
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wywołanie funkcji częściowo zaaplikowanej,
+framesep=4mm]{ocaml}
+  val f : int -> int -> int
+  f y z
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Tworzenie częściowo zaaplikowanej funkcji,
+framesep=4mm]{c}
+  f : function  
+  f.fn(2, f.args, y, z);
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{itemize}
+    \item Funkcja wołająca (call site):
+    \begin{itemize}
+        \pause
+        \item Sprawdzenie czy należy wywołać funkcję 
+        \pause 
+        \item Zrzutowanie wskaźnika na funkcję wejściową
+        \pause
+        \item Zapisanie argumentów do środowiska
+    \end{itemize}
+    \pause
+    \item Funkcja wołana
+    \begin{itemize}
+        \pause
+        \item Odzyskanie argumentów ze środowiska 
+        \pause
+        \item Wywołanie funkcji głównej 
+        \pause
+        \item Ewentualne przekazanie nadmiarowych argumentów lub zapisanie ich
+        do środowiska
+    \end{itemize}
+\end{itemize}
 \end{frame}
 
 \section{Klasy typów}
 
-\begin{frame}{Blocks}
-\begin{block}{Block Title}
-You can also highlight sections of your presentation in a block, with it's own title
-\end{block}
-\begin{theorem}
-There are separate environments for theorems, examples, definitions and proofs.
-\end{theorem}
-\begin{example}
-Here is an example of an example block.
-\end{example}
+\subsection{Standardowa implementacja}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\pause
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  class Show a where
+    show :: a -> String
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  type 'a show = {
+    show : 'a -> string
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+% \pause
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  instance Show String where
+    show s = "’" ++ s ++ "’"
+ 
+  instance Show Bool where
+    show True = "true"
+    show False = "false"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  let show_string = {
+    show = fun s -> "’" ^ s ^ "’"
+  }
+
+  let show_bool = {
+    show = function
+           | false -> "false"
+           | true  -> "true"
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  let printArg show_instance arg =
+    show_instance.show arg
+    |> printf "arg: %s"
+  
+  let main1 = printArg show_bool true
+  let main2 = printArg show_string "Hello"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  printArg :: Show a => a -> IO ()
+  printArg arg = putStrLn ("arg: " ++ show arg)
+  
+  main1 = printArg True
+  main2 = printArg "Hello World"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Implementacja w MonoMLu}
+
+\begin{frame}[fragile]{Klasy typów}{Implementacja w MonoMLu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  class Num 'a where 
+    add : 'a -> 'a -> 'a
+  type pair = { a : int; b : int }
+
+  instance Num int where
+    let add x y = x + y 
+  instance Num pair where 
+    let add (x : pair) (y : pair) = 
+      { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ = 
+    let sum  : int  = add 2 3
+    let sum2 : pair = add {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Implementacja w MonoMLu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  type pair = { a : int; b : int }
+
+  let Num_add_int x y = x + y 
+  let Num_add_pair (x : pair) (y : pair) = 
+    { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ = 
+    let sum  = Num_add_int 2 3
+    let sum2 = Num_add_pair {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
+\end{center}
 \end{frame}
 
 % Placing a * after \section means it will not show in the
 % outline or table of contents.
 \section*{Podsumowanie}
 
-\begin{frame}{Summary}
+\begin{frame}{Podsumowanie}
   \begin{itemize}
   \item
-    The \alert{first main message} of your talk in one or two lines.
-  \item
-    The \alert{second main message} of your talk in one or two lines.
-  \item
-    Perhaps a \alert{third message}, but not more than that.
-  \end{itemize}
-  
-  \begin{itemize}
-  \item
-    Outlook
+    Polimorfizm parametryczny
     \begin{itemize}
-    \item
-      Something you haven't solved.
-    \item
-      Something else you haven't solved.
+        \item Efektywna implementacja dzięki monomorfizacji 
+        \item \textcolor{green}{Brak narzutu wydajnościowego i pamięciowego}
+        \item \textcolor{green}{Ułatwia dalsze optymalizacje}
+        \item \textcolor{red}{Dłuższy czas kompilacji}
+        \item \textcolor{red}{Większy rozmiar wynikowego programu}
     \end{itemize}
+  \item Klasy typów 
+  \begin{itemize}
+      \item Ułatwiona implementacja dzięki monomorfizacji 
+      \item \textcolor{green}{Wprowadziły ad--hoc polimorfizm 
+      (przeładowanie funkcji)}
+      \item \textcolor{green}{Brak dodatkowego narzutu}
   \end{itemize}
-\end{frame}
-
-% All of the following is optional and typically not needed. 
-\appendix
-\section<presentation>*{\appendixname}
-\subsection<presentation>*{For Further Reading}
-
-\begin{frame}[allowframebreaks]
-  \frametitle<presentation>{For Further Reading}
-    
-  \begin{thebibliography}{10}
-    
-  \beamertemplatebookbibitems
-  % Start with overview books.
-
-  \bibitem{Author1990}
-    A.~Author.
-    \newblock {\em Handbook of Everything}.
-    \newblock Some Press, 1990.
- 
-    
-  \beamertemplatearticlebibitems
-  % Followed by interesting articles. Keep the list short. 
-
-  \bibitem{Someone2000}
-    S.~Someone.
-    \newblock On this and that.
-    \newblock {\em Journal of This and That}, 2(1):50--100,
-    2000.
-  \end{thebibliography}
+  \item Częściowa aplikacja
+  \begin{itemize}
+      \item Bazowana na push/enter z modyfikacjami
+      \item \textcolor{green}{Wspiera przekazywanie argumentów przez wartość}
+    %   \item 
+  \end{itemize}
+  \end{itemize}
 \end{frame}
 
 \end{document}

@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{type} \PYG{k}{\PYGZsq{}}\PYG{n}{a} \PYG{n}{show} \PYG{o}{=} \PYG{o}{\PYGZob{}}
+  \PYG{n}{show} \PYG{o}{:} \PYG{k}{\PYGZsq{}}\PYG{n}{a} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{string}
+\PYG{o}{\PYGZcb{}}
+\end{Verbatim}

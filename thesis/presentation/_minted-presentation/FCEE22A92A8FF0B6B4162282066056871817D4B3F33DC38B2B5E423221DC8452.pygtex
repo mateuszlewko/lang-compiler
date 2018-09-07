@@ -1,0 +1,8 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k+kr}{instance} \PYG{k+kt}{Show} \PYG{k+kt}{String} \PYG{k+kr}{where}
+  \PYG{n}{show} \PYG{n}{s} \PYG{o+ow}{=} \PYG{l+s}{\PYGZdq{}’\PYGZdq{}} \PYG{o}{++} \PYG{n}{s} \PYG{o}{++} \PYG{l+s}{\PYGZdq{}’\PYGZdq{}}
+
+\PYG{k+kr}{instance} \PYG{k+kt}{Show} \PYG{k+kt}{Bool} \PYG{k+kr}{where}
+  \PYG{n}{show} \PYG{k+kt}{True} \PYG{o+ow}{=} \PYG{l+s}{\PYGZdq{}true\PYGZdq{}}
+  \PYG{n}{show} \PYG{k+kt}{False} \PYG{o+ow}{=} \PYG{l+s}{\PYGZdq{}false\PYGZdq{}}
+\end{Verbatim}
