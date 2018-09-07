@@ -1,0 +1,31 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () = ll_print_line ()
+
+  let putint x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+open Prelude
+
+let _ =
+
+  let a = 5
+  let b = a + 5
+
+  if (a + b) = 5
+  then putint 1
+  elif a = 6
+  then putint 2
+  else 
+    putbool true (* This will be printed *)

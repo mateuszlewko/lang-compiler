@@ -1,0 +1,54 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () : () = ll_print_line ()
+
+  let printi x = 
+    ll_putint x
+
+  let printin x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+  module Array = 
+    let new size : int array = 
+      ll_new_int_array size
+
+    let set (arr : int array) ix elem = 
+      ll_set_ith_elem_of_int_array  arr ix elem
+
+    let get arr ix = 
+      ll_get_ith_elem_of_int_array arr ix
+
+    let printn arr size = 
+      let rec aux pos left = 
+        if left = 0 
+        then ln ()
+        else printin (get arr pos)
+             aux (pos + 1) (left - 1)
+
+      aux 0 size
+
+open Prelude
+
+let _ =
+  let ar : int array = Array.new 10
+
+  Array.set ar 0 9999
+  Array.set ar 1 2
+  Array.set ar 2 4
+  Array.set ar 0 1
+  Array.set ar 9 10
+
+  (* Array.set ar 10 10 --> this could cause an error (out of bounds) *)
+
+  Array.printn ar 10

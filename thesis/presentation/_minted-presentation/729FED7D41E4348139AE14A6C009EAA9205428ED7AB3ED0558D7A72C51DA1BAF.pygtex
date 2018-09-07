@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+  \PYG{n}{sumMono} \PYG{o}{::} \PYG{n+nc}{Int}\PYG{o}{\PYGZsh{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nc}{Int}\PYG{o}{\PYGZsh{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nc}{Int}\PYG{o}{\PYGZsh{}} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{n+nc}{Int}\PYG{o}{\PYGZsh{}}
+  \PYG{n}{sumMono} \PYG{l+m+mi}{0}\PYG{o}{\PYGZsh{}} \PYG{n}{curr} \PYG{o}{\PYGZus{}} \PYG{o}{=} \PYG{n}{curr}
+  \PYG{n}{sumMono} \PYG{n}{n} \PYG{n}{curr} \PYG{n}{x} \PYG{o}{=} \PYG{n}{sumMono} \PYG{o}{(}\PYG{n}{n} \PYG{o}{\PYGZhy{}\PYGZsh{}} \PYG{l+m+mi}{1}\PYG{o}{\PYGZsh{})} \PYG{o}{(}\PYG{n}{curr} \PYG{o}{+\PYGZsh{}} \PYG{n}{x}\PYG{o}{)} \PYG{n}{x}
+\end{Verbatim}

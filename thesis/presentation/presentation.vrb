@@ -1,0 +1,22 @@
+\frametitle{Klasy typów}\framesubtitle {Implementacja w MonoMLu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  type pair = { a : int; b : int }
+
+  let Num_add_int x y = x + y
+  let Num_add_pair (x : pair) (y : pair) =
+    { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ =
+    let sum  = Num_add_int 2 3
+    let sum2 = Num_add_pair {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
+\end{center}

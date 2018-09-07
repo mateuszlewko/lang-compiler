@@ -1,0 +1,109 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+  external ll_get_ith_elem_of_int_array : int array -> int -> int
+  external ll_set_ith_elem_of_int_array : int array -> int -> int -> ()
+  external ll_new_int_array : int -> int array
+  external ll_print_bool : bool -> ()
+
+  let ln () : () = ll_print_line ()
+
+  let printi x = 
+    ll_putint x
+
+  let printin x = 
+    ll_putint x
+    ln () 
+
+  let putbool b =
+    ll_print_bool b
+    ln ()
+
+  module Array = 
+    let new size : int array = 
+      ll_new_int_array size
+
+    let set (arr : int array) ix elem = 
+      ll_set_ith_elem_of_int_array  arr ix elem
+
+    let get arr ix = 
+      ll_get_ith_elem_of_int_array arr ix
+
+    let printn arr size = 
+      let rec aux pos left = 
+        if left = 0 
+        then ln ()
+        else printin (get arr pos)
+             aux (pos + 1) (left - 1)
+
+      aux 0 size
+
+open Prelude
+
+let global_arr : int array = 
+  [|1; 10; 
+     1 
+  |] (* valid array literal may be defined over multiple lines, 
+        but must have closing bracket at the same column as opening 
+        bracket*)
+
+  (* 
+  [|1; 2
+    |]  --> invalid array literal
+   *)
+
+(* override previous definition *)
+let global_arr : int array = [|1; 0; 1|] 
+
+let printer _ = 
+  (* x is unit, side effect of initializing x is printing *)
+  let x = 
+    printin (Array.get global_arr 1)
+    (* array is mutable so this will change cell at index 1 *)
+    Array.set global_arr 1 ((Array.get global_arr 1) + 1)
+
+  ()
+
+(* this function will be overridden by next let printer2 *)
+(* _ is a valid variable name *)
+let printer2 _ = 
+  let x : () = 
+    printin (Array.get global_arr 1)
+    ln ()
+    printin 99999 (* this won't be printed *)
+    ln ()
+    Array.set global_arr 1 ((Array.get global_arr 1) + 1)
+
+  ()
+
+(* wrapper for print *)
+let printer2 () = printer 0
+
+let dec x = x - 1
+
+let rec repeat (fn : () -> ()) times =
+  if times > 0
+  then 
+    fn ()
+    repeat fn (dec times)
+
+let mult2 x = x * 2
+
+let _ =
+
+  repeat printer2 10
+  
+  ln ()
+
+  (* print first 3 elements of an array *)
+  (* value of element at index 1 changed to 10 because of previous operations *)
+  Array.printn global_arr 3 
+
+  printin (2 * 2 + 2) (* correct priority of operators *)
+  printin (2 + 2 * 2) (* correct priority of operators *)
+
+  ln ()
+
+  printin (2 + mult2 2)
+  printin (mult2 2 + 4) (* prints result of 2 * 2 + 4 
+                                 instead of 2 * (2 + 4) *)

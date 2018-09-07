@@ -1,0 +1,902 @@
+\documentclass{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage{polski}
+\usepackage{listings}
+\usepackage[normalem]{ulem}
+\usepackage{minted}
+\usepackage{pifont}% http://ctan.org/pkg/pifont
+\newcommand{\cmark}{\ding{51}}%
+\newcommand{\xmark}{\ding{55}}%
+\usepackage{xcolor}
+
+% \usepackage{syntax}
+
+\usetheme{Warsaw}
+
+\title[Implementacja~języka~funkcyjnego z~rodziny~ML]
+{Implementacja~języka~funkcyjnego \newline z~rodziny~ML \newline
+z wykorzystaniem infrastruktury LLVM}
+
+\author{Mateusz Lewko}
+% - Give the names in the same order as the appear in the paper.
+% - Use the \inst{?} command only if the authors have different
+%   affiliation.
+
+% \institute[Universities of Somewhere and Elsewhere] % (optional, but mostly needed)
+% {
+%   \inst{1}%
+%   Department of Computer Science\\
+%   University of Somewhere
+%   \and
+%   \inst{2}%
+%   Department of Theoretical Philosophy\\
+%   University of Elsewhere}
+% - Use the \inst command only if there are several affiliations.
+% - Keep it simple, no one is interested in your street address.
+
+% \date{Conference Name, 2013}
+% - Either use conference name or its abbreviation.
+% - Not really informative to the audience, more for people (including
+%   yourself) who are reading the slides online
+
+% \subject{Theoretical Computer Science}
+% This is only inserted into the PDF information catalog. Can be left
+% out. 
+
+% If you have a file called "university-logo-filename.xxx", where xxx
+% is a graphic format that can be processed by latex or pdflatex,
+% resp., then you can add a logo as follows:
+
+% \pgfdeclareimage[height=0.5cm]{university-logo}{university-logo-filename}
+% \logo{\pgfuseimage{university-logo}}
+
+% Delete this, if you do not want the table of contents to pop up at
+% the beginning of each subsection:
+% \AtBeginSubsection[]
+% {
+%   \begin{frame}<beamer>{Outline}
+%     \tableofcontents[currentsection,currentsubsection]
+%   \end{frame}
+% }
+
+% Let's get started
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Spis treści}
+  \tableofcontents
+  % You might wish to add the option [pausesections]
+\end{frame}
+
+\section{Wstęp}
+
+\subsection{Obecnie}
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item {
+        Jest wiele języków z rodziny ML
+    \pause
+    \item Zawierają
+        \begin{itemize}
+            \pause
+            \item Polimorfizm parametryczny \pause
+            \item Częściową aplikację \pause
+            \item Zagnieżdżone funkcje \pause
+            \item Funkcje wyższych rzędów \pause
+            \item System modułów (OCaml, SML) lub obiektowe klasy (F\#) \pause
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item { 
+        Jest wiele języków z rodziny ML
+    \item Zawierają
+        \begin{itemize}
+            \item \textbf{Polimorfizm parametryczny $\Rightarrow$ Opakowywanie 
+            argumentów we wskaźnik}
+            \item Częściową aplikację
+            \item Zagnieżdżone funkcje 
+            \item Funkcje wyższych rzędów 
+            \item System modułów (OCaml, SML) lub obiektowe klasy (F\#)
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Obecnie}
+\begin{itemize}
+    \item {
+        Jest wiele języków z rodziny ML
+    \item Zawierają
+        \begin{itemize}
+            \item \textbf{Polimorfizm parametryczny $\Rightarrow$ Opakowywanie 
+            argumentów we wskaźnik}
+            \item Częściową aplikację
+            \item Zagnieżdżone funkcje 
+            \item Funkcje wyższych rzędów 
+            \item \textbf{System modułów (OCaml, SML)} lub obiektowe klasy (F\#)
+            \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, 
+            inferencja typów, 
+            inferencja typów, algebraiczne typy danych, itp.
+        \end{itemize}
+    }
+\end{itemize}
+\end{frame}
+
+\subsection{Motywacja}
+
+\begin{frame}{Motywacja}
+\begin{itemize}
+    \item Wady opakowywania we wskaźnik
+    \begin{itemize}
+        \pause
+        \item Narzut pamięciowy --- nawet 3x w przypadku typu int
+        \pause
+        \item Narzut czasowy 
+        \begin{itemize}
+            \item Automatyczne zarządzenie pamięcią
+            \item Konieczność odczytywania pamięci ze sterty 
+            \item Gorsze wykorzystanie pamięci cache
+        \end{itemize}
+    \end{itemize}
+
+    \pause
+    \item Wady systemu modułów
+    \begin{itemize}
+        \pause
+        \item Brak możliwości przeładowaniu operatorów i funkcji (np. dla różnych 
+        typów numerycznych)
+        \pause
+        \item Nietrywialne w implementacji i skomplikowane w użyciu
+    \end{itemize}
+
+\end{itemize}
+\end{frame}
+
+\subsection{Język MonoML}
+
+\begin{frame}{Język MonoML}
+\begin{itemize}
+    \pause
+    \item \textbf{Polimorfizm parametryczny $\rightarrow$ Monomorfizacja}
+    \pause
+    \item \textbf{Częściową aplikację $\rightarrow$ Bazowana na modelu
+    push/enter}
+    \pause
+    \item \textbf{Klasy typów (ad--hoc polimorfizm)}
+    \pause 
+    \item Zagnieżdżone funkcje 
+    \item Funkcje wyższych rzędów 
+    \item Trwałe rekordy, funkcje wzajemnie rekurencyjne, inferencja typów
+\end{itemize}
+\end{frame}
+
+\section{Polimorfizm Parametryczny}
+
+\subsection{Opis problemu}
+
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Wygenerowany LLVM IR \#1,
+framesep=2mm]{llvm}
+  define i32 @twice(i32 (i32)*, i32) {
+      ...
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Wygenerowany LLVM IR \#2,
+framesep=2mm]{llvm}
+  define float @twice(float (float)*, float) {
+      ...
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Opis problemu}%{Optional Subtitle}
+\begin{center}
+\begin{minipage}{0.8\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Kod do skompilowania,
+framesep=4mm]{ocaml}
+  let twice f x = f (f x)
+  let _ = 
+    print_int   (twice identity 42  );
+    print_float (twice identity 42.0)
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+fontsize=\small,
+frame=single,
+label=Argumenty opakowane we wskaźnik,
+framesep=2mm]{llvm}
+  define i8* @twice(i8* (i8*)*, i8*) {
+      ...
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Moje podejście --- Monomorfizacja}
+
+\begin{frame}[fragile]{Moje podejście --- Monomorfizacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Po monomorfizacji,
+framesep=4mm]{ocaml}
+  let twice_int (f : int -> int) (x : int) : int = 
+    f (f x)
+  let twice_float (f : float -> float) (x : float) 
+    : float = f (f x)
+
+  let _ = 
+    print_int   (twice_int identity_int 42  );
+    print_float (twice_float identity_float 42.0)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Testy wydajnościowe}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Cele}
+    \begin{itemize}
+    \item Porównanie czasów wykonania funkcji polimorficznej i monomorficznej
+    \pause 
+    \begin{itemize}
+        \item w MonoMLu
+        \pause
+        \item w Haskellu, Javie i Standard MLu
+    \pause
+    \end{itemize}
+    \item Narzut czasowy wywoływania funkcji w MonoMLu na tle innych języków
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Przygotowanie}
+ \begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja polimorficzna,
+framesep=4mm]{ocaml}
+  let rec sum n (curr : 'a) (x : 'a) : 'a = 
+      if n = 0 then curr 
+      else sum (n - 1) (add curr x) x 
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Monomorficzna,
+framesep=4mm]{ocaml}
+  let rec sum n (curr : int) (x : int) : int = 
+      if n = 0 then curr 
+      else sum (n - 1) (add curr x) x 
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Przygotowanie}
+ \begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja polimorficzna,
+framesep=4mm]{ocaml}
+    sumPoly :: Num a => Int -> a ->  a -> a
+    sumPoly 0 curr _ = curr 
+    sumPoly n curr x = sumPoly (n - 1) (curr + x) $! x
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Monomorficzna,
+framesep=4mm]{ocaml}
+    sumMono :: Int# -> Int# -> Int# -> Int# 
+    sumMono 0# curr _ = curr 
+    sumMono n curr x = sumMono (n -# 1#) (curr +# x) x
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & \textbf{39.1}  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli & \textbf{696.8} & 63.2 & 1.86 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & \textbf{140.1} & 65.7 & 0.37 \\ 
+ Java                 & Poli & \textbf{564.9} & 24.8 & 1.50 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & 140.1 & 65.7 & 0.37 \\ 
+ Java                 & Poli    & 564.9 & 24.8 & 1.50 \\ 
+ SML (MLton)          & Mono & \textbf{151.0} & 13.7 & 0.40 \\ 
+ SML (SML/NJ)         & Poli & \textbf{357.6} & 14.4 & 0.95 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Testy wydajnościowe}{Wyniki}
+    
+\begin{center}
+\begin{table}
+\begin{tabular}{|| l | l | r | r | r ||} 
+
+ \hline
+ Język & Wersja & Czas (ms) & $\sigma$ & x \\ 
+ \hline\hline
+ Haskell (GHC)        & Mono & 39.1  & 8.2  & 0.10 \\ 
+ Haskell (GHC)        & Poli    & 696.8 & 63.2 & 1.86 \\ 
+ Java                 & Mono & 140.1 & 65.7 & 0.37 \\ 
+ Java                 & Poli    & 564.9 & 24.8 & 1.50 \\ 
+ SML (MLton)          & Mono & 151.0 & 13.7 & 0.40 \\ 
+ SML (SML/NJ)         & Poli    & 357.6 & 14.4 & 0.95 \\ 
+ Mono ML              & Mono & \textbf{327.0} & 52.3 & 0.88 \\ 
+ Mono ML              & Poli & \textbf{375.4} & 46.9 & 1.00 \\ 
+ \hline
+\end{tabular}
+\end{table}
+\end{center}
+\end{frame}
+
+
+\section{Częściowa aplikacja i generowanie funkcji}
+
+\subsection{Opis problemu}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Opis problemu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{ocaml}    
+  let diverge cond x y = if cond then x else y
+
+  val apply : (int -> int -> int) -> int -> int -> int
+  let apply f x y = 
+    let z = diverge true x y
+    f y z
+
+  ...
+  apply (diverge true) 2 3 
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Opis problemu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{ocaml}    
+  val f : int -> int -> int
+  f y z
+  ------------------
+  (diverge true) y z
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{llvm}    
+  %result = call i32 %f(i32 %y, i32 %z)
+  ;----------------------------------
+  %f = @diverge(i1 %cond, i32 %x, i32 %y)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Implementacja}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Po monomorfizacji,
+framesep=4mm]{c}    
+  struct function {
+    void (**fn)();
+    unsigned char *args;
+    unsigned char left_args;
+    unsigned char arity;
+    int used_bytes;   
+  };
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Oryginalna funkcja,
+framesep=4mm]{ocaml}    
+  val diverge : bool -> int -> int -> int
+\end{minted}
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wygenerowane funkcje,
+framesep=4mm]{llvm} 
+  i32 @diverge_main(i1 %cond, i32 %x, i32 %y)
+
+  i32 @diverge_entry0(i8 %args_cnt, i8* %env, i1 %cond 
+                                  , i32 %x  , i32 %y)
+
+  i32 @diverge_entry1(i8 %args_cnt, i8* %env, i32 %x
+                                            , i32 %y)
+
+  i32 @diverge_entry2(i8 %args_cnt, i8* %env, i32 %y)
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wygenerowane funkcje,
+framesep=4mm]{llvm} 
+  @diverge_entry_points = global [3 x void ()*] [
+      @diverge_entry0,
+      @diverge_entry1,
+      @diverge_entry2
+  ]
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Funkcja częściowo zaaplikowana,
+framesep=4mm]{ocaml}
+  val diverge : bool -> int -> int -> int
+  (diverge true)
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Tworzenie częściowo zaaplikowanej funkcji,
+framesep=4mm]{c}
+  env = malloc (1); env[0] = true
+  function papp = { 
+    fn         = diverge_entry_points[1], 
+    args       = env, 
+    left_args  = 2, 
+    arity      = 3, 
+    used_bytes = 1,
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Wywołanie funkcji częściowo zaaplikowanej,
+framesep=4mm]{ocaml}
+  val f : int -> int -> int
+  f y z
+\end{minted}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+% label=Tworzenie częściowo zaaplikowanej funkcji,
+framesep=4mm]{c}
+  f : function  
+  f.fn(2, f.args, y, z);
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}{Częściowa aplikacja i generowanie funkcji}{Implementacja}
+\begin{itemize}
+    \item Funkcja wołająca (call site):
+    \begin{itemize}
+        \pause
+        \item Sprawdzenie czy należy wywołać funkcję 
+        \pause 
+        \item Zrzutowanie wskaźnika na funkcję wejściową
+        \pause
+        \item Zapisanie argumentów do środowiska
+    \end{itemize}
+    \pause
+    \item Funkcja wołana
+    \begin{itemize}
+        \pause
+        \item Odzyskanie argumentów ze środowiska 
+        \pause
+        \item Wywołanie funkcji głównej 
+        \pause
+        \item Ewentualne przekazanie nadmiarowych argumentów lub zapisanie ich
+        do środowiska
+    \end{itemize}
+\end{itemize}
+\end{frame}
+
+\section{Klasy typów}
+
+\subsection{Standardowa implementacja}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\pause
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  class Show a where
+    show :: a -> String
+\end{minted}
+\pause
+\pagebreak
+\pagebreak
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  type 'a show = {
+    show : 'a -> string
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+% \pause
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  instance Show String where
+    show s = "’" ++ s ++ "’"
+ 
+  instance Show Bool where
+    show True = "true"
+    show False = "false"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  let show_string = {
+    show = fun s -> "’" ^ s ^ "’"
+  }
+
+  let show_bool = {
+    show = function
+           | false -> "false"
+           | true  -> "true"
+  }
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=OCaml,
+framesep=4mm]{ocaml}
+  let printArg show_instance arg =
+    show_instance.show arg
+    |> printf "arg: %s"
+  
+  let main1 = printArg show_bool true
+  let main2 = printArg show_string "Hello"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Standardowa implementacja}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=Haskell,
+framesep=4mm]{haskell}
+  printArg :: Show a => a -> IO ()
+  printArg arg = putStrLn ("arg: " ++ show arg)
+  
+  main1 = printArg True
+  main2 = printArg "Hello World"
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\subsection{Implementacja w MonoMLu}
+
+\begin{frame}[fragile]{Klasy typów}{Implementacja w MonoMLu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  class Num 'a where 
+    add : 'a -> 'a -> 'a
+  type pair = { a : int; b : int }
+
+  instance Num int where
+    let add x y = x + y 
+  instance Num pair where 
+    let add (x : pair) (y : pair) = 
+      { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ = 
+    let sum  : int  = add 2 3
+    let sum2 : pair = add {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Klasy typów}{Implementacja w MonoMLu}
+\begin{center}
+\begin{minipage}{1.0\textwidth}
+\begin{minted}[mathescape,
+gobble=2,
+% linenos,
+frame=single,
+fontsize=\small,
+label=MonoML,
+framesep=4mm]{ocaml}
+  type pair = { a : int; b : int }
+
+  let Num_add_int x y = x + y 
+  let Num_add_pair (x : pair) (y : pair) = 
+    { x with a = x.a + y.a; b = x.b + y.b }
+
+  let _ = 
+    let sum  = Num_add_int 2 3
+    let sum2 = Num_add_pair {a = 2; b = 1} {a = 3; b = 4}
+\end{minted}
+\end{minipage}
+\end{center}
+\end{frame}
+
+% Placing a * after \section means it will not show in the
+% outline or table of contents.
+\section*{Podsumowanie}
+
+\begin{frame}{Podsumowanie}
+  \begin{itemize}
+  \item
+    Polimorfizm parametryczny
+    \begin{itemize}
+        \item Efektywna implementacja dzięki monomorfizacji 
+        \item \textcolor{green}{Brak narzutu wydajnościowego i pamięciowego}
+        \item \textcolor{green}{Ułatwia dalsze optymalizacje}
+        \item \textcolor{red}{Dłuższy czas kompilacji}
+        \item \textcolor{red}{Większy rozmiar wynikowego programu}
+    \end{itemize}
+  \item Klasy typów 
+  \begin{itemize}
+      \item Ułatwiona implementacja dzięki monomorfizacji 
+      \item \textcolor{green}{Wprowadziły ad--hoc polimorfizm 
+      (przeładowanie funkcji)}
+      \item \textcolor{green}{Brak dodatkowego narzutu}
+  \end{itemize}
+  \item Częściowa aplikacja
+  \begin{itemize}
+      \item Bazowana na push/enter z modyfikacjami
+      \item \textcolor{green}{Wspiera przekazywanie argumentów przez wartość}
+    %   \item 
+  \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\end{document}
+
+

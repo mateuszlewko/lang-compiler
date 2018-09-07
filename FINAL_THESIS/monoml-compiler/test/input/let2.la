@@ -1,0 +1,25 @@
+module Prelude = 
+    external ll_putint     : int -> () 
+    external ll_print_line : ()  -> () 
+
+    let print_int : int -> () = ll_putint
+    let print_nl  : ()  -> () = ll_print_line
+    let printn_int x : () = 
+        print_int x 
+        print_nl () 
+
+open Prelude
+
+let adder3 a b c = 
+    printn_int 0
+    let adder5 d e = a + b + c + d + e 
+    adder5
+
+let apply2 f3 g3 = 
+(* 2+2 +1+2 + 2+2 +3+4  - (2-2 -1 -1 = 4 + 3 + 4 + 7 + 2 = 20 *)
+    (f3 1 2) + (f3 3 4) - (g3 -1 -1)
+
+let _ = 
+    let f4 = adder3 1 1
+    let res = apply2 (f4 2) (f4 -2)
+    printn_int res

@@ -1,0 +1,45 @@
+module Prelude =
+  external ll_putint : int -> ()
+  external ll_print_line : () -> ()
+
+  let printn_int x : () = 
+    ll_putint x
+    ll_print_line () 
+
+open Prelude
+
+class Num 'a where 
+    add : 'a -> 'a -> 'a 
+
+instance Num int where 
+    let add x y = x + y 
+
+type pair = { first : int ; second : int }
+
+instance Num pair where 
+    let add (x : pair) (y : pair) = 
+        { x with first = x.first + y.first
+                 second = x.second + y.second
+        }
+
+let rec sumPoly n (curr : 'a) (x : 'a) : 'a = 
+    if n = 0 then curr 
+    else sumPoly (n - 1) (add curr x) x 
+
+let rec iter n count init change = 
+    if n > 0
+    then 
+        sumPoly count init change
+        iter (n - 1) count init change
+    else sumPoly count init change
+
+let _ =
+  printn_int (iter 10000 10000 12 2)
+  
+  (* Uncomment below lines to see that `iter` and `sumPoly` are polymorphic *)
+  
+  (* 
+  let init = { first = 12; second = 1}
+  let change = { first = 2; second = 3} 
+  let res = iter 10000 10000 init change 
+  printn_int (res.first) *)

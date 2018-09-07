@@ -1,0 +1,10 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{let} \PYG{n}{twice\PYGZus{}int} \PYG{o}{(}\PYG{n}{f} \PYG{o}{:} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int}\PYG{o}{)} \PYG{o}{(}\PYG{n}{x} \PYG{o}{:} \PYG{k+kt}{int}\PYG{o}{)} \PYG{o}{:} \PYG{k+kt}{int} \PYG{o}{=}
+  \PYG{n}{f} \PYG{o}{(}\PYG{n}{f} \PYG{n}{x}\PYG{o}{)}
+\PYG{k}{let} \PYG{n}{twice\PYGZus{}float} \PYG{o}{(}\PYG{n}{f} \PYG{o}{:} \PYG{k+kt}{float} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{float}\PYG{o}{)} \PYG{o}{(}\PYG{n}{x} \PYG{o}{:} \PYG{k+kt}{float}\PYG{o}{)}
+  \PYG{o}{:} \PYG{k+kt}{float} \PYG{o}{=} \PYG{n}{f}\PYG{o}{(}\PYG{n}{f} \PYG{n}{x}\PYG{o}{)}
+
+\PYG{k}{let} \PYG{o}{\PYGZus{}} \PYG{o}{=}
+  \PYG{n}{print\PYGZus{}int}   \PYG{o}{(}\PYG{n}{twice\PYGZus{}int} \PYG{n}{identity\PYGZus{}int} \PYG{l+m+mi}{42}  \PYG{o}{);}
+  \PYG{n}{print\PYGZus{}float} \PYG{o}{(}\PYG{n}{twice\PYGZus{}float} \PYG{n}{identity\PYGZus{}float} \PYG{l+m+mi}{42}\PYG{o}{.}\PYG{l+m+mi}{0}\PYG{o}{)}
+\end{Verbatim}

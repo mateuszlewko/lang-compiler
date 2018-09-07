@@ -1,0 +1,38 @@
+module Prelude = 
+    external ll_putint     : int -> () 
+    external ll_print_line : ()  -> () 
+
+    let printInt (x : int) : () = ll_putint x
+    let printNl : () -> () = ll_print_line
+    let printnInt x : () = 
+        printInt x 
+        printNl () 
+
+open Prelude
+
+let compose f g x = f (g x)
+
+let square x = x * x
+
+let rec factorial x =
+    if x <= 1 then 1 
+    else x * factorial (x - 1)
+
+(* compose function f n times *)
+let rec power f n x = 
+    if n > 0 
+    then compose f (power f (n - 1)) x
+    else x
+
+let _ = 
+    printnInt (120 * 120)
+    printnInt (compose square factorial 5)
+
+    printNl ()
+    
+    let add x y = x + y
+    let mult x y = x * y
+    
+    printnInt ((power (add 1) 4) 0)  (* 0 + 1 + 1 + 1 + 1 *)
+    printnInt ((power (mult 2) 4) 1) (* 1 * 2 * 2 * 2 * 2 *)
+    printnInt ((power square 4) 2)   (* (((2 ^ 2) ^ 2) ^ 2) ^ 2 *)

@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{define} \PYG{k}{i32} \PYG{n+nv+vg}{@twice}\PYG{p}{(}\PYG{k}{i32} \PYG{p}{(}\PYG{k}{i32}\PYG{p}{)*,} \PYG{k}{i32}\PYG{p}{)} \PYG{p}{\PYGZob{}}
+    \PYG{p}{...}
+\PYG{p}{\PYGZcb{}}
+\end{Verbatim}

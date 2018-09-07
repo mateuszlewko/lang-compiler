@@ -1,0 +1,11 @@
+\begin{Verbatim}[commandchars=\\\{\},codes={\catcode`\$=3\catcode`\^=7\catcode`\_=8}]
+\PYG{k}{let} \PYG{n}{diverge} \PYG{n}{cond} \PYG{n}{x} \PYG{n}{y} \PYG{o}{=} \PYG{k}{if} \PYG{n}{cond} \PYG{k}{then} \PYG{n}{x} \PYG{k}{else} \PYG{n}{y}
+
+\PYG{k}{val} \PYG{n}{apply} \PYG{o}{:} \PYG{o}{(}\PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int}\PYG{o}{)} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int} \PYG{o}{\PYGZhy{}\PYGZgt{}} \PYG{k+kt}{int}
+\PYG{k}{let} \PYG{n}{apply} \PYG{n}{f} \PYG{n}{x} \PYG{n}{y} \PYG{o}{=}
+  \PYG{k}{let} \PYG{n}{z} \PYG{o}{=} \PYG{n}{diverge} \PYG{n+nb+bp}{true} \PYG{n}{x} \PYG{n}{y}
+  \PYG{n}{f} \PYG{n}{y} \PYG{n}{z}
+
+\PYG{o}{...}
+\PYG{n}{apply} \PYG{o}{(}\PYG{n}{diverge} \PYG{n+nb+bp}{true}\PYG{o}{)} \PYG{l+m+mi}{2} \PYG{l+m+mi}{3}
+\end{Verbatim}
